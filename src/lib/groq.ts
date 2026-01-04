@@ -1,0 +1,327 @@
+/**
+ * Groq API Client for LLM Capability Analysis
+ * 
+ * Uses Groq's fast inference API with Llama-3 or Mixtral models
+ * Free tier: https://console.groq.com/
+ */
+
+import { RepoScan } from '@prisma/client';
+
+// Types for analysis results
+export interface AnalysisResult {
+    is_ai_system: boolean;
+    capabilities: string[];
+    libraries: string[];
+    ai_frameworks: string[];
+    programming_languages: string[];
+    detected_model_types: string[];
+    has_ml_pipeline: boolean;
+    has_training_code: boolean;
+    has_inference_code: boolean;
+    has_data_processing: boolean;
+    has_model_serialization: boolean;
+    estimated_risk_indicators: {
+        uses_computer_vision: boolean;
+        uses_biometric_processing: boolean;
+        uses_emotion_recognition: boolean;
+        uses_critical_infrastructure: boolean;
+        uses_generative_ai: boolean;
+        uses_nlp: boolean;
+        uses_nlp_decision_making: boolean;
+        targets_vulnerable_persons: boolean;
+        high_impact_decision_making: boolean;
+    };
+    reasoning: string;
+}
+
+export interface GroqResponse {
+    analysis: AnalysisResult;
+    model: string;
+    duration_ms: number;
+    confidence_score: number;
+}
+
+// Default risk indicators (all false)
+const DEFAULT_RISK_INDICATORS = {
+    uses_computer_vision: false,
+    uses_biometric_processing: false,
+    uses_emotion_recognition: false,
+    uses_critical_infrastructure: false,
+    uses_generative_ai: false,
+    uses_nlp: false,
+    uses_nlp_decision_making: false,
+    targets_vulnerable_persons: false,
+    high_impact_decision_making: false,
+};
+
+/**
+ * Build the analysis prompt from repository scan data
+ */
+function buildPrompt(repoScan: RepoScan): string {
+    const fileTreeStr = repoScan.file_tree
+        ? JSON.stringify(repoScan.file_tree, null, 2).slice(0, 3000)
+        : 'N/A';
+
+    const packageJson = repoScan.package_json_content as Record<string, unknown> | null;
+    const depsStr = packageJson?.dependencies
+        ? JSON.stringify(packageJson.dependencies, null, 2)
+        : 'N/A';
+
+    return `You are an expert AI system analyst. Analyze the following repository and extract AI capabilities.
+
+REPOSITORY: ${repoScan.repo_name}
+OWNER: ${repoScan.repo_owner}
+PRIMARY LANGUAGE: ${repoScan.primary_language || 'Unknown'}
+
+README (first 2000 chars):
+${(repoScan.readme_content || 'N/A').slice(0, 2000)}
+
+PYTHON DEPENDENCIES (requirements.txt):
+${repoScan.requirements_txt_content || 'N/A'}
+
+NODE.JS DEPENDENCIES (package.json):
+${depsStr}
+
+FILE STRUCTURE (truncated):
+${fileTreeStr}
+
+Based on this information, analyze and respond with ONLY valid JSON (no markdown, no backticks, no explanation):
+
+{
+  "is_ai_system": boolean,
+  "capabilities": ["list of AI capabilities like 'Computer Vision', 'NLP', 'Recommender System'"],
+  "libraries": ["list of AI/ML libraries detected like 'torch', 'tensorflow', 'sklearn'"],
+  "ai_frameworks": ["list of frameworks like 'PyTorch', 'TensorFlow', 'Hugging Face'"],
+  "programming_languages": ["list of primary languages"],
+  "detected_model_types": ["list like 'Neural Network', 'Transformer', 'Decision Tree'"],
+  "has_ml_pipeline": boolean,
+  "has_training_code": boolean,
+  "has_inference_code": boolean,
+  "has_data_processing": boolean,
+  "has_model_serialization": boolean,
+  "estimated_risk_indicators": {
+    "uses_computer_vision": boolean,
+    "uses_biometric_processing": boolean,
+    "uses_emotion_recognition": boolean,
+    "uses_critical_infrastructure": boolean,
+    "uses_generative_ai": boolean,
+    "uses_nlp": boolean,
+    "uses_nlp_decision_making": boolean,
+    "targets_vulnerable_persons": boolean,
+    "high_impact_decision_making": boolean
+  },
+  "reasoning": "Brief explanation of your analysis"
+}`;
+}
+
+/**
+ * Parse and validate LLM response
+ */
+function parseAndValidateResponse(responseText: string): AnalysisResult {
+    // Try to extract JSON from response (handle markdown code blocks)
+    let jsonStr = responseText.trim();
+
+    // Remove markdown code blocks if present
+    if (jsonStr.startsWith('```')) {
+        jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    // Parse JSON
+    let parsed: AnalysisResult;
+    try {
+        parsed = JSON.parse(jsonStr);
+    } catch {
+        throw new Error(`Invalid JSON from LLM: ${jsonStr.slice(0, 200)}...`);
+    }
+
+    // Validate required fields
+    const requiredFields = [
+        'is_ai_system', 'capabilities', 'libraries', 'ai_frameworks',
+        'programming_languages', 'detected_model_types', 'estimated_risk_indicators'
+    ];
+
+    for (const field of requiredFields) {
+        if (!(field in parsed)) {
+            throw new Error(`Missing required field: ${field}`);
+        }
+    }
+
+    // Validate arrays aren't too long (likely hallucination)
+    if (parsed.capabilities.length > 20) {
+        throw new Error('Too many capabilities detected (likely hallucination)');
+    }
+
+    // Ensure estimated_risk_indicators has all fields
+    parsed.estimated_risk_indicators = {
+        ...DEFAULT_RISK_INDICATORS,
+        ...parsed.estimated_risk_indicators,
+    };
+
+    return parsed;
+}
+
+/**
+ * Calculate confidence score based on analysis quality
+ */
+function calculateConfidence(analysis: AnalysisResult, repoScan: RepoScan): number {
+    let score = 0.5; // Base score
+
+    // Has dependencies → more confident
+    if (repoScan.requirements_txt_content || repoScan.package_json_content) {
+        score += 0.15;
+    }
+
+    // Has README → more confident
+    if (repoScan.readme_content && repoScan.readme_content.length > 100) {
+        score += 0.1;
+    }
+
+    // Libraries detected match known AI libraries
+    const knownAILibs = ['torch', 'tensorflow', 'sklearn', 'keras', 'transformers', 'numpy', 'pandas', 'opencv'];
+    const matchedLibs = analysis.libraries.filter(lib =>
+        knownAILibs.some(known => lib.toLowerCase().includes(known))
+    );
+    if (matchedLibs.length > 0) {
+        score += 0.15;
+    }
+
+    // Reasoning provided
+    if (analysis.reasoning && analysis.reasoning.length > 50) {
+        score += 0.1;
+    }
+
+    return Math.min(score, 1.0);
+}
+
+/**
+ * Main analysis function - calls Groq API
+ */
+export async function analyzeRepository(repoScan: RepoScan): Promise<GroqResponse> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        throw new Error('GROQ_API_KEY environment variable is not set');
+    }
+
+    // Updated model: llama-3.3-70b-versatile is currently available on Groq
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    const prompt = buildPrompt(repoScan);
+
+    const startTime = Date.now();
+
+    console.log(`🤖 [GROQ] Calling Groq API...`);
+    console.log(`   Model: ${model}`);
+    console.log(`   Repo: ${repoScan.repo_owner}/${repoScan.repo_name}`);
+
+    try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are an expert AI system analyst. Respond only with valid JSON, no markdown formatting.',
+                    },
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
+                temperature: 0.3, // Low for consistent JSON
+                max_tokens: 2000,
+            }),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Groq API error: ${error.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const duration_ms = Date.now() - startTime;
+
+        console.log(`✅ [GROQ] Response received in ${duration_ms}ms`);
+
+        const content = data.choices?.[0]?.message?.content;
+        if (!content) {
+            throw new Error('Empty response from Groq API');
+        }
+
+        const analysis = parseAndValidateResponse(content);
+        const confidence_score = calculateConfidence(analysis, repoScan);
+
+        console.log(`   AI System: ${analysis.is_ai_system}`);
+        console.log(`   Capabilities: ${analysis.capabilities.length} found`);
+        console.log(`   Confidence: ${(confidence_score * 100).toFixed(0)}%`);
+
+        return {
+            analysis,
+            model,
+            duration_ms,
+            confidence_score,
+        };
+
+    } catch (error) {
+        const duration_ms = Date.now() - startTime;
+
+        if (error instanceof Error) {
+            if (error.message.includes('rate limit')) {
+                throw new Error('Groq rate limit exceeded. Please wait and try again.');
+            }
+            if (error.message.includes('timeout') || duration_ms > 60000) {
+                throw new Error('Analysis timeout. Repository may be too large.');
+            }
+            throw error;
+        }
+
+        throw new Error('Unknown error during analysis');
+    }
+}
+
+/**
+ * Check Groq API health
+ */
+export async function checkGroqHealth(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    model?: string;
+    response_time_ms?: number;
+    error?: string;
+}> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        return { status: 'unhealthy', error: 'GROQ_API_KEY not configured' };
+    }
+
+    const model = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+    const startTime = Date.now();
+
+    try {
+        const response = await fetch('https://api.groq.com/openai/v1/models', {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+            },
+        });
+
+        const response_time_ms = Date.now() - startTime;
+
+        if (!response.ok) {
+            return { status: 'unhealthy', error: `API returned ${response.status}` };
+        }
+
+        return {
+            status: 'healthy',
+            model,
+            response_time_ms,
+        };
+
+    } catch (error) {
+        return {
+            status: 'unhealthy',
+            error: error instanceof Error ? error.message : 'Connection failed',
+        };
+    }
+}

@@ -1,0 +1,293 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  full_name  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Feature 1 relationships
+  github_connections GithubConnection[]
+  repo_scans         RepoScan[]
+  github_repos       UserGithubRepo[]
+
+  // Feature 2 relationships
+  llm_capability_analyses LlmCapabilityAnalysis[]
+
+  // Feature 3 relationships
+  risk_assessments RiskAssessment[]
+
+  // Feature 4 relationships
+  final_risk_assessments FinalRiskAssessment[]
+
+  // Feature 5 relationships
+  compliance_reports ComplianceReport[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model GithubConnection {
+  id                      String    @id @default(cuid())
+  user_id                 String
+  github_username         String
+  github_oauth_token      String    // Encrypted with AES-256-GCM
+  github_token_expires_at DateTime?
+  connected_at            DateTime  @default(now())
+  last_refreshed_at       DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, github_username])
+  @@index([user_id])
+  @@map("github_connections")
+}
+
+model RepoScan {
+  id               String  @id @default(cuid())
+  user_id          String
+  github_repo_url  String
+  repo_owner       String
+  repo_name        String
+  repo_description String?
+
+  // Raw data from GitHub - INPUT for Feature 2
+  readme_content           String?
+  package_json_content     Json?
+  requirements_txt_content String?
+  pyproject_toml_content   Json?
+  file_tree                Json    // Directory structure
+
+  // Metadata
+  total_files      Int
+  primary_language String?
+  license_type     String?
+  stars_count      Int     @default(0)
+  forks_count      Int     @default(0)
+  watchers_count   Int     @default(0)
+
+  scanned_at DateTime @default(now())
+  expires_at DateTime @default(dbgenerated("(now() + interval '30 days')"))
+
+  user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  llm_analysis          LlmCapabilityAnalysis? // One-to-one: each scan has one analysis
+  risk_assessment       RiskAssessment?        // One-to-one: each scan has one risk assessment
+  final_risk_assessment FinalRiskAssessment?   // One-to-one: each scan has one final assessment
+
+  @@index([user_id])
+  @@index([github_repo_url])
+  @@index([scanned_at])
+  @@map("repo_scans")
+}
+
+model UserGithubRepo {
+  id              String   @id @default(cuid())
+  user_id         String
+  github_repo_url String
+  repo_name       String
+  repo_visibility String   // "public" or "private"
+  last_synced_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, github_repo_url])
+  @@index([user_id])
+  @@map("user_github_repos")
+}
+
+// Feature 2: LLM Capability Analysis
+model LlmCapabilityAnalysis {
+  id           String @id @default(cuid())
+  repo_scan_id String @unique
+  user_id      String
+
+  // Core analysis results
+  is_ai_system          Boolean
+  capabilities          Json // ["Computer Vision", "NLP", "Recommender"]
+  libraries             Json // ["torch", "tensorflow", "scikit-learn"]
+  ai_frameworks         Json // ["PyTorch", "TensorFlow", "Hugging Face"]
+  programming_languages Json // ["Python", "JavaScript"]
+  detected_model_types  Json // ["Neural Network", "Transformer", "Decision Tree"]
+
+  // Code structure indicators
+  has_ml_pipeline         Boolean @default(false)
+  has_training_code       Boolean @default(false)
+  has_inference_code      Boolean @default(false)
+  has_data_processing     Boolean @default(false)
+  has_model_serialization Boolean @default(false)
+
+  // Risk indicators (pre-classified for Feature 3)
+  estimated_risk_indicators Json
+
+  // LLM metadata
+  llm_model_used       String
+  analysis_duration_ms Int
+  confidence_score     Float // 0-1
+  analysis_notes       String?
+  manual_review_needed Boolean @default(false)
+
+  // Timestamps
+  analyzed_at DateTime @default(now())
+  expires_at  DateTime @default(dbgenerated("(now() + interval '30 days')"))
+
+  // Relationships
+  repo_scan       RepoScan        @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  risk_assessment RiskAssessment? // Link to Feature 3
+
+  @@index([repo_scan_id])
+  @@index([user_id])
+  @@index([analyzed_at])
+  @@map("llm_capability_analyses")
+}
+
+// Feature 3: Risk Assessment (Annex III Mapping)
+model RiskAssessment {
+  id              String @id @default(cuid())
+  repo_scan_id    String @unique
+  llm_analysis_id String @unique
+  user_id         String
+
+  // Risk Classification
+  risk_classification String // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
+  risk_score          Int    // 0-100
+  risk_narrative      String?
+
+  // Annex III Matching
+  matched_annex_iii_articles Json // Array of matched articles
+  unmatched_risk_indicators  Json // Array of unmatched indicators
+
+  // Preliminary Assessment Flags
+  is_unacceptable Boolean @default(false)
+  is_high_risk    Boolean @default(false)
+  is_limited_risk Boolean @default(false)
+  is_minimal_risk Boolean @default(false)
+
+  // Key Findings
+  key_findings Json // Array of strings
+
+  // Metadata
+  assessed_at          DateTime @default(now())
+  assessment_version   Int      @default(1)
+  manual_review_needed Boolean  @default(false)
+  manual_review_reason String?
+
+  // Relationships
+  repo_scan             RepoScan              @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
+  llm_analysis          LlmCapabilityAnalysis @relation(fields: [llm_analysis_id], references: [id], onDelete: Cascade)
+  user                  User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  final_risk_assessment FinalRiskAssessment?  // Link to Feature 4
+
+  @@index([repo_scan_id])
+  @@index([user_id])
+  @@index([risk_classification])
+  @@index([assessed_at])
+  @@map("risk_assessments")
+}
+
+// Feature 4: Final Risk Assessment (Context Verified)
+model FinalRiskAssessment {
+  id                 String @id @default(cuid())
+  risk_assessment_id String @unique
+  repo_scan_id       String @unique
+  user_id            String
+
+  // Final Classification (after context verification)
+  final_risk_classification String // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
+  final_risk_score          Int    // 0-100
+  final_narrative           String?
+
+  // Context Verification
+  context_verified Boolean @default(false)
+  context_summary  Json    // { intended_use, target_users, deployment_region, has_human_oversight, etc. }
+  context_answers  Json    // Full user responses to verification questions
+
+  // Evidence Items (supports final classification)
+  evidence_items Json // Array of { category, description, supports_classification, regulatory_reference, confidence }
+
+  // Final Matched Articles (with verified applicability)
+  final_matched_articles Json // Array of { article, category, verified, requirements, user_confirmed_measures }
+
+  // Unresolved Issues
+  unresolved_risk_indicators Json    // Risk indicators user couldn't address
+  escalation_reason          String? // Why escalated to manual review
+
+  // Compliance Readiness
+  compliance_readiness Json // { overall_readiness, requirements_met, requirements_pending, developer_action_items }
+
+  // Approval Status
+  approved_for_report   Boolean @default(false)
+  requires_manual_review Boolean @default(false)
+  manual_review_notes   String?
+  reviewer_id           String?
+
+  // Metadata
+  verified_at          DateTime @default(now())
+  verification_version Int      @default(1)
+
+  // Relationships
+  risk_assessment RiskAssessment @relation(fields: [risk_assessment_id], references: [id], onDelete: Cascade)
+  repo_scan       RepoScan       @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([risk_assessment_id])
+  @@index([repo_scan_id])
+  @@index([user_id])
+  @@index([final_risk_classification])
+  @@index([verified_at])
+  @@index([approved_for_report])
+  @@map("final_risk_assessments")
+
+  // Feature 5 relationship
+  compliance_report ComplianceReport?
+}
+
+// Feature 5: Compliance Report
+model ComplianceReport {
+  id                        String   @id @default(cuid())
+  final_risk_assessment_id  String   @unique
+  user_id                   String
+
+  // File metadata (stored in Supabase Storage)
+  file_name                 String
+  file_path                 String   // Supabase storage path: userId/reportId.pdf
+  file_url                  String?  // Signed URL (expires)
+  file_size                 Int
+
+  // Report data
+  risk_classification       String
+  risk_score                Int
+
+  // Digital signing
+  digital_signature         String?
+  signed_at                 DateTime?
+
+  // Versioning
+  version                   Int      @default(1)
+
+  // Timestamps
+  generated_at              DateTime @default(now())
+  expires_at                DateTime? // Signed URL expiration
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+
+  // Relationships
+  final_risk_assessment FinalRiskAssessment @relation(fields: [final_risk_assessment_id], references: [id], onDelete: Cascade)
+  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, file_name])
+  @@index([user_id])
+  @@index([final_risk_assessment_id])
+  @@index([generated_at])
+  @@map("compliance_reports")
+}

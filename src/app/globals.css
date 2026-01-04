@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer base {
+    :root {
+        --background: #030303;
+        --foreground: #ffffff;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background: var(--background);
+        color: var(--foreground);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ensure all text inherits from body's font-family set by Next.js */
+    body,
+    p,
+    span,
+    div,
+    a,
+    button,
+    input,
+    textarea,
+    select,
+    label {
+        font-family: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-orbitron), ui-sans-serif, system-ui, sans-serif;
+    }
+
+    code,
+    pre {
+        font-family: var(--font-jetbrains), ui-monospace, monospace;
+    }
+}
+
+@layer utilities {
+    .font-heading {
+        font-family: var(--font-orbitron), ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .font-mono {
+        font-family: var(--font-jetbrains), ui-monospace, monospace;
+    }
+
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-panel-light {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Subtle glow for interactive elements */
+    .glow-blue {
+        box-shadow: 0 0 20px rgba(0, 102, 255, 0.15);
+    }
+
+    .glow-blue-hover:hover {
+        box-shadow: 0 0 30px rgba(0, 102, 255, 0.25);
+    }
+
+    /* Star background overlay for dashboard readability */
+    .star-overlay::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 3, 3, 0.4);
+        pointer-events: none;
+        z-index: -1;
+    }
+}

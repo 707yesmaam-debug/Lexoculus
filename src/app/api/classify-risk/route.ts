@@ -1,0 +1,188 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase-server';
+import prisma from '@/lib/prisma';
+import { classifyRisk } from '@/lib/risk-classifier';
+
+// Rate limiting (10 classifications per hour)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
+
+function checkRateLimit(userId: string): { allowed: boolean; remaining: number; resetAt: number } {
+    const now = Date.now();
+    const userLimit = rateLimitMap.get(userId);
+
+    if (!userLimit || now > userLimit.resetAt) {
+        const resetAt = now + RATE_LIMIT_WINDOW;
+        rateLimitMap.set(userId, { count: 1, resetAt });
+        return { allowed: true, remaining: RATE_LIMIT - 1, resetAt };
+    }
+
+    if (userLimit.count >= RATE_LIMIT) {
+        return { allowed: false, remaining: 0, resetAt: userLimit.resetAt };
+    }
+
+    userLimit.count++;
+    return { allowed: true, remaining: RATE_LIMIT - userLimit.count, resetAt: userLimit.resetAt };
+}
+
+/**
+ * POST /api/classify-risk
+ * 
+ * Trigger risk classification on an analyzed repository
+ */
+export async function POST(request: NextRequest) {
+    try {
+        // 1. Authenticate user
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // 2. Parse request body
+        const body = await request.json();
+        const { repo_scan_id } = body;
+
+        if (!repo_scan_id) {
+            return NextResponse.json(
+                { error: 'repo_scan_id is required' },
+                { status: 400 }
+            );
+        }
+
+        // 3. Check rate limit
+        const rateLimit = checkRateLimit(user.id);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                {
+                    error: 'Rate limit exceeded. Maximum 10 classifications per hour.',
+                    resetAt: new Date(rateLimit.resetAt).toISOString(),
+                },
+                { status: 429 }
+            );
+        }
+
+        // 4. Check for existing assessment
+        const existingAssessment = await prisma.riskAssessment.findUnique({
+            where: { repo_scan_id },
+        });
+
+        if (existingAssessment) {
+            console.log(`📦 [CACHE] Returning cached risk assessment for ${repo_scan_id}`);
+            return NextResponse.json({
+                cached: true,
+                message: 'Risk assessment already exists',
+                assessment_id: existingAssessment.id,
+                repo_scan_id: existingAssessment.repo_scan_id,
+                risk_classification: existingAssessment.risk_classification,
+                risk_score: existingAssessment.risk_score,
+                risk_narrative: existingAssessment.risk_narrative,
+                matched_annex_iii_articles: existingAssessment.matched_annex_iii_articles,
+                unmatched_risk_indicators: existingAssessment.unmatched_risk_indicators,
+                key_findings: existingAssessment.key_findings,
+                preliminary_assessment: {
+                    is_unacceptable: existingAssessment.is_unacceptable,
+                    is_high_risk: existingAssessment.is_high_risk,
+                    is_limited_risk: existingAssessment.is_limited_risk,
+                    is_minimal_risk: existingAssessment.is_minimal_risk,
+                },
+                manual_review_needed: existingAssessment.manual_review_needed,
+                manual_review_reason: existingAssessment.manual_review_reason,
+                assessed_at: existingAssessment.assessed_at,
+            });
+        }
+
+        // 5. Fetch LLM capability analysis
+        const llmAnalysis = await prisma.llmCapabilityAnalysis.findUnique({
+            where: { repo_scan_id },
+            include: {
+                repo_scan: {
+                    select: {
+                        repo_name: true,
+                        repo_owner: true,
+                    },
+                },
+            },
+        });
+
+        if (!llmAnalysis) {
+            return NextResponse.json(
+                { error: 'LLM capability analysis not found. Please run Feature 2 first.' },
+                { status: 404 }
+            );
+        }
+
+        // 6. Verify ownership
+        if (llmAnalysis.user_id !== user.id) {
+            return NextResponse.json(
+                { error: 'Unauthorized - you do not own this analysis' },
+                { status: 401 }
+            );
+        }
+
+        console.log(`🎯 [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
+
+        // 7. Run risk classification
+        const result = classifyRisk(llmAnalysis);
+
+        console.log(`✅ [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
+        console.log(`   Articles matched: ${result.matched_annex_iii_articles.length}`);
+        console.log(`   Key findings: ${result.key_findings.length}`);
+
+        // 8. Store assessment in database
+        const assessment = await prisma.riskAssessment.create({
+            data: {
+                repo_scan_id,
+                llm_analysis_id: llmAnalysis.id,
+                user_id: user.id,
+                risk_classification: result.risk_classification,
+                risk_score: result.risk_score,
+                risk_narrative: result.risk_narrative,
+                matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
+                unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
+                key_findings: result.key_findings as unknown as object[],
+                is_unacceptable: result.preliminary_assessment.is_unacceptable,
+                is_high_risk: result.preliminary_assessment.is_high_risk,
+                is_limited_risk: result.preliminary_assessment.is_limited_risk,
+                is_minimal_risk: result.preliminary_assessment.is_minimal_risk,
+                manual_review_needed: result.manual_review_needed,
+                manual_review_reason: result.manual_review_reason,
+            },
+        });
+
+        // 9. Return assessment
+        return NextResponse.json({
+            cached: false,
+            assessment_id: assessment.id,
+            repo_scan_id: assessment.repo_scan_id,
+            risk_classification: assessment.risk_classification,
+            risk_score: assessment.risk_score,
+            risk_narrative: assessment.risk_narrative,
+            matched_annex_iii_articles: assessment.matched_annex_iii_articles,
+            unmatched_risk_indicators: assessment.unmatched_risk_indicators,
+            key_findings: assessment.key_findings,
+            preliminary_assessment: {
+                is_unacceptable: assessment.is_unacceptable,
+                is_high_risk: assessment.is_high_risk,
+                is_limited_risk: assessment.is_limited_risk,
+                is_minimal_risk: assessment.is_minimal_risk,
+            },
+            manual_review_needed: assessment.manual_review_needed,
+            manual_review_reason: assessment.manual_review_reason,
+            assessed_at: assessment.assessed_at,
+            rate_limit_remaining: rateLimit.remaining,
+        });
+
+    } catch (error) {
+        console.error('Risk classification error:', error);
+        return NextResponse.json(
+            { error: 'Failed to classify risk' },
+            { status: 500 }
+        );
+    }
+}
