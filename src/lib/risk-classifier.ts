@@ -621,7 +621,7 @@ export function classifyRiskWithConstraintValidation(
         finalClassification,
         baseResult.matched_annex_iii_articles,
         legalCitations,
-        analysis.confidence_score,
+        analysis.confidence_score ?? 0.5, // Default to 0.5 if undefined
         wasOverridden
     );
 
