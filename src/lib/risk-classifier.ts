@@ -540,114 +540,137 @@ export function classifyRiskWithConstraintValidation(
     // Step 1: Run standard LLM-based classification
     const baseResult = classifyRisk(analysis);
 
-    // Step 2: Get Constraint Engine
-    const engine = getConstraintEngine();
+    // Try constraint validation, but fall back to base result if it fails
+    try {
+        // Step 2: Get Constraint Engine
+        const engine = getConstraintEngine();
 
-    // Step 3: Extract indicators for constraint matching
-    const libraries = analysis.ai_frameworks as string[] || [];
-    const patterns: string[] = [];
+        // Step 3: Extract indicators for constraint matching
+        const libraries = analysis.ai_frameworks as string[] || [];
+        const patterns: string[] = [];
 
-    // Extract patterns from capabilities and risk indicators
-    const capabilities = analysis.capabilities as string[] || [];
-    const riskIndicators = analysis.estimated_risk_indicators as Record<string, boolean> || {};
+        // Extract patterns from capabilities and risk indicators
+        const capabilities = analysis.capabilities as string[] || [];
+        const riskIndicators = analysis.estimated_risk_indicators as Record<string, boolean> || {};
 
-    patterns.push(...capabilities);
+        patterns.push(...capabilities);
 
-    // Convert risk indicators to patterns
-    if (riskIndicators.uses_biometric_processing) patterns.push('biometric', 'biometric_processing');
-    if (riskIndicators.uses_emotion_recognition) patterns.push('emotion_recognition', 'emotion_detection');
-    if (riskIndicators.uses_computer_vision) patterns.push('computer_vision', 'face_recognition');
-    if (riskIndicators.uses_critical_infrastructure) patterns.push('critical_infrastructure', 'scada');
-    if (riskIndicators.uses_generative_ai) patterns.push('generative_ai', 'llm', 'chatbot');
-    if (riskIndicators.targets_vulnerable_persons) patterns.push('vulnerable_group', 'exploitation');
-    if (riskIndicators.high_impact_decision_making) patterns.push('high_impact_decision', 'scoring');
+        // Convert risk indicators to patterns
+        if (riskIndicators.uses_biometric_processing) patterns.push('biometric', 'biometric_processing');
+        if (riskIndicators.uses_emotion_recognition) patterns.push('emotion_recognition', 'emotion_detection');
+        if (riskIndicators.uses_computer_vision) patterns.push('computer_vision', 'face_recognition');
+        if (riskIndicators.uses_critical_infrastructure) patterns.push('critical_infrastructure', 'scada');
+        if (riskIndicators.uses_generative_ai) patterns.push('generative_ai', 'llm', 'chatbot');
+        if (riskIndicators.targets_vulnerable_persons) patterns.push('vulnerable_group', 'exploitation');
+        if (riskIndicators.high_impact_decision_making) patterns.push('high_impact_decision', 'scoring');
 
-    // Step 4: Run constraint matching
-    const constraintResult = engine.matchConstraints(libraries, patterns);
+        // Step 4: Run constraint matching
+        const constraintResult = engine.matchConstraints(libraries, patterns);
 
-    // Step 5: Validate LLM classification against constraints
-    const validation = engine.validateLLMClassification(
-        baseResult.risk_classification,
-        baseResult.risk_score,
-        libraries,
-        patterns
-    );
-
-    // Step 6: Build legal citations
-    const legalCitations = constraintResult.matches.map(match => ({
-        constraint_id: match.constraint.constraint_id,
-        regulation_source: match.constraint.regulation_source,
-        official_text: match.constraint.official_text
-    }));
-
-    // Step 7: Determine final classification (constraint engine is source of truth)
-    const finalClassification = validation.validated_risk;
-    const wasOverridden = validation.was_overridden;
-
-    // Step 8: Update key findings if escalated
-    const enhancedFindings = [...baseResult.key_findings];
-
-    if (wasOverridden) {
-        enhancedFindings.unshift(
-            `⚖️ Constraint Engine Override: ${validation.override_reason}`
+        // Step 5: Validate LLM classification against constraints
+        const validation = engine.validateLLMClassification(
+            baseResult.risk_classification,
+            baseResult.risk_score,
+            libraries,
+            patterns
         );
-    }
 
-    // Add constraint-matched findings
-    for (const match of constraintResult.matches) {
-        if (match.constraint.risk_level === 'UNACCEPTABLE') {
+        // Step 6: Build legal citations
+        const legalCitations = constraintResult.matches.map(match => ({
+            constraint_id: match.constraint.constraint_id,
+            regulation_source: match.constraint.regulation_source,
+            official_text: match.constraint.official_text
+        }));
+
+        // Step 7: Determine final classification (constraint engine is source of truth)
+        const finalClassification = validation.validated_risk;
+        const wasOverridden = validation.was_overridden;
+
+        // Step 8: Update key findings if escalated
+        const enhancedFindings = [...baseResult.key_findings];
+
+        if (wasOverridden) {
             enhancedFindings.unshift(
-                `🚫 BANNED (${match.constraint.regulation_source}): ${match.constraint.category}`
+                `⚖️ Constraint Engine Override: ${validation.override_reason}`
             );
         }
-    }
 
-    // Step 9: Update manual review if constraints require context
-    const enhancedManualReview = baseResult.manual_review_needed ||
-        constraintResult.requires_manual_review;
-
-    let enhancedManualReviewReason = baseResult.manual_review_reason;
-    if (constraintResult.requires_manual_review && !enhancedManualReviewReason) {
-        enhancedManualReviewReason = 'Constraint Engine requires context verification - see questions below';
-    }
-
-    // Step 10: Recalculate risk score based on constraint matches
-    const enhancedRiskScore = constraintResult.risk_score > baseResult.risk_score
-        ? constraintResult.risk_score
-        : baseResult.risk_score;
-
-    // Step 11: Update narrative with legal citations
-    const enhancedNarrative = generateEnhancedNarrative(
-        finalClassification,
-        baseResult.matched_annex_iii_articles,
-        legalCitations,
-        analysis.confidence_score ?? 0.5, // Default to 0.5 if undefined
-        wasOverridden
-    );
-
-    return {
-        ...baseResult,
-        risk_classification: finalClassification,
-        risk_score: enhancedRiskScore,
-        key_findings: enhancedFindings,
-        manual_review_needed: enhancedManualReview,
-        manual_review_reason: enhancedManualReviewReason,
-        risk_narrative: enhancedNarrative,
-        preliminary_assessment: {
-            is_unacceptable: finalClassification === 'UNACCEPTABLE',
-            is_high_risk: finalClassification === 'HIGH_RISK',
-            is_limited_risk: finalClassification === 'LIMITED_RISK',
-            is_minimal_risk: finalClassification === 'MINIMAL_RISK',
-        },
-        constraint_validation: {
-            was_overridden: wasOverridden,
-            override_reason: validation.override_reason,
-            matched_constraint_ids: validation.matched_constraints,
-            legal_citations: legalCitations,
-            contextual_questions: constraintResult.contextual_questions,
-            audit_trail: validation.audit_trail
+        // Add constraint-matched findings
+        for (const match of constraintResult.matches) {
+            if (match.constraint.risk_level === 'UNACCEPTABLE') {
+                enhancedFindings.unshift(
+                    `🚫 BANNED (${match.constraint.regulation_source}): ${match.constraint.category}`
+                );
+            }
         }
-    };
+
+        // Step 9: Update manual review if constraints require context
+        const enhancedManualReview = baseResult.manual_review_needed ||
+            constraintResult.requires_manual_review;
+
+        let enhancedManualReviewReason = baseResult.manual_review_reason;
+        if (constraintResult.requires_manual_review && !enhancedManualReviewReason) {
+            enhancedManualReviewReason = 'Constraint Engine requires context verification - see questions below';
+        }
+
+        // Step 10: Recalculate risk score based on constraint matches
+        const enhancedRiskScore = constraintResult.risk_score > baseResult.risk_score
+            ? constraintResult.risk_score
+            : baseResult.risk_score;
+
+        // Step 11: Update narrative with legal citations
+        const enhancedNarrative = generateEnhancedNarrative(
+            finalClassification,
+            baseResult.matched_annex_iii_articles,
+            legalCitations,
+            analysis.confidence_score ?? 0.5, // Default to 0.5 if undefined
+            wasOverridden
+        );
+
+        return {
+            ...baseResult,
+            risk_classification: finalClassification,
+            risk_score: enhancedRiskScore,
+            key_findings: enhancedFindings,
+            manual_review_needed: enhancedManualReview,
+            manual_review_reason: enhancedManualReviewReason,
+            risk_narrative: enhancedNarrative,
+            preliminary_assessment: {
+                is_unacceptable: finalClassification === 'UNACCEPTABLE',
+                is_high_risk: finalClassification === 'HIGH_RISK',
+                is_limited_risk: finalClassification === 'LIMITED_RISK',
+                is_minimal_risk: finalClassification === 'MINIMAL_RISK',
+            },
+            constraint_validation: {
+                was_overridden: wasOverridden,
+                override_reason: validation.override_reason,
+                matched_constraint_ids: validation.matched_constraints,
+                legal_citations: legalCitations,
+                contextual_questions: constraintResult.contextual_questions,
+                audit_trail: validation.audit_trail
+            }
+        };
+    } catch (error) {
+        // If constraint engine fails, log and return base result without constraint validation
+        console.error('Constraint Engine error (falling back to base classification):', error);
+
+        // Return base result with empty constraint validation
+        return {
+            ...baseResult,
+            constraint_validation: {
+                was_overridden: false,
+                override_reason: undefined,
+                matched_constraint_ids: [],
+                legal_citations: [],
+                contextual_questions: [],
+                audit_trail: {
+                    detected_libraries: [],
+                    detected_patterns: [],
+                    constraint_matches: []
+                }
+            }
+        };
+    }
 }
 
 /**
