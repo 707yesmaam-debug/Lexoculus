@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
-import { classifyRisk } from '@/lib/risk-classifier';
+import { classifyRiskWithConstraintValidation } from '@/lib/risk-classifier';
 
 // Rate limiting (10 classifications per hour)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -127,12 +127,15 @@ export async function POST(request: NextRequest) {
 
         console.log(`🎯 [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
 
-        // 7. Run risk classification
-        const result = classifyRisk(llmAnalysis);
+        // 7. Run risk classification with Constraint Engine validation
+        const result = classifyRiskWithConstraintValidation(llmAnalysis);
 
         console.log(`✅ [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
         console.log(`   Articles matched: ${result.matched_annex_iii_articles.length}`);
         console.log(`   Key findings: ${result.key_findings.length}`);
+        if (result.constraint_validation?.was_overridden) {
+            console.log(`   ⚖️ Constraint Override: ${result.constraint_validation.override_reason}`);
+        }
 
         // 8. Store assessment in database
         const assessment = await prisma.riskAssessment.create({
@@ -155,7 +158,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        // 9. Return assessment
+        // 9. Return assessment with constraint validation data
         return NextResponse.json({
             cached: false,
             assessment_id: assessment.id,
@@ -176,6 +179,8 @@ export async function POST(request: NextRequest) {
             manual_review_reason: assessment.manual_review_reason,
             assessed_at: assessment.assessed_at,
             rate_limit_remaining: rateLimit.remaining,
+            // Constraint Engine validation data
+            constraint_validation: result.constraint_validation,
         });
 
     } catch (error) {

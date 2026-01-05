@@ -1,0 +1,91 @@
+# ComplianceAI GitHub Action
+# 
+# EU AI Act Compliance Guardian - Scans every PR for regulatory risks
+# https://complianceai.eu
+#
+# INSTALLATION:
+# 1. Copy this file to .github/workflows/complianceai.yml in your repository
+# 2. Add your COMPLIANCEAI_WEBHOOK_SECRET as a repository secret
+# 3. Enable PR scanning in your ComplianceAI dashboard
+#
+# The action will:
+# - Scan PR diffs for AI-related code patterns
+# - Comment on PRs with compliance findings
+# - Block merges for UNACCEPTABLE risk (EU AI Act Article 5 violations)
+
+name: ComplianceAI - EU AI Act Compliance Scan
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - master
+      - develop
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  compliance-scan:
+    name: EU AI Act Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff analysis
+      
+      - name: Get PR diff
+        id: diff
+        run: |
+          git diff origin/${{ github.base_ref }}...origin/${{ github.head_ref }} > pr_diff.txt
+          echo "diff_lines=$(wc -l < pr_diff.txt)" >> $GITHUB_OUTPUT
+      
+      - name: Scan for EU AI Act compliance
+        id: scan
+        env:
+          COMPLIANCEAI_API_URL: ${{ vars.COMPLIANCEAI_API_URL || 'https://complianceai.eu' }}
+        run: |
+          # Send PR diff to ComplianceAI webhook for scanning
+          RESPONSE=$(curl -s -X POST \
+            "${COMPLIANCEAI_API_URL}/api/webhooks/github" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: pull_request" \
+            -H "X-Hub-Signature-256: $(echo -n '${{ toJson(github.event) }}' | openssl dgst -sha256 -hmac '${{ secrets.COMPLIANCEAI_WEBHOOK_SECRET }}' | cut -d' ' -f2)" \
+            -d '${{ toJson(github.event) }}')
+          
+          echo "response=$RESPONSE" >> $GITHUB_OUTPUT
+          
+          # Parse risk level from response
+          RISK_LEVEL=$(echo $RESPONSE | jq -r '.risk_level // "MINIMAL_RISK"')
+          BLOCKED=$(echo $RESPONSE | jq -r '.blocked // false')
+          
+          echo "risk_level=$RISK_LEVEL" >> $GITHUB_OUTPUT
+          echo "blocked=$BLOCKED" >> $GITHUB_OUTPUT
+          
+          # Output summary
+          echo "## 🔍 ComplianceAI Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $RISK_LEVEL" >> $GITHUB_STEP_SUMMARY
+          echo "**Blocked:** $BLOCKED" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Fail if UNACCEPTABLE risk
+        if: steps.scan.outputs.blocked == 'true'
+        run: |
+          echo "❌ PR blocked due to UNACCEPTABLE risk under EU AI Act Article 5"
+          echo "Please review the ComplianceAI comment on this PR for details."
+          exit 1
+      
+      - name: Warn on HIGH risk
+        if: steps.scan.outputs.risk_level == 'HIGH_RISK'
+        run: |
+          echo "⚠️ HIGH risk detected - requires EU conformity assessment before deployment"
+          echo "Review the ComplianceAI comment on this PR for compliance requirements."
+      
+      - name: Pass on LOW/MINIMAL risk
+        if: steps.scan.outputs.risk_level == 'MINIMAL_RISK' || steps.scan.outputs.risk_level == 'LIMITED_RISK'
+        run: |
+          echo "✅ No significant EU AI Act compliance issues detected"

@@ -33,6 +33,13 @@ model User {
   // Feature 5 relationships
   compliance_reports ComplianceReport[]
 
+  // GitHub Action MVP relationships
+  github_action_installs GitHubActionInstall[]
+  pr_scans               PRScan[]
+
+  // Subscription & Billing
+  subscription Subscription?
+
   @@index([email])
   @@map("users")
 }
@@ -291,3 +298,127 @@ model ComplianceReport {
   @@index([generated_at])
   @@map("compliance_reports")
 }
+
+// =============================================================================
+// GitHub Action MVP - Recurring Revenue Infrastructure
+// =============================================================================
+
+// Track GitHub Action installations per repo
+model GitHubActionInstall {
+  id             String   @id @default(cuid())
+  user_id        String
+  repo_full_name String   // e.g., "owner/repo"
+  repo_id        Int?     // GitHub repo ID
+  status         String   @default("active") // active, paused, disabled
+  
+  // Configuration
+  block_on_high_risk    Boolean @default(false) // Block PRs with HIGH_RISK
+  block_on_unacceptable Boolean @default(true)  // Block PRs with UNACCEPTABLE
+  notify_slack          Boolean @default(false)
+  slack_webhook_url     String?
+  
+  // Metadata
+  installed_at  DateTime @default(now())
+  last_scan_at  DateTime?
+  total_scans   Int      @default(0)
+  
+  // Relationships
+  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  pr_scans PRScan[]
+
+  @@unique([user_id, repo_full_name])
+  @@index([user_id])
+  @@index([repo_full_name])
+  @@index([status])
+  @@map("github_action_installs")
+}
+
+// Track individual PR scans
+model PRScan {
+  id             String   @id @default(cuid())
+  user_id        String
+  repo_full_name String
+  
+  // PR Details
+  pr_number      Int
+  pr_title       String
+  pr_url         String
+  head_sha       String
+  
+  // Scan Results
+  risk_level          String   // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
+  matched_patterns    String[] @default([])
+  matched_constraints String[] @default([])
+  blocked             Boolean  @default(false)
+  comment_posted      Boolean  @default(false)
+  
+  // Metadata
+  scanned_at     DateTime @default(now())
+  scan_duration_ms Int?
+  
+  // Relationships
+  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  github_action_install GitHubActionInstall? @relation(fields: [repo_full_name, user_id], references: [repo_full_name, user_id])
+
+  @@index([user_id])
+  @@index([repo_full_name])
+  @@index([pr_number])
+  @@index([scanned_at])
+  @@index([risk_level])
+  @@map("pr_scans")
+}
+
+// =============================================================================
+// Subscription & Billing (Stripe-Ready)
+// =============================================================================
+
+model Subscription {
+  id        String   @id @default(cuid())
+  user_id   String   @unique  // One subscription per user
+  
+  // Subscription Tier
+  tier      String   @default("free") // free, pro, enterprise
+  status    String   @default("active") // active, canceled, past_due, trialing
+  
+  // Usage Limits (per month)
+  repos_limit        Int @default(1)  // Free: 1, Pro: 10, Enterprise: unlimited
+  scans_limit        Int @default(5)  // Free: 5/month, Pro: 100/month
+  pr_scans_limit     Int @default(0)  // Free: 0, Pro: unlimited
+  reports_limit      Int @default(1)  // Free: 1/month, Pro: 20/month
+  
+  // Current Usage (reset monthly)
+  repos_used         Int @default(0)
+  scans_used         Int @default(0)
+  pr_scans_used      Int @default(0)
+  reports_used       Int @default(0)
+  usage_reset_at     DateTime @default(now())
+  
+  // Stripe Integration (ready for later)
+  stripe_customer_id     String?  @unique
+  stripe_subscription_id String?  @unique
+  stripe_price_id        String?
+  
+  // Billing Cycle
+  current_period_start  DateTime?
+  current_period_end    DateTime?
+  cancel_at_period_end  Boolean @default(false)
+  
+  // Manual Override (for early adopters, demos)
+  is_manual_grant     Boolean @default(false)
+  manual_grant_reason String?
+  granted_by          String?  // Admin user ID
+  
+  // Metadata
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relationships
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([tier])
+  @@index([status])
+  @@index([stripe_customer_id])
+  @@map("subscriptions")
+}
+
+

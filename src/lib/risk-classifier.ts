@@ -3,10 +3,14 @@
  * 
  * Maps AI capabilities from Feature 2 to EU AI Act Annex III articles
  * and determines risk classification.
+ * 
+ * Enhanced with Constraint Engine validation using official EU AI Act text
+ * Source: Regulation (EU) 2024/1689
  */
 
 import { LlmCapabilityAnalysis } from '@prisma/client';
-import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS } from './annex-iii-articles';
+import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAIConstraint } from './annex-iii-articles';
+import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -48,6 +52,30 @@ export interface RiskAssessmentResult {
     manual_review_needed: boolean;
     manual_review_reason?: string;
     risk_narrative: string;
+
+    // Constraint Engine Validation (NEW)
+    constraint_validation?: {
+        /** Was the LLM risk overridden by constraint engine? */
+        was_overridden: boolean;
+        /** Reason for override if applicable */
+        override_reason?: string;
+        /** Matched constraint IDs from EU AI Act */
+        matched_constraint_ids: string[];
+        /** Official legal text citations */
+        legal_citations: {
+            constraint_id: string;
+            regulation_source: string;
+            official_text: string;
+        }[];
+        /** Contextual questions for user verification */
+        contextual_questions: string[];
+        /** Audit trail for compliance */
+        audit_trail: {
+            detected_libraries: string[];
+            detected_patterns: string[];
+            constraint_matches: string[];
+        };
+    };
 }
 
 /**
@@ -492,3 +520,181 @@ function generateRiskNarrative(
 
     return narratives.join(' ');
 }
+
+// =============================================================================
+// CONSTRAINT ENGINE INTEGRATION (NEW)
+// =============================================================================
+
+/**
+ * Enhanced risk classification with Constraint Engine validation
+ * 
+ * This function:
+ * 1. Runs the standard LLM-based classification
+ * 2. Validates against the Constraint Engine (EU AI Act knowledge base)
+ * 3. Overrides LLM if constraint engine finds violations LLM missed
+ * 4. Adds legal citations and audit trail
+ */
+export function classifyRiskWithConstraintValidation(
+    analysis: LlmCapabilityAnalysis
+): RiskAssessmentResult {
+    // Step 1: Run standard LLM-based classification
+    const baseResult = classifyRisk(analysis);
+
+    // Step 2: Get Constraint Engine
+    const engine = getConstraintEngine();
+
+    // Step 3: Extract indicators for constraint matching
+    const libraries = analysis.ai_frameworks as string[] || [];
+    const patterns: string[] = [];
+
+    // Extract patterns from capabilities and risk indicators
+    const capabilities = analysis.capabilities as string[] || [];
+    const riskIndicators = analysis.estimated_risk_indicators as Record<string, boolean> || {};
+
+    patterns.push(...capabilities);
+
+    // Convert risk indicators to patterns
+    if (riskIndicators.uses_biometric_processing) patterns.push('biometric', 'biometric_processing');
+    if (riskIndicators.uses_emotion_recognition) patterns.push('emotion_recognition', 'emotion_detection');
+    if (riskIndicators.uses_computer_vision) patterns.push('computer_vision', 'face_recognition');
+    if (riskIndicators.uses_critical_infrastructure) patterns.push('critical_infrastructure', 'scada');
+    if (riskIndicators.uses_generative_ai) patterns.push('generative_ai', 'llm', 'chatbot');
+    if (riskIndicators.targets_vulnerable_persons) patterns.push('vulnerable_group', 'exploitation');
+    if (riskIndicators.high_impact_decision_making) patterns.push('high_impact_decision', 'scoring');
+
+    // Step 4: Run constraint matching
+    const constraintResult = engine.matchConstraints(libraries, patterns);
+
+    // Step 5: Validate LLM classification against constraints
+    const validation = engine.validateLLMClassification(
+        baseResult.risk_classification,
+        baseResult.risk_score,
+        libraries,
+        patterns
+    );
+
+    // Step 6: Build legal citations
+    const legalCitations = constraintResult.matches.map(match => ({
+        constraint_id: match.constraint.constraint_id,
+        regulation_source: match.constraint.regulation_source,
+        official_text: match.constraint.official_text
+    }));
+
+    // Step 7: Determine final classification (constraint engine is source of truth)
+    const finalClassification = validation.validated_risk;
+    const wasOverridden = validation.was_overridden;
+
+    // Step 8: Update key findings if escalated
+    const enhancedFindings = [...baseResult.key_findings];
+
+    if (wasOverridden) {
+        enhancedFindings.unshift(
+            `⚖️ Constraint Engine Override: ${validation.override_reason}`
+        );
+    }
+
+    // Add constraint-matched findings
+    for (const match of constraintResult.matches) {
+        if (match.constraint.risk_level === 'UNACCEPTABLE') {
+            enhancedFindings.unshift(
+                `🚫 BANNED (${match.constraint.regulation_source}): ${match.constraint.category}`
+            );
+        }
+    }
+
+    // Step 9: Update manual review if constraints require context
+    const enhancedManualReview = baseResult.manual_review_needed ||
+        constraintResult.requires_manual_review;
+
+    let enhancedManualReviewReason = baseResult.manual_review_reason;
+    if (constraintResult.requires_manual_review && !enhancedManualReviewReason) {
+        enhancedManualReviewReason = 'Constraint Engine requires context verification - see questions below';
+    }
+
+    // Step 10: Recalculate risk score based on constraint matches
+    const enhancedRiskScore = constraintResult.risk_score > baseResult.risk_score
+        ? constraintResult.risk_score
+        : baseResult.risk_score;
+
+    // Step 11: Update narrative with legal citations
+    const enhancedNarrative = generateEnhancedNarrative(
+        finalClassification,
+        baseResult.matched_annex_iii_articles,
+        legalCitations,
+        analysis.confidence_score,
+        wasOverridden
+    );
+
+    return {
+        ...baseResult,
+        risk_classification: finalClassification,
+        risk_score: enhancedRiskScore,
+        key_findings: enhancedFindings,
+        manual_review_needed: enhancedManualReview,
+        manual_review_reason: enhancedManualReviewReason,
+        risk_narrative: enhancedNarrative,
+        preliminary_assessment: {
+            is_unacceptable: finalClassification === 'UNACCEPTABLE',
+            is_high_risk: finalClassification === 'HIGH_RISK',
+            is_limited_risk: finalClassification === 'LIMITED_RISK',
+            is_minimal_risk: finalClassification === 'MINIMAL_RISK',
+        },
+        constraint_validation: {
+            was_overridden: wasOverridden,
+            override_reason: validation.override_reason,
+            matched_constraint_ids: validation.matched_constraints,
+            legal_citations: legalCitations,
+            contextual_questions: constraintResult.contextual_questions,
+            audit_trail: validation.audit_trail
+        }
+    };
+}
+
+/**
+ * Generate enhanced risk narrative with legal citations
+ */
+function generateEnhancedNarrative(
+    classification: RiskClassification,
+    matchedArticles: AnnexIIIMatch[],
+    legalCitations: { constraint_id: string; regulation_source: string; official_text: string }[],
+    confidenceScore: number,
+    wasOverridden: boolean
+): string {
+    const narratives: string[] = [];
+
+    if (wasOverridden) {
+        narratives.push('⚖️ This classification was validated by the Constraint Engine using official EU AI Act text.');
+    }
+
+    switch (classification) {
+        case 'UNACCEPTABLE':
+            narratives.push('This AI system has been classified as UNACCEPTABLE under EU AI Act Article 5.');
+            narratives.push('Systems in this category are PROHIBITED and cannot be placed on the market or used in the European Union.');
+            break;
+        case 'HIGH_RISK':
+            narratives.push('This AI system has been classified as HIGH RISK under EU AI Act Annex III.');
+            narratives.push('High-risk systems require conformity assessment, registration in EU database, human oversight, and continuous monitoring.');
+            break;
+        case 'LIMITED_RISK':
+            narratives.push('This AI system has been classified as LIMITED RISK under EU AI Act Article 50.');
+            narratives.push('Limited-risk systems require transparency measures: users must be informed they are interacting with AI.');
+            break;
+        case 'MINIMAL_RISK':
+            narratives.push('This AI system has been classified as MINIMAL RISK.');
+            narratives.push('Minimal-risk systems are generally exempt from specific requirements but should follow best practices.');
+            break;
+    }
+
+    // Add legal citations
+    if (legalCitations.length > 0) {
+        const sources = [...new Set(legalCitations.map(c => c.regulation_source))];
+        narratives.push(`Legal basis: ${sources.join(', ')} of Regulation (EU) 2024/1689.`);
+    }
+
+    if (confidenceScore < 0.7) {
+        narratives.push('Note: Analysis confidence is below 70% - manual verification recommended.');
+    }
+
+    return narratives.join(' ');
+}
+
