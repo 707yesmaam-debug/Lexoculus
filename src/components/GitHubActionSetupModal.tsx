@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, Copy, AlertTriangle, ExternalLink, Loader2 } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2 } from 'lucide-react';
 
 interface GitHubActionSetupModalProps {
     open: boolean;
@@ -126,24 +126,32 @@ jobs:
                             <h3 className="font-medium text-zinc-200 text-sm">Add Workflow File</h3>
                         </div>
 
-                        <div className="ml-7 p-3 bg-zinc-900 rounded-md border border-zinc-800 space-y-2">
-                            <p className="text-xs text-zinc-400">
-                                Create <span className="font-mono text-zinc-300">.github/workflows/complianceai.yml</span>:
-                            </p>
-
-                            <div className="relative group">
-                                <pre className="bg-black p-2 rounded border border-zinc-800 text-[10px] font-mono text-zinc-300 overflow-x-auto max-h-[100px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
-                                    {yamlContent}
-                                </pre>
+                        <div className="ml-7 bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden">
+                            <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-800 bg-zinc-900/50">
+                                <span className="text-[10px] text-zinc-400 font-mono">.github/workflows/complianceai.yml</span>
                                 <Button
-                                    className="absolute top-2 right-2 h-6 text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                    variant="ghost"
                                     size="sm"
-                                    onClick={() => copyToClipboard(yamlContent)}
+                                    className="h-5 text-[10px] text-zinc-400 hover:text-white px-2 hover:bg-zinc-800"
+                                    onClick={() => copyToClipboard(yamlContent, 'yaml')}
                                 >
-                                    <Copy className="w-3 h-3 mr-2" />
-                                    Copy YAML
+                                    {copiedField === 'yaml' ? (
+                                        <>
+                                            <Check className="w-3 h-3 mr-1.5 text-green-500" />
+                                            Copied
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-3 h-3 mr-1.5" />
+                                            Copy
+                                        </>
+                                    )}
                                 </Button>
                             </div>
+
+                            <pre className="bg-black p-3 text-[10px] font-mono text-zinc-300 overflow-x-auto max-h-[120px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900 block">
+                                <code>{yamlContent}</code>
+                            </pre>
                         </div>
                     </div>
                 </div>
