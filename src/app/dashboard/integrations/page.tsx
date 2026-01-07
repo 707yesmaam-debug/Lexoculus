@@ -197,8 +197,7 @@ export default function IntegrationsPage() {
                                                 className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8"
                                                 onClick={() => handleEnable(repo.name)}
                                             >
-                                                {isPro ? 'Enable' : <Lock className="w-3 h-3 mr-1.5" />}
-                                                {isPro ? 'Setup Guardian' : 'Locked'}
+                                                {isPro ? 'Setup Guardian' : <><Lock className="w-3 h-3 mr-1.5" /> Locked</>}
                                             </Button>
                                         )}
                                     </div>
