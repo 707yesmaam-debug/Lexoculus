@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 interface Repo {
     name: string;
+    full_name: string;
     repo_url: string;
     visibility: 'public' | 'private';
 }
@@ -195,7 +196,7 @@ export default function IntegrationsPage() {
                                                 size="sm"
                                                 disabled={!isPro}
                                                 className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8"
-                                                onClick={() => handleEnable(repo.name)}
+                                                onClick={() => handleEnable(repo.full_name)}
                                             >
                                                 {isPro ? 'Setup Guardian' : <><Lock className="w-3 h-3 mr-1.5" /> Locked</>}
                                             </Button>

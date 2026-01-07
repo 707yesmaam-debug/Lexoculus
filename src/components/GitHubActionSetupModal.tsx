@@ -130,11 +130,11 @@ jobs:
                             </p>
 
                             <div className="relative group">
-                                <pre className="bg-black p-4 rounded border border-zinc-800 text-xs font-mono text-zinc-300 overflow-x-auto max-h-[200px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+                                <pre className="bg-black p-3 rounded border border-zinc-800 text-[10px] font-mono text-zinc-300 overflow-x-auto max-h-[120px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
                                     {yamlContent}
                                 </pre>
                                 <Button
-                                    className="absolute top-2 right-2 h-7 text-xs bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="absolute top-2 right-2 h-6 text-[10px] bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
                                     size="sm"
                                     onClick={() => copyToClipboard(yamlContent)}
                                 >

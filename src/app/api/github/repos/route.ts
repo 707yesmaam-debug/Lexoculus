@@ -80,13 +80,14 @@ export async function GET() {
         // Return formatted response
         return NextResponse.json({
             repos: repos.map((repo) => ({
-                repo_url: repo.full_name,
                 name: repo.name,
+                full_name: repo.full_name,
+                repo_url: repo.html_url,
                 visibility: repo.private ? 'private' : 'public',
                 description: repo.description,
                 language: repo.language,
                 stars: repo.stargazers_count,
-                updated_at: repo.html_url,
+                updated_at: repo.updated_at,
             })),
             github_username: connection.github_username,
             remaining_requests: rateLimit.remaining,

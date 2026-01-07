@@ -22,6 +22,7 @@ interface GitHubRepo {
     watchers_count: number;
     license: { spdx_id: string } | null;
     default_branch: string;
+    updated_at: string;
 }
 
 interface GitHubTreeItem {
