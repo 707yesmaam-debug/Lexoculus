@@ -59,11 +59,13 @@ export default function DashboardLayout({
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-1 ml-4">
-                        <Link href="/dashboard/scanner" className="px-3 py-1.5 text-xs font-medium text-zinc-100 bg-white/10 border border-white/10 rounded-sm">Scanner</Link>
+                        <Link href="/dashboard/scanner" className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Scanner</Link>
                         <span className="text-zinc-700 text-xs px-2">/</span>
-                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed">Analysis</button>
+                        <Link href="/dashboard/integrations" className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Integrations</Link>
                         <span className="text-zinc-700 text-xs px-2">/</span>
-                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-500 cursor-not-allowed">Reports</button>
+                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-600 cursor-not-allowed">Analysis</button>
+                        <span className="text-zinc-700 text-xs px-2">/</span>
+                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-600 cursor-not-allowed">Reports</button>
                     </nav>
                 </div>
 

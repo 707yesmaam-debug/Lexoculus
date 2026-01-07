@@ -86,7 +86,7 @@ export default function LandingPage() {
                 <nav className="hidden md:flex gap-8 text-sm font-medium tracking-wide opacity-70">
                     <a href="#pipeline" className="hover:opacity-100 transition-opacity">Pipeline</a>
                     <a href="#security" className="hover:opacity-100 transition-opacity">Security</a>
-                    <a href="#pricing" className="hover:opacity-100 transition-opacity">Pricing</a>
+                    <Link href="/pricing" className="hover:opacity-100 transition-opacity">Pricing</Link>
                 </nav>
                 <div className="flex gap-4 items-center">
                     <Link href="/auth/login" className="text-sm font-medium hover:text-white/80 transition-colors">Log In</Link>
@@ -117,8 +117,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="font-heading text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 text-white"
                     >
-                        AI Compliance <br />
-                        <span className="text-zinc-500">Automated.</span>
+                        Mission Control <br />
+                        <span className="text-zinc-500">for AI Compliance.</span>
                     </motion.h1>
 
                     <motion.p
@@ -143,10 +143,10 @@ export default function LandingPage() {
                             <Github className="w-5 h-5" />
                             Connect GitHub
                         </Link>
-                        <a href="#pipeline" className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-8 py-4 rounded-full font-medium text-lg hover:bg-white/5 transition-all">
-                            See How It Works
+                        <Link href="/pricing" className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-8 py-4 rounded-full font-medium text-lg hover:bg-white/5 transition-all">
+                            View Pricing
                             <ArrowRight className="w-4 h-4" />
-                        </a>
+                        </Link>
                     </motion.div>
                 </div>
             </section>

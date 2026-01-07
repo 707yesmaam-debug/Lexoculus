@@ -287,6 +287,12 @@ export async function POST(request: NextRequest) {
 
         console.log(`📥 [WEBHOOK] Received event: ${event}`);
 
+        // Handle 'ping' events (sent when creating a webhook)
+        if (event === 'ping') {
+            console.log('✅ [WEBHOOK] Ping received!');
+            return NextResponse.json({ message: 'Pong!' });
+        }
+
         // Only handle pull_request events
         if (event !== 'pull_request') {
             return NextResponse.json({ message: 'Event ignored' });

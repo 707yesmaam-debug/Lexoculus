@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
+import { getUsageStatus } from '@/lib/subscription';
 
 /**
  * GET /api/github/action-install
@@ -35,7 +36,11 @@ export async function GET() {
             }
         });
 
+        // Check subscription tier
+        const usageStatus = await getUsageStatus(user.id);
+
         return NextResponse.json({
+            can_enable_integrations: usageStatus.is_pro,
             installations: installations.map(i => ({
                 id: i.id,
                 repo_full_name: i.repo_full_name,
@@ -74,6 +79,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
+            );
+        }
+
+        // Check Pro subscription requirement
+        const usageStatus = await getUsageStatus(user.id);
+        if (!usageStatus.is_pro) {
+            return NextResponse.json(
+                { error: 'GitHub Actions integration is a Pro feature. Please upgrade.' },
+                { status: 403 }
             );
         }
 
