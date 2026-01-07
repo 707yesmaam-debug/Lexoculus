@@ -80,37 +80,37 @@ jobs:
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-2">
+                <div className="space-y-3 py-1">
                     {/* Step 1: Secret */}
-                    <div className={`space-y-3 ${step !== 1 ? 'opacity-50' : ''}`}>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/30">1</div>
-                            <h3 className="font-medium text-zinc-200">Add Repository Secret</h3>
+                    <div className={`space-y-2 ${step !== 1 ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold border border-blue-500/30">1</div>
+                            <h3 className="font-medium text-zinc-200 text-sm">Add Repository Secret</h3>
                         </div>
 
-                        <div className="ml-9 p-4 bg-zinc-900 rounded-md border border-zinc-800 space-y-3">
-                            <p className="text-sm text-zinc-400">
+                        <div className="ml-7 p-3 bg-zinc-900 rounded-md border border-zinc-800 space-y-2">
+                            <p className="text-xs text-zinc-400">
                                 Go to <a href={`https://github.com/${repoFullName}/settings/secrets/actions`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">
-                                    Settings &gt; Secrets and variables &gt; Actions <ExternalLink className="w-3 h-3" />
+                                    Settings &gt; Secrets &gt; Actions <ExternalLink className="w-3 h-3" />
                                 </a> and add a new repository secret:
                             </p>
 
-                            <div className="grid gap-2">
-                                <div className="text-xs font-mono text-zinc-500">Name</div>
+                            <div className="grid gap-1">
+                                <div className="text-[10px] font-mono text-zinc-500">Name</div>
                                 <div className="flex gap-2">
-                                    <code className="flex-1 bg-black p-2 rounded border border-zinc-800 text-sm font-mono text-purple-400">COMPLIANCEAI_WEBHOOK_SECRET</code>
-                                    <Button variant="outline" size="icon" className="h-9 w-9 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard('COMPLIANCEAI_WEBHOOK_SECRET')}>
-                                        <Copy className="w-4 h-4" />
+                                    <code className="flex-1 bg-black p-1.5 rounded border border-zinc-800 text-xs font-mono text-purple-400">COMPLIANCEAI_WEBHOOK_SECRET</code>
+                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard('COMPLIANCEAI_WEBHOOK_SECRET')}>
+                                        <Copy className="w-3 h-3" />
                                     </Button>
                                 </div>
                             </div>
 
-                            <div className="grid gap-2">
-                                <div className="text-xs font-mono text-zinc-500">Secret</div>
+                            <div className="grid gap-1">
+                                <div className="text-[10px] font-mono text-zinc-500">Secret</div>
                                 <div className="flex gap-2">
-                                    <code className="flex-1 bg-black p-2 rounded border border-zinc-800 text-sm font-mono text-emerald-400">{webhookSecret}</code>
-                                    <Button variant="outline" size="icon" className="h-9 w-9 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard(webhookSecret)}>
-                                        <Copy className="w-4 h-4" />
+                                    <code className="flex-1 bg-black p-1.5 rounded border border-zinc-800 text-xs font-mono text-emerald-400">{webhookSecret}</code>
+                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard(webhookSecret)}>
+                                        <Copy className="w-3 h-3" />
                                     </Button>
                                 </div>
                             </div>
@@ -118,19 +118,19 @@ jobs:
                     </div>
 
                     {/* Step 2: Workflow File */}
-                    <div className={`space-y-3 ${step !== 1 ? 'opacity-50' : ''}`}>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold border border-blue-500/30">2</div>
-                            <h3 className="font-medium text-zinc-200">Add Workflow File</h3>
+                    <div className={`space-y-2 ${step !== 1 ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold border border-blue-500/30">2</div>
+                            <h3 className="font-medium text-zinc-200 text-sm">Add Workflow File</h3>
                         </div>
 
-                        <div className="ml-9 p-4 bg-zinc-900 rounded-md border border-zinc-800 space-y-3">
-                            <p className="text-sm text-zinc-400">
-                                Create a new file in your repository at <span className="font-mono text-zinc-300">.github/workflows/complianceai.yml</span> with this content:
+                        <div className="ml-7 p-3 bg-zinc-900 rounded-md border border-zinc-800 space-y-2">
+                            <p className="text-xs text-zinc-400">
+                                Create <span className="font-mono text-zinc-300">.github/workflows/complianceai.yml</span>:
                             </p>
 
                             <div className="relative group">
-                                <pre className="bg-black p-3 rounded border border-zinc-800 text-[10px] font-mono text-zinc-300 overflow-x-auto max-h-[120px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
+                                <pre className="bg-black p-2 rounded border border-zinc-800 text-[10px] font-mono text-zinc-300 overflow-x-auto max-h-[100px] scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900">
                                     {yamlContent}
                                 </pre>
                                 <Button
