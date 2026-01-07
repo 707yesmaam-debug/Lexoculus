@@ -101,8 +101,8 @@ jobs:
                                 <div className="text-[10px] font-mono text-zinc-500">Name</div>
                                 <div className="flex gap-2">
                                     <code className="flex-1 bg-black p-1.5 rounded border border-zinc-800 text-xs font-mono text-purple-400">COMPLIANCEAI_WEBHOOK_SECRET</code>
-                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard('COMPLIANCEAI_WEBHOOK_SECRET')}>
-                                        <Copy className="w-3 h-3" />
+                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800 shrink-0" onClick={() => copyToClipboard('COMPLIANCEAI_WEBHOOK_SECRET', 'secret_name')}>
+                                        {copiedField === 'secret_name' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                                     </Button>
                                 </div>
                             </div>
@@ -111,8 +111,8 @@ jobs:
                                 <div className="text-[10px] font-mono text-zinc-500">Secret</div>
                                 <div className="flex gap-2">
                                     <code className="flex-1 bg-black p-1.5 rounded border border-zinc-800 text-xs font-mono text-emerald-400">{webhookSecret}</code>
-                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800" onClick={() => copyToClipboard(webhookSecret)}>
-                                        <Copy className="w-3 h-3" />
+                                    <Button variant="outline" size="icon" className="h-7 w-7 border-zinc-700 hover:bg-zinc-800 shrink-0" onClick={() => copyToClipboard(webhookSecret, 'secret_value')}>
+                                        {copiedField === 'secret_value' ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                                     </Button>
                                 </div>
                             </div>
