@@ -21,6 +21,7 @@ export default function GitHubActionSetupModal({
     const [step, setStep] = useState(1);
     const [webhookSecret] = useState(() => 'gh_sec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
     const [isChecking, setIsChecking] = useState(false);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
 
     // The exact YAML content for the user
     // We use the current window location to determine the base URL if needed, 
@@ -51,9 +52,10 @@ jobs:
           github-token: \${{ secrets.GITHUB_TOKEN }}
 `;
 
-    const copyToClipboard = (text: string) => {
+    const copyToClipboard = (text: string, fieldId: string) => {
         navigator.clipboard.writeText(text);
-        // Could show a toast here
+        setCopiedField(fieldId);
+        setTimeout(() => setCopiedField(null), 2000);
     };
 
     const handlePingCheck = async () => {
