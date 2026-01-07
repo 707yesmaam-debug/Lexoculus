@@ -34,22 +34,46 @@ on:
 
 jobs:
   compliance-scan:
+    name: EU AI Act Compliance Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run Compliance Scan
-        uses: gemini-compliance-ai/action@v1
-        with:
-          webhook-url: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai.platform'}/api/webhooks/github'
-          webhook-secret: \${{ secrets.COMPLIANCEAI_WEBHOOK_SECRET }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+      - name: Scan for EU AI Act compliance
+        id: scan
+        env:
+          COMPLIANCEAI_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai.platform'}'
+        run: |
+          # Send PR diff to ComplianceAI webhook for scanning
+          RESPONSE=$(curl -s -X POST \\
+            "$COMPLIANCEAI_API_URL/api/webhooks/github" \\
+            -H "Content-Type: application/json" \\
+            -H "X-GitHub-Event: pull_request" \\
+            -H "X-Hub-Signature-256: $(echo -n '\${{ toJson(github.event) }}' | openssl dgst -sha256 -hmac '\${{ secrets.COMPLIANCEAI_WEBHOOK_SECRET }}' | cut -d' ' -f2)" \\
+            -d '\${{ toJson(github.event) }}')
+          
+          echo "response=$RESPONSE" >> $GITHUB_OUTPUT
+          
+          # Parse risk from response (requires jq)
+          RISK_LEVEL=$(echo $RESPONSE | jq -r '.risk_level // "MINIMAL_RISK"')
+          BLOCKED=$(echo $RESPONSE | jq -r '.blocked // false')
+          
+          # Output summary to PR
+          echo "## 🔍 ComplianceAI Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $RISK_LEVEL" >> $GITHUB_STEP_SUMMARY
+          echo "**Blocked:** $BLOCKED" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$BLOCKED" = "true" ]; then
+            echo "❌ PR blocked due to UNACCEPTABLE risk under EU AI Act"
+            exit 1
+          fi
 `;
 
     const copyToClipboard = (text: string, fieldId: string) => {
