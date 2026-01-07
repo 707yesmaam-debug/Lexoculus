@@ -32,7 +32,7 @@ export const DialogContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ 
     return (
         <div
             className={cn(
-                "relative w-full max-w-lg gap-4 border bg-zinc-950 p-6 shadow-lg duration-200 animate-in fade-in-0 zoom-in-95 rounded-xl border-zinc-800 sm:rounded-lg",
+                "relative w-full max-w-lg gap-4 border bg-zinc-950 p-6 shadow-lg duration-200 animate-in fade-in-0 zoom-in-95 rounded-xl border-zinc-800 sm:rounded-lg max-h-[90vh] overflow-y-auto",
                 className
             )}
             {...props}

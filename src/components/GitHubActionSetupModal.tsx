@@ -80,7 +80,7 @@ jobs:
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6 py-4">
+                <div className="space-y-4 py-2">
                     {/* Step 1: Secret */}
                     <div className={`space-y-3 ${step !== 1 ? 'opacity-50' : ''}`}>
                         <div className="flex items-center gap-3">
