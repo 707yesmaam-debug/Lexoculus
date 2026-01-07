@@ -1,0 +1,48 @@
+name: ComplianceAI Guardian
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  compliance-scan:
+    name: EU AI Act Compliance Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for EU AI Act compliance
+        id: scan
+        env:
+          COMPLIANCEAI_API_URL: 'https://compliance-ai-omega.vercel.app'
+        run: |
+          # Send PR diff to ComplianceAI webhook for scanning
+          RESPONSE=$(curl -s -X POST \
+            "$COMPLIANCEAI_API_URL/api/webhooks/github" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: pull_request" \
+            -H "X-Hub-Signature-256: $(echo -n '${{ toJson(github.event) }}' | openssl dgst -sha256 -hmac '${{ secrets.COMPLIANCEAI_WEBHOOK_SECRET }}' | cut -d' ' -f2)" \
+            -d '${{ toJson(github.event) }}')
+          
+          echo "response=$RESPONSE" >> $GITHUB_OUTPUT
+          
+          # Parse risk from response (requires jq)
+          RISK_LEVEL=$(echo $RESPONSE | jq -r '.risk_level // "MINIMAL_RISK"')
+          BLOCKED=$(echo $RESPONSE | jq -r '.blocked // false')
+          
+          # Output summary to PR
+          echo "## 🔍 ComplianceAI Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Risk Level:** $RISK_LEVEL" >> $GITHUB_STEP_SUMMARY
+          echo "**Blocked:** $BLOCKED" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$BLOCKED" = "true" ]; then
+            echo "❌ PR blocked due to UNACCEPTABLE risk under EU AI Act"
+            exit 1
+          fi
