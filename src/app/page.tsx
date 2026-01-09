@@ -18,8 +18,8 @@ const pipelineSteps = [
     {
         icon: Github,
         step: "01",
-        title: "Repository Ingestion",
-        description: "Connect your GitHub account with read-only access. We extract README, package.json, file structure, and dependency graphs from your AI repository.",
+        title: "Ingest",
+        description: "Read-only extraction of README, package.json, and dependency graphs. Cloned to volatile memory.",
         terminal: [
             "SCANNING: github.com/org/ml-model",
             "EXTRACTED: readme.md, requirements.txt",
@@ -29,8 +29,8 @@ const pipelineSteps = [
     {
         icon: Brain,
         step: "02",
-        title: "Capability Analysis",
-        description: "Our LLM analyzes your codebase to detect AI/ML frameworks, model architectures, training pipelines, and inference patterns.",
+        title: "Analyze",
+        description: "LLM-driven inspection of architectures and inference patterns. Detects high-risk libraries instantly.",
         terminal: [
             "DETECTED: PyTorch, Transformers",
             "MODEL_TYPE: Neural Network",
@@ -40,8 +40,8 @@ const pipelineSteps = [
     {
         icon: Scale,
         step: "03",
-        title: "Risk Classification",
-        description: "Map detected capabilities against EU AI Act Annex III articles. Get preliminary risk classification from UNACCEPTABLE to MINIMAL_RISK.",
+        title: "Classify",
+        description: "Automated mapping against Annex III. Determines risk tier (UNACCEPTABLE to MINIMAL) with regulatory precision.",
         terminal: [
             "ANNEX_III: Article 6.1(a) matched",
             "RISK_TIER: HIGH_RISK",
@@ -51,8 +51,8 @@ const pipelineSteps = [
     {
         icon: ClipboardCheck,
         step: "04",
-        title: "Context Verification",
-        description: "Answer targeted questions about deployment context, human oversight, data safeguards, and transparency measures to finalize your assessment.",
+        title: "Verify",
+        description: "Dynamic verification layer. We generate tailored questions to validate human oversight and context.",
         terminal: [
             "CONTEXT: EU Healthcare Deployment",
             "OVERSIGHT: Human-in-the-loop confirmed",
@@ -62,12 +62,12 @@ const pipelineSteps = [
     {
         icon: FileText,
         step: "05",
-        title: "Enterprise Trust Pack",
-        description: "Generate a 'Vendor Risk Profile' PDF. Includes executive summary, Article 5 clearance, and privacy checks. Ready for your data room.",
+        title: "Report",
+        description: "Generate the Enterprise Trust Pack. Signed, audit-ready PDF artifacts for your data room.",
         terminal: [
             "GENERATING: Vendor_Risk_Profile.pdf",
             "STATUS: ACCESS_GRANTED",
-            "READY_FOR: SALES"
+            "ARTIFACT: SIGNED"
         ]
     }
 ];
@@ -106,8 +106,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-mono text-zinc-400 mb-8"
                     >
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                        EU AI ACT COMPLIANT
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        REGULATORY ENGINE: ACTIVE
                     </motion.div>
 
                     <motion.h1
@@ -117,8 +117,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="font-heading text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 text-white"
                     >
-                        Unblock <br />
-                        <span className="text-zinc-500">Enterprise Sales.</span>
+                        Compliance <br />
+                        <span className="text-zinc-500">as Code.</span>
                     </motion.h1>
 
                     <motion.p
@@ -128,8 +128,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed"
                     >
-                        Generate a professional <strong>Vendor Risk Profile</strong> in seconds.
-                        Prove EU AI Act compliance, satisfy procurement teams, and close deals faster.
+                        Turn your repository into a regulatory fortress.
+                        The first automated compliance engine for the EU AI Act.
                     </motion.p>
 
                     <motion.div
@@ -201,12 +201,12 @@ export default function LandingPage() {
                         <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6">We analyze code. <br />We don't store it.</h2>
                         <div className="space-y-6 text-lg text-zinc-400">
                             <p>
-                                ComplianceAI operates on a <strong className="text-white">Zero-Retention</strong> architecture.
-                                Your repository is cloned into volatile memory, analyzed, and immediately discarded.
+                                ComplianceAI operates on a <strong className="text-white">Volatile Execution</strong> architecture.
+                                Repositories are cloned into ephemeral memory, analyzed, and wiped instantly.
                             </p>
                             <p>
-                                We only persist the <strong className="text-white">compliance metadata</strong>: risk scores,
-                                capability assessments, and your signed PDF reports. Your source code never touches our database.
+                                We only persist <strong className="text-white">compliance metadata</strong>: risk scores,
+                                capability graphs, and signed artifacts. Source code is never written to disk.
                             </p>
                         </div>
                     </div>
