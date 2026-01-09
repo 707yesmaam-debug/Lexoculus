@@ -150,7 +150,7 @@ export default function IntegrationsPage() {
                         </div>
                     ) : (
                         repos.map((repo) => {
-                            const install = installations.find(i => i.repo_full_name === repo.name && i.status === 'active');
+                            const install = installations.find(i => i.repo_full_name === repo.full_name && i.status === 'active');
                             const isActive = !!install;
 
                             return (
@@ -187,7 +187,7 @@ export default function IntegrationsPage() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="border-red-900/30 text-red-400 hover:bg-red-950/30 hover:border-red-900/50 text-xs h-8"
-                                                onClick={() => handleDisable(repo.name)}
+                                                onClick={() => handleDisable(repo.full_name)}
                                             >
                                                 Disable
                                             </Button>
