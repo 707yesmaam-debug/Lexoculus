@@ -121,56 +121,69 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
 
     // Article 6-9: Biometric Identification & Categorization
     if (indicators.uses_biometric_processing) {
-        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: true,
-            riskTier: 'HIGH_RISK',
-            reasoning: 'Biometric processing detected - real-time or post biometric identification',
-            requirements: article.requirements,
-        });
-        if (riskClassification !== 'UNACCEPTABLE') {
-            riskClassification = 'HIGH_RISK';
+        // Map to Annex III(1)(a) - Remote Biometric Identification (most severe)
+        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(a)') ||
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9'); // Fallback
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: true,
+                riskTier: 'HIGH_RISK',
+                reasoning: 'Biometric processing detected - real-time or post biometric identification',
+                requirements: article.requirements,
+            });
+            if (riskClassification !== 'UNACCEPTABLE') {
+                riskClassification = 'HIGH_RISK';
+            }
+            keyFindings.push('Biometric processing detected - HIGH RISK');
         }
-        keyFindings.push('Biometric processing detected - HIGH RISK');
     }
 
     // Article 6-9: Emotion Recognition (HIGH_RISK if for access control)
     if (indicators.uses_emotion_recognition && indicators.uses_biometric_processing) {
-        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9')!;
-        matchedArticles.push({
-            article: article.article,
-            category: 'Emotion Recognition for Access Control',
-            description: 'Emotion recognition combined with biometric identification',
-            applicable: true,
-            riskTier: 'HIGH_RISK',
-            reasoning: 'Emotion recognition used with biometric processing indicates access control use case',
-            requirements: article.requirements,
-        });
-        if (riskClassification !== 'UNACCEPTABLE') {
-            riskClassification = 'HIGH_RISK';
+        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(c)') ||
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: 'Emotion Recognition for Access Control',
+                description: 'Emotion recognition combined with biometric identification',
+                applicable: true,
+                riskTier: 'HIGH_RISK',
+                reasoning: 'Emotion recognition used with biometric processing indicates access control use case',
+                requirements: article.requirements,
+            });
+            if (riskClassification !== 'UNACCEPTABLE') {
+                riskClassification = 'HIGH_RISK';
+            }
+            keyFindings.push('Emotion recognition with biometrics - HIGH RISK');
         }
-        keyFindings.push('Emotion recognition with biometrics - HIGH RISK');
     }
 
     // Article 15: Critical Infrastructure
     if (indicators.uses_critical_infrastructure) {
-        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 15')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: true,
-            riskTier: 'HIGH_RISK',
-            reasoning: 'System may control or manage critical infrastructure',
-            requirements: article.requirements,
-        });
-        if (riskClassification !== 'UNACCEPTABLE') {
-            riskClassification = 'HIGH_RISK';
+        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(2)') ||
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 15');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: true,
+                riskTier: 'HIGH_RISK',
+                reasoning: 'System may control or manage critical infrastructure',
+                requirements: article.requirements,
+            });
+            if (riskClassification !== 'UNACCEPTABLE') {
+                riskClassification = 'HIGH_RISK';
+            }
+            keyFindings.push('Critical infrastructure involvement - HIGH RISK');
         }
-        keyFindings.push('Critical infrastructure involvement - HIGH RISK');
     }
 
     // Article 21: Employment Decisions (conditional)
@@ -185,18 +198,22 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         analysis.has_training_code &&
         analysis.has_inference_code &&
         hasClassificationCapability) {
-        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 21')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: 'conditional',
-            riskTier: 'HIGH_RISK',
-            reasoning: 'System has classification/decision capability - if used for employment decisions, requires HIGH RISK assessment',
-            requirements: article.requirements,
-        });
-        keyFindings.push('Potential employment decision system - verify use case in Feature 4');
-        unmatchedIndicators.push('employment_decision_capability');
+        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(4)') ||
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 21');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: 'conditional',
+                riskTier: 'HIGH_RISK',
+                reasoning: 'System has classification/decision capability - if used for employment decisions, requires HIGH RISK assessment',
+                requirements: article.requirements,
+            });
+            keyFindings.push('Potential employment decision system - verify use case in Feature 4');
+            unmatchedIndicators.push('employment_decision_capability');
+        }
     }
 
     // Article 22: Essential Services (conditional)
@@ -209,18 +226,22 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     );
 
     if (hasFinancialCapability && analysis.has_ml_pipeline) {
-        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 22')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: 'conditional',
-            riskTier: 'HIGH_RISK',
-            reasoning: 'System has financial/risk assessment capability - if used for credit/insurance decisions, requires HIGH RISK assessment',
-            requirements: article.requirements,
-        });
-        keyFindings.push('Potential financial decision system - verify use case in Feature 4');
-        unmatchedIndicators.push('financial_decision_capability');
+        const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(5)') ||
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 22');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: 'conditional',
+                riskTier: 'HIGH_RISK',
+                reasoning: 'System has financial/risk assessment capability - if used for credit/insurance decisions, requires HIGH RISK assessment',
+                requirements: article.requirements,
+            });
+            keyFindings.push('Potential financial decision system - verify use case in Feature 4');
+            unmatchedIndicators.push('financial_decision_capability');
+        }
     }
 
     // Article 26: Autonomous Vehicles
@@ -260,20 +281,24 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
 
     // Article 37: Emotion Recognition (not for access control)
     if (indicators.uses_emotion_recognition && !indicators.uses_biometric_processing) {
-        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 37')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: true,
-            riskTier: 'LIMITED_RISK',
-            reasoning: 'Emotion recognition without biometric identification - requires transparency',
-            requirements: article.requirements,
-        });
-        if (riskClassification === 'MINIMAL_RISK') {
-            riskClassification = 'LIMITED_RISK';
+        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 50(3)') ||
+            LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 37');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: true,
+                riskTier: 'LIMITED_RISK',
+                reasoning: 'Emotion recognition without biometric identification - requires transparency',
+                requirements: article.requirements,
+            });
+            if (riskClassification === 'MINIMAL_RISK') {
+                riskClassification = 'LIMITED_RISK';
+            }
+            keyFindings.push('Emotion recognition system - LIMITED RISK (requires transparency)');
         }
-        keyFindings.push('Emotion recognition system - LIMITED RISK (requires transparency)');
     }
 
     // Article 39: Code/Content Generation (Generative AI)
@@ -294,20 +319,24 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         );
 
     if (isGenerativeSystem) {
-        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 39')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: true,
-            riskTier: 'LIMITED_RISK',
-            reasoning: 'Generative AI system detected - generates code, text, or synthetic content',
-            requirements: article.requirements,
-        });
-        if (riskClassification === 'MINIMAL_RISK') {
-            riskClassification = 'LIMITED_RISK';
+        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 50(2)') ||
+            LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 39');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: true,
+                riskTier: 'LIMITED_RISK',
+                reasoning: 'Generative AI system detected - generates code, text, or synthetic content',
+                requirements: article.requirements,
+            });
+            if (riskClassification === 'MINIMAL_RISK') {
+                riskClassification = 'LIMITED_RISK';
+            }
+            keyFindings.push('Generative AI system - LIMITED RISK (requires AI-generated content labeling)');
         }
-        keyFindings.push('Generative AI system - LIMITED RISK (requires AI-generated content labeling)');
     }
 
     // Article 40: Personalized Recommendations
@@ -320,20 +349,23 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
 
     if (isRecommendationSystem && !hasFinancialCapability) {
         // Only add if not already flagged for financial decisions
-        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 40')!;
-        matchedArticles.push({
-            article: article.article,
-            category: article.category,
-            description: article.description,
-            applicable: true,
-            riskTier: 'LIMITED_RISK',
-            reasoning: 'Personalized recommendation system with ML pipeline',
-            requirements: article.requirements,
-        });
-        if (riskClassification === 'MINIMAL_RISK') {
-            riskClassification = 'LIMITED_RISK';
+        const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 40');
+
+        if (article) {
+            matchedArticles.push({
+                article: article.article,
+                category: article.category,
+                description: article.description,
+                applicable: true,
+                riskTier: 'LIMITED_RISK',
+                reasoning: 'Personalized recommendation system with ML pipeline',
+                requirements: article.requirements,
+            });
+            if (riskClassification === 'MINIMAL_RISK') {
+                riskClassification = 'LIMITED_RISK';
+            }
+            keyFindings.push('Recommendation system - LIMITED RISK (requires transparency)');
         }
-        keyFindings.push('Recommendation system - LIMITED RISK (requires transparency)');
     }
 
     // ========================================

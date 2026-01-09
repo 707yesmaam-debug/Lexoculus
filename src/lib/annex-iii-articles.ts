@@ -662,6 +662,23 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
             "Case outcome prediction",
             "Sentencing recommendation systems"
         ]
+    },
+
+    // Category 9: Autonomous Vehicles (Article 26 equivalent)
+    {
+        constraint_id: "annex3_av",
+        regulation_source: "Article 26", // Specific citation kept for classifier match
+        official_text: "AI systems intended to be used as safety components in autonomous road vehicles",
+        risk_level: "HIGH_RISK",
+        category: "Autonomous Vehicles",
+        description: "Safety components in autonomous vehicles",
+        code_indicators: [
+            "autonomous_driving", "lane_detection", "object_detection_vehicle",
+            "self_driving", "autopilot", "vehicle_control"
+        ],
+        detection_method: "context",
+        requirements: ["Conformity assessment", "Technical documentation"],
+        examples: ["Self-driving car software", "Lane keep assist"]
     }
 ];
 
