@@ -313,6 +313,7 @@ export default function ContextVerifierPage() {
                                 answers={answers}
                                 onAnswerChange={handleAnswerChange}
                                 isExpanded={idx === 0}
+                                riskAssessmentId={questionsData.risk_assessment_id}
                             />
                         ))}
                     </div>

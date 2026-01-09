@@ -63,6 +63,51 @@ export async function uploadReportToSupabase(
 }
 
 /**
+ * Upload evidence file to Supabase Storage
+ * Files stored in: userId/evidence/assessmentId/filename
+ */
+export async function uploadEvidenceToSupabase(
+    fileBuffer: Buffer,
+    userId: string,
+    assessmentId: string,
+    fileName: string,
+    contentType: string
+): Promise<{ url: string; path: string }> {
+    // Sanitize filename
+    const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const filePath = `${userId}/evidence/${assessmentId}/${safeName}`;
+
+    console.log(`[Storage] Uploading Evidence: ${filePath}`);
+
+    const { error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(filePath, fileBuffer, {
+            contentType,
+            cacheControl: '3600',
+            upsert: true,
+        });
+
+    if (error) {
+        console.error('[Storage] Canvas Upload error:', error);
+        throw new Error(`Failed to upload evidence: ${error.message}`);
+    }
+
+    // Generate signed URL (7 days)
+    const { data: urlData, error: signError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .createSignedUrl(filePath, 604800);
+
+    if (signError) {
+        throw new Error(`Failed to generate URL: ${signError.message}`);
+    }
+
+    return {
+        url: urlData?.signedUrl || '',
+        path: filePath,
+    };
+}
+
+/**
  * Delete report from Supabase Storage
  * Called when user deletes report or cleanup job runs
  */

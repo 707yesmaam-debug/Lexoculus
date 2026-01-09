@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import QuestionFileUpload from './QuestionFileUpload';
 
 interface QuestionOption {
     value: string;
@@ -31,6 +32,7 @@ interface QuestionSetProps {
     answers: Record<string, string | boolean>;
     onAnswerChange: (questionId: string, value: string | boolean) => void;
     isExpanded?: boolean;
+    riskAssessmentId?: string;
 }
 
 export default function QuestionSet({
@@ -38,6 +40,7 @@ export default function QuestionSet({
     answers,
     onAnswerChange,
     isExpanded: defaultExpanded = true,
+    riskAssessmentId,
 }: QuestionSetProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -181,6 +184,17 @@ export default function QuestionSet({
                                     className="w-full ml-5 p-3 bg-zinc-900 border border-zinc-800 text-zinc-200 text-sm placeholder-zinc-600 focus:border-zinc-600 focus:outline-none"
                                     rows={3}
                                 />
+                            )}
+
+                            {question.type === 'file_upload' && riskAssessmentId && (
+                                <div className="ml-5">
+                                    <QuestionFileUpload
+                                        questionId={question.id}
+                                        riskAssessmentId={riskAssessmentId}
+                                        currentValue={answers[question.id] as string}
+                                        onUploadComplete={(url) => onAnswerChange(question.id, url)}
+                                    />
+                                </div>
                             )}
                         </div>
                     ))}

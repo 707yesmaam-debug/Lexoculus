@@ -6,7 +6,7 @@
 
 import { RiskAssessment } from '@prisma/client';
 
-export type QuestionType = 'multiple_choice' | 'boolean' | 'text';
+export type QuestionType = 'multiple_choice' | 'boolean' | 'text' | 'file_upload';
 
 export interface QuestionOption {
     value: string;
@@ -378,6 +378,37 @@ const TRANSPARENCY_QUESTIONS: QuestionSet = {
     ],
 };
 
+// Question Set 9: Evidence Collection
+const EVIDENCE_QUESTIONS: QuestionSet = {
+    set_id: 'evidence',
+    title: 'Evidence Collection (The Moat)',
+    description: 'Upload documentation to prove your compliance claims.',
+    required: false,
+    questions: [
+        {
+            id: 'architecture_diagram',
+            question: 'Upload System Architecture Diagram',
+            type: 'file_upload',
+            helpText: 'PDF or PNG showing data flow and model components.',
+            required: false,
+        },
+        {
+            id: 'human_oversight_policy',
+            question: 'Upload Human Oversight Policy',
+            type: 'file_upload',
+            helpText: 'Document describing how humans intervene in loop.',
+            required: false,
+        },
+        {
+            id: 'data_governance_policy',
+            question: 'Upload Data Governance Policy',
+            type: 'file_upload',
+            helpText: 'PDF describing data collection and privacy measures.',
+            required: false,
+        }
+    ]
+};
+
 // =====================================================
 // QUESTION GENERATOR
 // =====================================================
@@ -433,6 +464,7 @@ export function generateContextQuestions(assessment: RiskAssessment): QuestionSe
     questionSets.push(DEPLOYMENT_QUESTIONS);
     questionSets.push(SAFETY_QUESTIONS);
     questionSets.push(TRANSPARENCY_QUESTIONS);
+    questionSets.push(EVIDENCE_QUESTIONS);
 
     return questionSets;
 }
