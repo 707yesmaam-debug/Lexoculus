@@ -159,26 +159,52 @@ export async function POST(request: NextRequest) {
         console.log(`✅ [AI] Generated ${tailoredQuestions.length} tailored questions`);
 
         // 9. Store assessment in database
-        const assessment = await prisma.riskAssessment.create({
-            data: {
-                repo_scan_id,
-                llm_analysis_id: llmAnalysis.id,
-                user_id: user.id,
-                risk_classification: result.risk_classification,
-                risk_score: result.risk_score,
-                risk_narrative: result.risk_narrative,
-                matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
-                unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
-                key_findings: result.key_findings as unknown as object[],
-                tailored_questions: tailoredQuestions as unknown as object[],
-                is_unacceptable: result.preliminary_assessment.is_unacceptable,
-                is_high_risk: result.preliminary_assessment.is_high_risk,
-                is_limited_risk: result.preliminary_assessment.is_limited_risk,
-                is_minimal_risk: result.preliminary_assessment.is_minimal_risk,
-                manual_review_needed: result.manual_review_needed,
-                manual_review_reason: result.manual_review_reason,
-            },
-        });
+        let assessment;
+        try {
+            assessment = await prisma.riskAssessment.create({
+                data: {
+                    repo_scan_id,
+                    llm_analysis_id: llmAnalysis.id,
+                    user_id: user.id,
+                    risk_classification: result.risk_classification,
+                    risk_score: result.risk_score,
+                    risk_narrative: result.risk_narrative,
+                    matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
+                    unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
+                    key_findings: result.key_findings as unknown as object[],
+                    tailored_questions: tailoredQuestions as unknown as object[],
+                    is_unacceptable: result.preliminary_assessment.is_unacceptable,
+                    is_high_risk: result.preliminary_assessment.is_high_risk,
+                    is_limited_risk: result.preliminary_assessment.is_limited_risk,
+                    is_minimal_risk: result.preliminary_assessment.is_minimal_risk,
+                    manual_review_needed: result.manual_review_needed,
+                    manual_review_reason: result.manual_review_reason,
+                },
+            });
+        } catch (dbError) {
+            console.error('❌ [DB] Failed to save with tailored_questions. Retrying without...', dbError);
+            // Fallback: Try saving without tailored_questions (in case schema migration failed)
+            assessment = await prisma.riskAssessment.create({
+                data: {
+                    repo_scan_id,
+                    llm_analysis_id: llmAnalysis.id,
+                    user_id: user.id,
+                    risk_classification: result.risk_classification,
+                    risk_score: result.risk_score,
+                    risk_narrative: result.risk_narrative,
+                    matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
+                    unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
+                    key_findings: result.key_findings as unknown as object[],
+                    // tailored_questions OMITTED in fallback
+                    is_unacceptable: result.preliminary_assessment.is_unacceptable,
+                    is_high_risk: result.preliminary_assessment.is_high_risk,
+                    is_limited_risk: result.preliminary_assessment.is_limited_risk,
+                    is_minimal_risk: result.preliminary_assessment.is_minimal_risk,
+                    manual_review_needed: result.manual_review_needed,
+                    manual_review_reason: result.manual_review_reason,
+                },
+            });
+        }
 
         // 9. Return assessment with constraint validation data
         return NextResponse.json({
