@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase';
 interface Repo {
     repo_url: string;
     name: string;
+    full_name: string;
     visibility: 'public' | 'private';
     description: string | null;
     language: string | null;
@@ -15,7 +16,7 @@ interface Repo {
 }
 
 interface RepoSelectorProps {
-    onSelect: (repoUrl: string) => void;
+    onSelect: (repoFullName: string) => void;
 }
 
 export default function RepoSelector({ onSelect }: RepoSelectorProps) {
@@ -51,7 +52,7 @@ export default function RepoSelector({ onSelect }: RepoSelectorProps) {
 
     const handleSelect = (repo: Repo) => {
         setSelectedRepo(repo.name);
-        onSelect(repo.repo_url);
+        onSelect(repo.full_name);
         setIsOpen(false);
     };
 
