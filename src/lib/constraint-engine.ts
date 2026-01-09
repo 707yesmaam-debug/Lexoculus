@@ -317,10 +317,10 @@ export class ConstraintEngine {
             };
 
             if (riskOrder[validatedRisk] > riskOrder[llmRiskLevel]) {
-                overrideReason = `Constraint Engine ESCALATED risk from ${llmRiskLevel} to ${validatedRisk}. ` +
+                overrideReason = `Regulatory Validation ESCALATED risk from ${llmRiskLevel} to ${validatedRisk}. ` +
                     `Matched constraints: ${matchResult.matches.map(m => m.constraint.constraint_id).join(', ')}`;
             } else {
-                overrideReason = `Constraint Engine DE-ESCALATED risk from ${llmRiskLevel} to ${validatedRisk}. ` +
+                overrideReason = `Regulatory Validation DE-ESCALATED risk from ${llmRiskLevel} to ${validatedRisk}. ` +
                     `No high-risk constraints matched.`;
             }
         }

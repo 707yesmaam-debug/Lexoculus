@@ -97,6 +97,10 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     // STEP 1: Check UNACCEPTABLE RISK
     // ========================================
 
+    // ========================================
+    // STEP 1: Check UNACCEPTABLE RISK
+    // ========================================
+
     if (indicators.targets_vulnerable_persons) {
         matchedArticles.push({
             article: 'Unacceptable',
@@ -107,7 +111,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
             reasoning: 'System targets vulnerable groups such as children, elderly, or persons with disabilities',
         });
         riskClassification = 'UNACCEPTABLE';
-        keyFindings.push('⚠️ BANNED: System targets vulnerable persons - not permitted under EU AI Act');
+        keyFindings.push('PROHIBITED: System targets vulnerable persons - not permitted under EU AI Act');
         manualReviewReason = 'UNACCEPTABLE risk detected - requires legal review';
     }
 
@@ -130,7 +134,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         if (riskClassification !== 'UNACCEPTABLE') {
             riskClassification = 'HIGH_RISK';
         }
-        keyFindings.push('⚠️ Biometric processing detected - HIGH RISK');
+        keyFindings.push('Biometric processing detected - HIGH RISK');
     }
 
     // Article 6-9: Emotion Recognition (HIGH_RISK if for access control)
@@ -148,7 +152,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         if (riskClassification !== 'UNACCEPTABLE') {
             riskClassification = 'HIGH_RISK';
         }
-        keyFindings.push('⚠️ Emotion recognition with biometrics - HIGH RISK');
+        keyFindings.push('Emotion recognition with biometrics - HIGH RISK');
     }
 
     // Article 15: Critical Infrastructure
@@ -166,7 +170,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         if (riskClassification !== 'UNACCEPTABLE') {
             riskClassification = 'HIGH_RISK';
         }
-        keyFindings.push('⚠️ Critical infrastructure involvement - HIGH RISK');
+        keyFindings.push('Critical infrastructure involvement - HIGH RISK');
     }
 
     // Article 21: Employment Decisions (conditional)
@@ -191,7 +195,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
             reasoning: 'System has classification/decision capability - if used for employment decisions, requires HIGH RISK assessment',
             requirements: article.requirements,
         });
-        keyFindings.push('⚠️ Potential employment decision system - verify use case in Feature 4');
+        keyFindings.push('Potential employment decision system - verify use case in Feature 4');
         unmatchedIndicators.push('employment_decision_capability');
     }
 
@@ -215,7 +219,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
             reasoning: 'System has financial/risk assessment capability - if used for credit/insurance decisions, requires HIGH RISK assessment',
             requirements: article.requirements,
         });
-        keyFindings.push('⚠️ Potential financial decision system - verify use case in Feature 4');
+        keyFindings.push('Potential financial decision system - verify use case in Feature 4');
         unmatchedIndicators.push('financial_decision_capability');
     }
 
@@ -247,7 +251,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         if (riskClassification !== 'UNACCEPTABLE') {
             riskClassification = 'HIGH_RISK';
         }
-        keyFindings.push('⚠️ Autonomous vehicle system detected - HIGH RISK');
+        keyFindings.push('Autonomous vehicle system detected - HIGH RISK');
     }
 
     // ========================================
@@ -340,7 +344,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         // NLP without generative AI is generally lower risk
         if (indicators.uses_nlp_decision_making) {
             unmatchedIndicators.push('nlp_decision_making');
-            keyFindings.push('⚠️ NLP used for decision-making - verify context in Feature 4');
+            keyFindings.push('NLP used for decision-making - verify context in Feature 4');
         } else {
             keyFindings.push('NLP capabilities detected - no specific regulatory category matched');
         }
@@ -362,7 +366,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     if (indicators.high_impact_decision_making &&
         !matchedArticles.some(a => a.riskTier === 'HIGH_RISK' && a.applicable === true)) {
         unmatchedIndicators.push('high_impact_decision_making');
-        keyFindings.push('⚠️ High-impact decision capabilities detected - requires context verification');
+        keyFindings.push('High-impact decision capabilities detected - requires context verification');
     }
 
     // ========================================
@@ -591,7 +595,7 @@ export function classifyRiskWithConstraintValidation(
 
         if (wasOverridden) {
             enhancedFindings.unshift(
-                `⚖️ Constraint Engine Override: ${validation.override_reason}`
+                `Regulatory Validation Adjustment: ${validation.override_reason}`
             );
         }
 
@@ -599,7 +603,7 @@ export function classifyRiskWithConstraintValidation(
         for (const match of constraintResult.matches) {
             if (match.constraint.risk_level === 'UNACCEPTABLE') {
                 enhancedFindings.unshift(
-                    `🚫 BANNED (${match.constraint.regulation_source}): ${match.constraint.category}`
+                    `PROHIBITED (${match.constraint.regulation_source}): ${match.constraint.category}`
                 );
             }
         }
@@ -610,7 +614,7 @@ export function classifyRiskWithConstraintValidation(
 
         let enhancedManualReviewReason = baseResult.manual_review_reason;
         if (constraintResult.requires_manual_review && !enhancedManualReviewReason) {
-            enhancedManualReviewReason = 'Constraint Engine requires context verification - see questions below';
+            enhancedManualReviewReason = 'Regulatory validation requires context verification - see questions below';
         }
 
         // Step 10: Recalculate risk score based on constraint matches
@@ -652,7 +656,7 @@ export function classifyRiskWithConstraintValidation(
         };
     } catch (error) {
         // If constraint engine fails, log and return base result without constraint validation
-        console.error('Constraint Engine error (falling back to base classification):', error);
+        console.error('Regulatory Validation error (falling back to base classification):', error);
 
         // Return base result with empty constraint validation
         return {
@@ -686,7 +690,7 @@ function generateEnhancedNarrative(
     const narratives: string[] = [];
 
     if (wasOverridden) {
-        narratives.push('⚖️ This classification was validated by the Constraint Engine using official EU AI Act text.');
+        narratives.push('This classification was validated against official EU AI Act regulatory text.');
     }
 
     switch (classification) {
