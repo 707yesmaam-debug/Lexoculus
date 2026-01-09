@@ -283,8 +283,63 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
 }
 
 /**
- * Check Groq API health
+ * Generate tailored compliance questions based on analysis
  */
+export async function generateTailoredQuestions(
+    analysis: AnalysisResult,
+    repoName: string
+): Promise<{ id: string; question: string; type: string }[]> {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) return [];
+
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+
+    const prompt = `Based on the following AI system analysis, generate 3 specific "YES/NO" compliance verification questions.
+The questions should specificially target the risks and capabilities identified.
+Do not ask generic questions. Ask about the specific libraries, models, or data types detected.
+
+ANALYSIS:
+Repository: ${repoName}
+Capabilities: ${analysis.capabilities.join(', ')}
+Risks: ${JSON.stringify(analysis.estimated_risk_indicators)}
+Libraries: ${analysis.libraries.join(', ')}
+
+Respond ONLY with valid JSON in this format:
+[
+  { "id": "tailored_1", "question": "Question 1 text", "type": "boolean" },
+  { "id": "tailored_2", "question": "Question 2 text", "type": "boolean" },
+  { "id": "tailored_3", "question": "Question 3 text", "type": "boolean" }
+]`;
+
+    try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.4,
+                max_tokens: 500,
+            }),
+        });
+
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '[]';
+
+        // Clean markdown
+        const jsonStr = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        console.error('Failed to generate tailored questions:', e);
+        return [];
+    }
+}
+
 export async function checkGroqHealth(): Promise<{
     status: 'healthy' | 'unhealthy';
     model?: string;

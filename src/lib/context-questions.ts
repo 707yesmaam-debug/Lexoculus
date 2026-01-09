@@ -460,6 +460,24 @@ export function generateContextQuestions(assessment: RiskAssessment): QuestionSe
         }
     }
 
+    // Dynamic Questions (Feature 7)
+    const tailoredQs = (assessment.tailored_questions as unknown as { id: string; question: string; type: string }[]) || [];
+
+    if (tailoredQs.length > 0) {
+        questionSets.push({
+            set_id: 'tailored_verification',
+            title: 'Product-Specific Verification',
+            description: 'Questions tailored to your specific codebase and AI capabilities.',
+            required: true,
+            questions: tailoredQs.map(q => ({
+                id: q.id,
+                question: q.question,
+                type: 'boolean', // Force boolean for consistency in MVP
+                required: true,
+            }))
+        });
+    }
+
     // Always include deployment, safety, and transparency
     questionSets.push(DEPLOYMENT_QUESTIONS);
     questionSets.push(SAFETY_QUESTIONS);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
 import { classifyRiskWithConstraintValidation } from '@/lib/risk-classifier';
+import { generateTailoredQuestions } from '@/lib/groq';
 
 // Rate limiting (10 classifications per hour)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -137,7 +138,27 @@ export async function POST(request: NextRequest) {
             console.log(`   ⚖️ Constraint Override: ${result.constraint_validation.override_reason}`);
         }
 
-        // 8. Store assessment in database
+        // 8. Generate Tailored Questions (Feature 7)
+        console.log('🤖 [AI] Generating tailored verification questions...');
+        // Cast Prisma JSON types to AnalysisResult interface
+        const analysisForGroq = {
+            ...llmAnalysis,
+            capabilities: llmAnalysis.capabilities as string[],
+            libraries: llmAnalysis.libraries as string[],
+            ai_frameworks: llmAnalysis.ai_frameworks as string[],
+            programming_languages: llmAnalysis.programming_languages as string[],
+            detected_model_types: llmAnalysis.detected_model_types as string[],
+            estimated_risk_indicators: llmAnalysis.estimated_risk_indicators as any,
+            reasoning: llmAnalysis.analysis_notes || '',
+        };
+
+        const tailoredQuestions = await generateTailoredQuestions(
+            analysisForGroq,
+            llmAnalysis.repo_scan.repo_name
+        );
+        console.log(`✅ [AI] Generated ${tailoredQuestions.length} tailored questions`);
+
+        // 9. Store assessment in database
         const assessment = await prisma.riskAssessment.create({
             data: {
                 repo_scan_id,
@@ -149,6 +170,7 @@ export async function POST(request: NextRequest) {
                 matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
                 unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
                 key_findings: result.key_findings as unknown as object[],
+                tailored_questions: tailoredQuestions as unknown as object[],
                 is_unacceptable: result.preliminary_assessment.is_unacceptable,
                 is_high_risk: result.preliminary_assessment.is_high_risk,
                 is_limited_risk: result.preliminary_assessment.is_limited_risk,

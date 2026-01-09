@@ -93,8 +93,10 @@ export default function QuestionSet({
                                 <div className="flex-1">
                                     <p className="text-zinc-200 text-sm">
                                         {question.question}
-                                        {question.required && (
+                                        {question.required ? (
                                             <span className="text-amber-400 ml-1">*</span>
+                                        ) : (
+                                            <span className="text-zinc-500 text-xs ml-2 font-normal">(Optional)</span>
                                         )}
                                     </p>
                                     {question.helpText && (
