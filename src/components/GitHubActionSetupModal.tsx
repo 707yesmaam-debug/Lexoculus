@@ -49,7 +49,7 @@ jobs:
       - name: Scan for EU AI Act compliance
         id: scan
         env:
-          COMPLIANCEAI_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai.platform'}'
+          COMPLIANCEAI_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai-omega.vercel.app'}'
         run: |
           # Send PR diff to ComplianceAI webhook for scanning
           RESPONSE=$(curl -s -X POST \\
