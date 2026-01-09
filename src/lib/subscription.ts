@@ -63,7 +63,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
         features: {
             github_action: false,
             slack_notifications: false,
-            pdf_reports: true,
+            pdf_reports: false, // Up-sell to Pro
             api_access: false,
             priority_support: false,
             custom_constraints: false,

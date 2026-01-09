@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock } from 'lucide-react';
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -56,6 +56,7 @@ export default function RiskClassifierPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isClassifying, setIsClassifying] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isPro, setIsPro] = useState(false);
 
     // Fetch capability analysis data
     useEffect(() => {
@@ -101,8 +102,21 @@ export default function RiskClassifierPage() {
             }
         }
 
+        async function fetchSubscriptionStatus() {
+            try {
+                const res = await fetch('/api/subscription/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsPro(data.is_pro || data.limits?.features?.pdf_reports);
+                }
+            } catch (e) {
+                console.error('Failed to fetch subscription', e);
+            }
+        }
+
         if (repo_scan_id) {
             fetchData();
+            fetchSubscriptionStatus();
         }
     }, [repo_scan_id]);
 
@@ -184,13 +198,26 @@ export default function RiskClassifierPage() {
 
                 <div className="flex gap-3 mt-8 sm:mt-0">
                     <button
-                        onClick={() => window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank')}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium rounded-lg shadow-lg shadow-emerald-900/20 transition-all border border-emerald-500/20 hover:border-emerald-400/30"
+                        onClick={() => {
+                            if (isPro) {
+                                window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank');
+                            } else {
+                                router.push('/pricing');
+                            }
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-lg transition-all border ${isPro
+                                ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-900/20 border-emerald-500/20 hover:border-emerald-400/30'
+                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border-zinc-700'
+                            }`}
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Download Trust Pack
+                        {isPro ? (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        ) : (
+                            <Lock className="w-4 h-4" />
+                        )}
+                        {isPro ? 'Download Trust Pack' : 'Upgrade to Unlock'}
                     </button>
                 </div>
             </div>

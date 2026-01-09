@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
 import { generateTrustPackPDF } from '@/lib/pdf-generator';
+import { getUsageStatus } from '@/lib/subscription';
 
 export async function GET(
     request: NextRequest,
@@ -33,6 +34,16 @@ export async function GET(
 
     if (repoScan.user_id !== user.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    // 3.5 Check Subscription Feature Access
+    const subscription = await getUsageStatus(user.id);
+    if (!subscription.limits.features.pdf_reports) {
+        return NextResponse.json({
+            error: 'Upgrade Required',
+            message: 'Enterprise Trust Packs are available on the Pro plan.',
+            upgrade_required: true
+        }, { status: 403 });
     }
 
     // Fetch latest analysis

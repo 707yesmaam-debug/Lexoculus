@@ -62,12 +62,12 @@ const pipelineSteps = [
     {
         icon: FileText,
         step: "05",
-        title: "Report Generation",
-        description: "Generate a comprehensive PDF compliance report with executive summary, evidence items, and a SHA-256 cryptographic signature for auditability.",
+        title: "Enterprise Trust Pack",
+        description: "Generate a 'Vendor Risk Profile' PDF. Includes executive summary, Article 5 clearance, and privacy checks. Ready for your data room.",
         terminal: [
-            "GENERATING: compliance_report.pdf",
-            "SHA-256: 8a7b3c...9f2e1d",
-            "STATUS: SIGNED & STORED"
+            "GENERATING: Vendor_Risk_Profile.pdf",
+            "STATUS: ACCESS_GRANTED",
+            "READY_FOR: SALES"
         ]
     }
 ];
@@ -117,8 +117,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="font-heading text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 text-white"
                     >
-                        Mission Control <br />
-                        <span className="text-zinc-500">for AI Compliance.</span>
+                        Unblock <br />
+                        <span className="text-zinc-500">Enterprise Sales.</span>
                     </motion.h1>
 
                     <motion.p
@@ -128,8 +128,8 @@ export default function LandingPage() {
                         variants={fadeUp}
                         className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed"
                     >
-                        Connect your GitHub repository. Get EU AI Act risk classification
-                        and a cryptographically signed compliance report in minutes.
+                        Generate a professional <strong>Vendor Risk Profile</strong> in seconds.
+                        Prove EU AI Act compliance, satisfy procurement teams, and close deals faster.
                     </motion.p>
 
                     <motion.div
@@ -154,8 +154,8 @@ export default function LandingPage() {
             {/* 5-STAGE PIPELINE */}
             <section id="pipeline" className="py-32 px-6 max-w-7xl mx-auto">
                 <div className="mb-16 text-center">
-                    <h2 className="font-heading text-4xl md:text-5xl font-bold mb-4">The 5-Stage Pipeline</h2>
-                    <p className="text-zinc-500 max-w-2xl mx-auto">From repository to compliance report in five automated steps. No manual documentation required.</p>
+                    <h2 className="font-heading text-4xl md:text-5xl font-bold mb-4">From Code to Contract</h2>
+                    <p className="text-zinc-500 max-w-2xl mx-auto">Automated "Guerrilla Compliance" checks generate the artifacts your customers need.</p>
                 </div>
 
                 <div className="space-y-6">
