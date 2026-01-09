@@ -4,17 +4,18 @@
  * Receives webhook events from GitHub and triggers PR scanning.
  * This enables the "Compliance Guardian" - continuous monitoring of PRs.
  * 
- * Setup:
- * 1. User enables GitHub Action in their repo
- * 2. GitHub sends PR events to this endpoint
- * 3. We scan the PR diff for risky patterns
- * 4. We post a comment on the PR with results
+ * TRIWIRE UPDATE:
+ * Now uses "Guerrilla Compliance" strategy:
+ * 1. Fetch PR Diff
+ * 2. Parse filenames and content
+ * 3. Run Tripwire Engine (short-circuit if irrelevant)
+ * 4. Post results
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
-import { quickPatternMatch, getConstraintEngine } from '@/lib/constraint-engine';
+import { scanDiffs, TripwireResult } from '@/lib/tripwire';
 
 // Types for GitHub webhook payloads
 interface GitHubPRPayload {
@@ -49,14 +50,6 @@ interface GitHubPRPayload {
     installation?: {
         id: number;
     };
-}
-
-interface ScanResult {
-    risk_level: 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK' | null;
-    matched_patterns: string[];
-    matched_constraints: string[];
-    should_block: boolean;
-    comment_body: string;
 }
 
 /**
@@ -96,135 +89,119 @@ async function fetchPRDiff(diffUrl: string, accessToken: string): Promise<string
 }
 
 /**
- * Extract added lines from diff
+ * Parse a unified diff string into individual file changes
  */
-function extractAddedLines(diff: string): string {
-    const lines = diff.split('\n');
-    const addedLines: string[] = [];
+interface FileChange {
+    filename: string;
+    diff: string;
+}
 
-    for (const line of lines) {
-        // Lines starting with + (but not +++) are additions
-        if (line.startsWith('+') && !line.startsWith('+++')) {
-            addedLines.push(line.substring(1)); // Remove the + prefix
+function parseDiff(diffText: string): FileChange[] {
+    const changes: FileChange[] = [];
+    // Split by "diff --git" to separate files
+    const rawFiles = diffText.split('diff --git ');
+
+    for (const rawFile of rawFiles) {
+        if (!rawFile.trim()) continue;
+
+        // Extract filename (e.g., a/package.json b/package.json)
+        // We want the 'b/' version (the new version)
+        const lines = rawFile.split('\n');
+        const headerLine = lines[0]; // a/foo.ts b/foo.ts
+
+        let filename = 'unknown';
+        const parts = headerLine.split(' ');
+        if (parts.length >= 2) {
+            // usually the last part is b/path/to/file
+            const bPath = parts[parts.length - 1];
+            if (bPath.startsWith('b/')) {
+                filename = bPath.substring(2);
+            } else {
+                filename = bPath; // fallback
+            }
         }
+
+        changes.push({
+            filename: filename,
+            diff: rawFile
+        });
     }
 
-    return addedLines.join('\n');
+    return changes;
 }
 
 /**
- * Scan PR content for risky patterns
+ * Build GitHub PR comment based on Tripwire results
  */
-function scanPRContent(addedCode: string): ScanResult {
-    // Step 1: Quick pattern match (fast, no LLM)
-    const quickResult = quickPatternMatch(addedCode);
-
-    // Step 2: If risky patterns found, get detailed constraint info
-    let matchedConstraints: string[] = [];
-    let comment_body = '';
-    let should_block = false;
-
-    if (quickResult.risk_level) {
-        const engine = getConstraintEngine();
-        const constraintResult = engine.matchConstraints(
-            quickResult.matched_patterns,
-            [],
-        );
-
-        matchedConstraints = constraintResult.matches.map(m => m.constraint.constraint_id);
-
-        // Determine if should block
-        should_block = quickResult.risk_level === 'UNACCEPTABLE';
-
-        // Build comment body
-        comment_body = buildCommentBody(
-            quickResult.risk_level,
-            quickResult.matched_patterns,
-            constraintResult.matches,
-            should_block
-        );
-    }
-
-    return {
-        risk_level: quickResult.risk_level,
-        matched_patterns: quickResult.matched_patterns,
-        matched_constraints: matchedConstraints,
-        should_block,
-        comment_body,
-    };
-}
-
-/**
- * Build GitHub PR comment
- */
-function buildCommentBody(
-    riskLevel: string,
-    patterns: string[],
-    matches: { constraint: { constraint_id: string; regulation_source: string; category: string; official_text: string } }[],
-    shouldBlock: boolean
-): string {
+function buildTripwireComment(result: TripwireResult): string {
     const lines: string[] = [];
 
-    // Header with icon
-    if (riskLevel === 'UNACCEPTABLE') {
-        lines.push('## 🚫 ComplianceAI: UNACCEPTABLE Risk Detected');
-        lines.push('');
-        lines.push('> **This PR contains code that is BANNED under EU AI Act Article 5.**');
-        lines.push('> This PR cannot be merged until these issues are resolved.');
-    } else if (riskLevel === 'HIGH_RISK') {
-        lines.push('## ⚠️ ComplianceAI: HIGH Risk Detected');
-        lines.push('');
-        lines.push('> This PR contains code requiring EU AI Act conformity assessment before deployment.');
-    } else if (riskLevel === 'LIMITED_RISK') {
-        lines.push('## ℹ️ ComplianceAI: LIMITED Risk Detected');
-        lines.push('');
-        lines.push('> This PR contains code requiring transparency measures under EU AI Act Article 50.');
+    // Header with status
+    if (result.risk_found) {
+        const highestRisk = result.highest_risk;
+
+        if (highestRisk === 'UNACCEPTABLE') {
+            lines.push('## 🚫 ComplianceAI: PROHIBITED Risk Detected');
+            lines.push('> **Critical Alert**: This PR introduces capabilities banned under EU AI Act Article 5.');
+        } else if (highestRisk === 'HIGH_RISK') {
+            lines.push('## ⚠️ ComplianceAI: HIGH Risk Detected');
+            lines.push('> **Warning**: This PR introduces High-Risk AI capabilities (Annex III).');
+        } else if (highestRisk === 'LIMITED_RISK') {
+            lines.push('## ℹ️ ComplianceAI: Transparency Requirements');
+            lines.push('> **Notice**: This PR introduces Limited Risk AI capabilities.');
+        } else {
+            // Should technically not happen if match found, but fallback
+            lines.push('## 🔍 ComplianceAI: Risk Detected');
+        }
     } else {
-        lines.push('## ✅ ComplianceAI: MINIMAL Risk');
-        lines.push('');
-        lines.push('> No significant EU AI Act compliance concerns detected.');
+        lines.push('## ✅ ComplianceAI: Passed');
+        lines.push('> No specific EU AI Act risks detected in this PR.');
+        // If it was just irrelevant files, we might not even post this default message 
+        // to reduce noise, but for now we'll be explicit.
         return lines.join('\n');
     }
 
-    // Detected patterns
     lines.push('');
-    lines.push('### Detected Patterns');
+
+    // Tripwire Findings
+    lines.push('### 🕸️ Tripwire Findings');
+    lines.push('The following risk patterns were detected in your changes:');
     lines.push('');
-    for (const pattern of patterns) {
-        lines.push(`- \`${pattern}\``);
+    lines.push('| Risk Level | Category | File | Pattern |');
+    lines.push('| :--- | :--- | :--- | :--- |');
+
+    for (const detection of result.detections) {
+        // Format risk level for table
+        const riskEmoji = {
+            'UNACCEPTABLE': '🚫 PROHIBITED',
+            'HIGH_RISK': '⚠️ HIGH',
+            'LIMITED_RISK': 'ℹ️ LIMITED',
+            'MINIMAL_RISK': '✅ LOW'
+        }[detection.risk] || detection.risk;
+
+        lines.push(`| ${riskEmoji} | ${detection.category} | \`${detection.file}\` | \`${detection.heuristic_match}\` |`);
     }
 
-    // Matched regulations
-    if (matches.length > 0) {
-        lines.push('');
-        lines.push('### Applicable Regulations');
-        lines.push('');
-        for (const match of matches.slice(0, 3)) { // Limit to 3 for readability
-            lines.push(`#### ${match.constraint.regulation_source}: ${match.constraint.category}`);
-            lines.push('');
-            lines.push(`> ${match.constraint.official_text.slice(0, 300)}...`);
-            lines.push('');
-        }
-    }
-
-    // Action required
+    // Action Items
     lines.push('');
-    lines.push('### What to do');
+    lines.push('### 🛡️ Recommended Actions');
     lines.push('');
-    if (shouldBlock) {
-        lines.push('1. **Remove or refactor** the flagged code patterns');
-        lines.push('2. Run this PR again to re-scan');
-        lines.push('3. Contact your compliance officer if you believe this is a false positive');
-    } else {
-        lines.push('1. **Review** the flagged patterns with your compliance team');
-        lines.push('2. Ensure proper documentation and conformity assessment before deployment');
-        lines.push('3. Add transparency disclosures where required');
+    if (result.highest_risk === 'UNACCEPTABLE') {
+        lines.push('1. **BLOCKED**: You cannot merge this PR.');
+        lines.push('2. Remove the prohibited capability immediately.');
+    } else if (result.highest_risk === 'HIGH_RISK') {
+        lines.push('1. **Assessment Required**: This feature requires a Conformity Assessment.');
+        lines.push('2. Ensure you have technical documentation prepared.');
+        lines.push('3. Verify if this system is intended for a High-Risk use case (e.g. Hiring, Biometrics).');
+    } else if (result.highest_risk === 'LIMITED_RISK') {
+        lines.push('1. **Transparency**: Update your UI to inform users they are interacting with AI.');
+        lines.push('2. If generating content, ensure it is machine-readable as artificially generated.');
     }
 
     // Footer
     lines.push('');
     lines.push('---');
-    lines.push('*Powered by [ComplianceAI](https://complianceai.eu) | [Learn more about EU AI Act](https://artificialintelligenceact.eu)*');
+    lines.push('*Powered by ComplianceAI Tripwire Engine*');
 
     return lines.join('\n');
 }
@@ -285,8 +262,6 @@ export async function POST(request: NextRequest) {
         const payload = JSON.parse(rawBody);
         const event = request.headers.get('x-github-event');
 
-        console.log(`📥 [WEBHOOK] Received event: ${event}`);
-
         // Handle 'ping' events (sent when creating a webhook)
         if (event === 'ping') {
             console.log('✅ [WEBHOOK] Ping received!');
@@ -302,11 +277,10 @@ export async function POST(request: NextRequest) {
 
         // Only handle opened, synchronize (new commits), reopened
         if (!['opened', 'synchronize', 'reopened'].includes(prPayload.action)) {
-            console.log(`📥 [WEBHOOK] Ignoring action: ${prPayload.action}`);
             return NextResponse.json({ message: 'Action ignored' });
         }
 
-        console.log(`🔍 [PR-SCAN] Scanning PR #${prPayload.number} in ${prPayload.repository.full_name}`);
+        console.log(`🔍 [TRIPWIRE] Scanning PR #${prPayload.number} in ${prPayload.repository.full_name}`);
 
         // Find the user who installed this for this repo
         const installation = await prisma.gitHubActionInstall.findFirst({
@@ -320,7 +294,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!installation) {
-            console.log(`⚠️ [PR-SCAN] No active installation found for ${prPayload.repository.full_name}`);
+            console.log(`⚠️ [TRIPWIRE] No active installation found for ${prPayload.repository.full_name}`);
             return NextResponse.json({ message: 'No installation found' });
         }
 
@@ -330,29 +304,28 @@ export async function POST(request: NextRequest) {
         });
 
         if (!githubConnection?.github_oauth_token) {
-            console.error(`❌ [PR-SCAN] No GitHub token for user ${installation.user_id}`);
+            console.error(`❌ [TRIPWIRE] No GitHub token for user ${installation.user_id}`);
             return NextResponse.json(
                 { error: 'GitHub token not found' },
                 { status: 500 }
             );
         }
 
-        // Fetch PR diff
-        const diff = await fetchPRDiff(
+        // 1. Fetch PR diff
+        const diffText = await fetchPRDiff(
             prPayload.pull_request.diff_url,
             githubConnection.github_oauth_token
         );
 
-        // Extract added code
-        const addedCode = extractAddedLines(diff);
+        // 2. Parse Diff into files
+        const fileChanges = parseDiff(diffText);
 
-        // Scan for risky patterns
-        const scanResult = scanPRContent(addedCode);
+        // 3. Run Tripwire Engine
+        const tripwireResult = scanDiffs(fileChanges);
 
-        console.log(`✅ [PR-SCAN] Result: ${scanResult.risk_level || 'MINIMAL_RISK'}`);
-        console.log(`   Patterns: ${scanResult.matched_patterns.join(', ') || 'none'}`);
+        console.log(`✅ [TRIPWIRE] Result: Run=${tripwireResult.triggered}, Risks=${tripwireResult.detections.length}`);
 
-        // Store scan result
+        // 4. Store Scan Result (Legacy table adaptation)
         await prisma.pRScan.create({
             data: {
                 user_id: installation.user_id,
@@ -361,30 +334,34 @@ export async function POST(request: NextRequest) {
                 pr_title: prPayload.pull_request.title,
                 pr_url: prPayload.pull_request.html_url,
                 head_sha: prPayload.pull_request.head.sha,
-                risk_level: scanResult.risk_level || 'MINIMAL_RISK',
-                matched_patterns: scanResult.matched_patterns,
-                matched_constraints: scanResult.matched_constraints,
-                blocked: scanResult.should_block,
+                risk_level: tripwireResult.highest_risk || 'MINIMAL_RISK',
+                // Flatten heuristics for storage
+                matched_patterns: tripwireResult.detections.map(d => `${d.heuristic_match} (${d.file})`),
+                matched_constraints: tripwireResult.detections.map(d => d.category),
+                blocked: tripwireResult.highest_risk === 'UNACCEPTABLE',
             },
         });
 
-        // Post comment if risky patterns found
-        if (scanResult.risk_level && scanResult.comment_body) {
+        // 5. Post Comment (Only if triggered and risk found)
+        // Optimization: If NOT triggered (all files ignored), don't post anything to reduce noise.
+        // If triggered but NO risk, maybe post "Pass" emoji if configured (omitted for now for silence).
+        if (tripwireResult.triggered && tripwireResult.risk_found) {
+            const commentBody = buildTripwireComment(tripwireResult);
             await postPRComment(
                 prPayload.repository.full_name,
                 prPayload.number,
-                scanResult.comment_body,
+                commentBody,
                 githubConnection.github_oauth_token
             );
-            console.log(`💬 [PR-SCAN] Posted comment on PR #${prPayload.number}`);
+            console.log(`💬 [TRIPWIRE] Posted comment on PR #${prPayload.number}`);
+        } else {
+            console.log(`zzz [TRIPWIRE] No risks found or irrelevant files. Sleeping.`);
         }
 
         return NextResponse.json({
             success: true,
-            pr_number: prPayload.number,
-            risk_level: scanResult.risk_level || 'MINIMAL_RISK',
-            blocked: scanResult.should_block,
-            patterns_found: scanResult.matched_patterns.length,
+            risk_found: tripwireResult.risk_found,
+            triggered: tripwireResult.triggered
         });
 
     } catch (error) {
@@ -405,7 +382,7 @@ export async function GET() {
     return NextResponse.json({
         status: 'healthy',
         endpoint: '/api/webhooks/github',
-        description: 'GitHub webhook endpoint for PR scanning',
+        description: 'GitHub webhook endpoint for PR scanning (Tripwire Engine)',
         events_supported: ['pull_request'],
     });
 }

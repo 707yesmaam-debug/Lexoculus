@@ -164,21 +164,35 @@ export default function RiskClassifierPage() {
     return (
         <div className="max-w-4xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-                <button
-                    onClick={() => router.push(`/dashboard/analyzer/${repo_scan_id}`)}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Capability Analysis
-                </button>
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-8">
+                <div>
+                    <button
+                        onClick={() => router.push(`/dashboard/analyzer/${repo_scan_id}`)}
+                        className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Capability Analysis
+                    </button>
 
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
-                    Risk Classification
-                </h1>
-                <p className="text-zinc-500">
-                    EU AI Act Annex III Risk Mapping
-                </p>
+                    <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
+                        Risk Classification
+                    </h1>
+                    <p className="text-zinc-500">
+                        EU AI Act Annex III Risk Mapping
+                    </p>
+                </div>
+
+                <div className="flex gap-3 mt-8 sm:mt-0">
+                    <button
+                        onClick={() => window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank')}
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-medium rounded-lg shadow-lg shadow-emerald-900/20 transition-all border border-emerald-500/20 hover:border-emerald-400/30"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download Trust Pack
+                    </button>
+                </div>
             </div>
 
             {/* Repo Info */}
