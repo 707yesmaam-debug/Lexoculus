@@ -178,3 +178,42 @@ function drawCheckRow(doc: PDFKit.PDFDocument, label: string, value: string, col
     doc.fillColor(color).font('Helvetica-Bold').text(value, 300, y, { align: 'right', width: 245 });
     doc.moveDown(1);
 }
+
+// =============================================================================
+// LEGACY REPORT GENERATOR (Restored for Build Compatibility)
+// =============================================================================
+
+export interface ReportData {
+    assessment: any;
+    repo: RepoScan;
+    capabilities: any;
+    preliminary: any;
+}
+
+/**
+ * Generate standard Compliance Report PDF
+ */
+export async function generateComplianceReport(data: ReportData): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const buffers: Buffer[] = [];
+
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
+        doc.on('error', reject);
+
+        // Header
+        doc.fontSize(20).text('ComplianceAI Report', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(12).text(`Repository: ${data.repo.repo_name}`);
+        doc.text(`Date: ${new Date().toISOString().split('T')[0]}`);
+        doc.moveDown();
+
+        // Status
+        doc.fontSize(14).text('Compliance Status');
+        doc.fontSize(12).text(`Risk Level: ${data.assessment.final_risk_classification}`);
+        doc.text(`Score: ${data.assessment.final_risk_score}`);
+
+        doc.end();
+    });
+}
