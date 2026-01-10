@@ -139,24 +139,32 @@ export async function POST(request: NextRequest) {
         }
 
         // 8. Generate Tailored Questions (Feature 7)
+        // 8. Generate Tailored Questions (Feature 7)
         console.log('🤖 [AI] Generating tailored verification questions...');
-        // Cast Prisma JSON types to AnalysisResult interface
-        const analysisForGroq = {
-            ...llmAnalysis,
-            capabilities: llmAnalysis.capabilities as string[],
-            libraries: llmAnalysis.libraries as string[],
-            ai_frameworks: llmAnalysis.ai_frameworks as string[],
-            programming_languages: llmAnalysis.programming_languages as string[],
-            detected_model_types: llmAnalysis.detected_model_types as string[],
-            estimated_risk_indicators: llmAnalysis.estimated_risk_indicators as any,
-            reasoning: llmAnalysis.analysis_notes || '',
-        };
 
-        const tailoredQuestions = await generateTailoredQuestions(
-            analysisForGroq,
-            llmAnalysis.repo_scan.repo_name
-        );
-        console.log(`✅ [AI] Generated ${tailoredQuestions.length} tailored questions`);
+        let tailoredQuestions: { id: string; question: string; type: string }[] = [];
+        try {
+            // Cast Prisma JSON types to AnalysisResult interface
+            const analysisForGroq = {
+                ...llmAnalysis,
+                capabilities: llmAnalysis.capabilities as string[],
+                libraries: llmAnalysis.libraries as string[],
+                ai_frameworks: llmAnalysis.ai_frameworks as string[],
+                programming_languages: llmAnalysis.programming_languages as string[],
+                detected_model_types: llmAnalysis.detected_model_types as string[],
+                estimated_risk_indicators: llmAnalysis.estimated_risk_indicators as any,
+                reasoning: llmAnalysis.analysis_notes || '',
+            };
+
+            tailoredQuestions = await generateTailoredQuestions(
+                analysisForGroq,
+                llmAnalysis.repo_scan.repo_name
+            );
+            console.log(`✅ [AI] Generated ${tailoredQuestions.length} tailored questions`);
+        } catch (groqError) {
+            console.error('⚠️ [AI] Failed to generate tailored questions (continuing workflow):', groqError);
+            tailoredQuestions = [];
+        }
 
         // 9. Store assessment in database
         let assessment;

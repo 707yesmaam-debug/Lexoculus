@@ -311,6 +311,9 @@ Respond ONLY with valid JSON in this format:
   { "id": "tailored_3", "question": "Question 3 text", "type": "boolean" }
 ]`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     try {
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -324,7 +327,10 @@ Respond ONLY with valid JSON in this format:
                 temperature: 0.4,
                 max_tokens: 500,
             }),
+            signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) return [];
 
@@ -335,8 +341,14 @@ Respond ONLY with valid JSON in this format:
         const jsonStr = content.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
         return JSON.parse(jsonStr);
     } catch (e) {
-        console.error('Failed to generate tailored questions:', e);
+        if (e instanceof Error && e.name === 'AbortError') {
+            console.error('Tailored questions generation timed out (limit: 8s)');
+        } else {
+            console.error('Failed to generate tailored questions:', e);
+        }
         return [];
+    } finally {
+        clearTimeout(timeoutId);
     }
 }
 
