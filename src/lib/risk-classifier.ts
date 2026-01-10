@@ -88,10 +88,10 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     let riskClassification: RiskClassification = 'MINIMAL_RISK';
     let manualReviewReason: string | undefined;
 
-    // Parse risk indicators from JSON
-    const indicators = analysis.estimated_risk_indicators as RiskIndicators;
-    const capabilities = analysis.capabilities as string[];
-    const detectedModelTypes = analysis.detected_model_types as string[];
+    // Parse risk indicators from JSON with safe defaults
+    const indicators = (analysis.estimated_risk_indicators || {}) as RiskIndicators;
+    const capabilities = (analysis.capabilities || []) as string[];
+    const detectedModelTypes = (analysis.detected_model_types || []) as string[];
 
     // ========================================
     // STEP 1: Check UNACCEPTABLE RISK
