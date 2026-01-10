@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 9. Store assessment in database
+        console.log('💾 [DB] Saving assessment to database...');
         let assessment;
         try {
             assessment = await prisma.riskAssessment.create({
@@ -189,6 +190,7 @@ export async function POST(request: NextRequest) {
                     manual_review_reason: result.manual_review_reason,
                 },
             });
+            console.log('✅ [DB] Assessment saved successfully with ID:', assessment.id);
         } catch (dbError) {
             console.error('❌ [DB] Failed to save with tailored_questions. Retrying without...', dbError);
             // Fallback: Try saving without tailored_questions (in case schema migration failed)
@@ -212,8 +214,10 @@ export async function POST(request: NextRequest) {
                     manual_review_reason: result.manual_review_reason,
                 },
             });
+            console.log('✅ [DB] Fallback save successful with ID:', assessment.id);
         }
 
+        console.log('🚀 [API] Returning successful response');
         // 9. Return assessment with constraint validation data
         return NextResponse.json({
             cached: false,
@@ -240,9 +244,12 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('Risk classification error:', error);
+        console.error('❌ [API] Critical Risk classification error:', error);
+        if (error instanceof Error) {
+            console.error('Stack:', error.stack);
+        }
         return NextResponse.json(
-            { error: 'Failed to classify risk' },
+            { error: 'Failed to classify risk', details: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         );
     }
