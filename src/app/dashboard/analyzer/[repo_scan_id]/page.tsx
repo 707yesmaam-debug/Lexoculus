@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Brain, ArrowRight, Clock, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Brain, ArrowRight, Clock, RefreshCw, CheckCircle2 } from 'lucide-react';
 import CapabilityCard from '@/components/CapabilityCard';
 import ConfidenceBadge from '@/components/ConfidenceBadge';
 
@@ -217,13 +217,23 @@ export default function AnalyzerPage() {
                                         Analyzed in {(analysis.analysis_duration_ms / 1000).toFixed(1)}s
                                     </span>
                                 </div>
-                                <button
-                                    onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
-                                >
-                                    Next: Risk Classification
-                                    <ArrowRight className="w-4 h-4" />
-                                </button>
+                                {analysis.is_ai_system ? (
+                                    <button
+                                        onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
+                                    >
+                                        Next: Risk Classification
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => router.push('/dashboard/scanner')}
+                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600/90 hover:bg-emerald-600 text-white font-medium transition-colors"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" />
+                                        Audit Complete
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -269,7 +279,7 @@ export default function AnalyzerPage() {
                                 <p className="text-zinc-500 text-sm mt-1">
                                     {analysis.is_ai_system
                                         ? 'This repository contains AI/ML components that may require regulatory assessment.'
-                                        : 'No AI/ML components detected in this repository.'}
+                                        : 'No AI/ML components detected. This repository does not fall under the EU AI Act. No further action required.'}
                                 </p>
                             </div>
                         </div>
