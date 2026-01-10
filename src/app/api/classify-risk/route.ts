@@ -69,32 +69,55 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Check for existing assessment
+        // Explicitly select fields to avoid "column does not exist" error for tailored_questions
+        // if the DB schema hasn't been migrated yet.
         const existingAssessment = await prisma.riskAssessment.findUnique({
             where: { repo_scan_id },
+            select: {
+                id: true,
+                repo_scan_id: true,
+                risk_classification: true,
+                risk_score: true,
+                risk_narrative: true,
+                matched_annex_iii_articles: true,
+                unmatched_risk_indicators: true,
+                key_findings: true,
+                is_unacceptable: true,
+                is_high_risk: true,
+                is_limited_risk: true,
+                is_minimal_risk: true,
+                manual_review_needed: true,
+                manual_review_reason: true,
+                assessed_at: true,
+                // tailored_questions OMITTED to match current DB state
+            }
         });
 
         if (existingAssessment) {
             console.log(`📦 [CACHE] Returning cached risk assessment for ${repo_scan_id}`);
+            // Type assertion since we're selecting specific fields
+            const assessment = existingAssessment as any;
+
             return NextResponse.json({
                 cached: true,
                 message: 'Risk assessment already exists',
-                assessment_id: existingAssessment.id,
-                repo_scan_id: existingAssessment.repo_scan_id,
-                risk_classification: existingAssessment.risk_classification,
-                risk_score: existingAssessment.risk_score,
-                risk_narrative: existingAssessment.risk_narrative,
-                matched_annex_iii_articles: existingAssessment.matched_annex_iii_articles,
-                unmatched_risk_indicators: existingAssessment.unmatched_risk_indicators,
-                key_findings: existingAssessment.key_findings,
+                assessment_id: assessment.id,
+                repo_scan_id: assessment.repo_scan_id,
+                risk_classification: assessment.risk_classification,
+                risk_score: assessment.risk_score,
+                risk_narrative: assessment.risk_narrative,
+                matched_annex_iii_articles: assessment.matched_annex_iii_articles,
+                unmatched_risk_indicators: assessment.unmatched_risk_indicators,
+                key_findings: assessment.key_findings,
                 preliminary_assessment: {
-                    is_unacceptable: existingAssessment.is_unacceptable,
-                    is_high_risk: existingAssessment.is_high_risk,
-                    is_limited_risk: existingAssessment.is_limited_risk,
-                    is_minimal_risk: existingAssessment.is_minimal_risk,
+                    is_unacceptable: assessment.is_unacceptable,
+                    is_high_risk: assessment.is_high_risk,
+                    is_limited_risk: assessment.is_limited_risk,
+                    is_minimal_risk: assessment.is_minimal_risk,
                 },
-                manual_review_needed: existingAssessment.manual_review_needed,
-                manual_review_reason: existingAssessment.manual_review_reason,
-                assessed_at: existingAssessment.assessed_at,
+                manual_review_needed: assessment.manual_review_needed,
+                manual_review_reason: assessment.manual_review_reason,
+                assessed_at: assessment.assessed_at,
             });
         }
 
