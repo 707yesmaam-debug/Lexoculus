@@ -2,6 +2,7 @@
 
 import { CheckCircle2, AlertCircle, Loader2, FileCode2, Scale, Brain } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from "@/components/ui/button";
 
 interface ScanStatusProps {
     status: 'idle' | 'scanning' | 'complete' | 'error';
@@ -107,18 +108,18 @@ export default function ScanStatus({ status, error, data }: ScanStatusProps) {
                             {data.repo_scan_id ? (
                                 <Link
                                     href={`/dashboard/analyzer/${data.repo_scan_id}`}
-                                    className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+                                    className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors inline-flex justify-center rounded-md"
                                 >
                                     <Brain className="w-4 h-4" />
                                     <span>Analyze Capabilities</span>
                                     <span className="text-blue-200 group-hover:translate-x-0.5 transition-transform">→</span>
                                 </Link>
                             ) : (
-                                <button disabled className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium opacity-50 cursor-not-allowed">
-                                    <Brain className="w-4 h-4" />
+                                <Button disabled className="bg-blue-600 text-white opacity-50 cursor-not-allowed w-auto h-auto py-2.5 px-5">
+                                    <Brain className="w-4 h-4 mr-2" />
                                     <span>Analyze Capabilities</span>
-                                    <span className="text-blue-200">→</span>
-                                </button>
+                                    <span className="text-blue-200 ml-2">→</span>
+                                </Button>
                             )}
                         </div>
                     </div>
@@ -129,4 +130,3 @@ export default function ScanStatus({ status, error, data }: ScanStatusProps) {
 
     return null;
 }
-

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertCircle, Brain, ArrowRight, Clock, RefreshCw, CheckCircle2 } from 'lucide-react';
 import CapabilityCard from '@/components/CapabilityCard';
 import ConfidenceBadge from '@/components/ConfidenceBadge';
+import { Button } from "@/components/ui/button";
 
 interface RepoScanData {
     repo_scan_id: string;
@@ -131,12 +132,13 @@ export default function AnalyzerPage() {
                     <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
                     <p className="text-zinc-400 mb-4">{error}</p>
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={() => router.push('/dashboard/scanner')}
-                        className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="mt-4 border-zinc-800 text-zinc-300 hover:bg-zinc-800"
                     >
                         Back to Scanner
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -146,13 +148,14 @@ export default function AnalyzerPage() {
         <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-                <button
+                <Button
+                    variant="ghost"
                     onClick={() => router.push('/dashboard/scanner')}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+                    className="text-zinc-500 hover:text-zinc-300 mb-4 pl-0 hover:bg-transparent"
                 >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Scanner
-                </button>
+                </Button>
 
                 <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
                     Capability Analysis
@@ -184,23 +187,23 @@ export default function AnalyzerPage() {
                     <div className="px-6 py-4">
                         {!analysis ? (
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                <button
+                                <Button
                                     onClick={handleAnalyze}
                                     disabled={isAnalyzing}
-                                    className="flex items-center gap-2 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-950 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold w-full sm:w-auto"
                                 >
                                     {isAnalyzing ? (
                                         <>
-                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
                                             Analyzing...
                                         </>
                                     ) : (
                                         <>
-                                            <Brain className="w-5 h-5" />
+                                            <Brain className="w-5 h-5 mr-2" />
                                             Analyze Capabilities
                                         </>
                                     )}
-                                </button>
+                                </Button>
 
                                 {isAnalyzing && (
                                     <div className="flex items-center gap-2 text-zinc-500 text-sm">
@@ -218,21 +221,21 @@ export default function AnalyzerPage() {
                                     </span>
                                 </div>
                                 {analysis.is_ai_system ? (
-                                    <button
+                                    <Button
                                         onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
+                                        className="bg-blue-600 hover:bg-blue-500 text-white"
                                     >
                                         Next: Risk Classification
-                                        <ArrowRight className="w-4 h-4" />
-                                    </button>
+                                        <ArrowRight className="w-4 h-4 ml-2" />
+                                    </Button>
                                 ) : (
-                                    <button
+                                    <Button
                                         onClick={() => router.push('/dashboard/scanner')}
-                                        className="flex items-center gap-2 px-4 py-2 bg-emerald-600/90 hover:bg-emerald-600 text-white font-medium transition-colors"
+                                        className="bg-emerald-600/90 hover:bg-emerald-600 text-white border-0"
                                     >
-                                        <CheckCircle2 className="w-4 h-4" />
+                                        <CheckCircle2 className="w-4 h-4 mr-2" />
                                         Audit Complete
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                         )}
@@ -247,13 +250,14 @@ export default function AnalyzerPage() {
                     <div>
                         <p className="text-red-400 font-medium">Analysis Failed</p>
                         <p className="text-zinc-400 text-sm mt-1">{error}</p>
-                        <button
+                        <Button
+                            variant="ghost"
                             onClick={handleAnalyze}
-                            className="flex items-center gap-2 mt-3 text-sm text-zinc-300 hover:text-white"
+                            className="mt-3 text-zinc-300 hover:text-white"
                         >
-                            <RefreshCw className="w-4 h-4" />
+                            <RefreshCw className="w-4 h-4 mr-2" />
                             Try Again
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}

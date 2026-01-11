@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, GitFork, Star, Lock, Eye, Check, Loader2, ChevronDown } from 'lucide-react';
-import { createClient } from '@/lib/supabase';
+import { Button } from "@/components/ui/button";
 
 interface Repo {
     repo_url: string;
@@ -75,9 +75,10 @@ export default function RepoSelector({ onSelect }: RepoSelectorProps) {
 
     return (
         <div className="w-full relative">
-            <button
+            <Button
+                variant="outline"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 transition-colors text-left"
+                className="w-full justify-between py-6 bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-300 text-zinc-300 font-normal"
             >
                 {selectedRepo ? (
                     <span className="font-medium text-zinc-100">{selectedRepo}</span>
@@ -85,7 +86,7 @@ export default function RepoSelector({ onSelect }: RepoSelectorProps) {
                     <span className="text-zinc-500">Select a repository to scan...</span>
                 )}
                 <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
+            </Button>
 
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 shadow-xl z-50 max-h-[400px] flex flex-col">

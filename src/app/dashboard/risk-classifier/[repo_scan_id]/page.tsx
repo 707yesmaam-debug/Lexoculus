@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock } from 'lucide-react';
 import RiskClassificationCard from '@/components/RiskClassificationCard';
+import { Button } from "@/components/ui/button";
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -164,12 +165,13 @@ export default function RiskClassifierPage() {
                     <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
                     <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
                     <p className="text-zinc-400 mb-4">{error}</p>
-                    <button
+                    <Button
+                        variant="secondary"
                         onClick={() => router.push('/dashboard/scanner')}
-                        className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="mt-4 border-zinc-800 text-zinc-300 hover:bg-zinc-800"
                     >
                         Back to Scanner
-                    </button>
+                    </Button>
                 </div>
             </div>
         );
@@ -180,13 +182,14 @@ export default function RiskClassifierPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-8">
                 <div>
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => router.push(`/dashboard/analyzer/${repo_scan_id}`)}
-                        className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+                        className="text-zinc-500 hover:text-zinc-300 mb-4 pl-0 hover:bg-transparent"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Capability Analysis
-                    </button>
+                    </Button>
 
                     <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
                         Risk Classification
@@ -197,7 +200,7 @@ export default function RiskClassifierPage() {
                 </div>
 
                 <div className="flex gap-3 mt-8 sm:mt-0">
-                    <button
+                    <Button
                         onClick={() => {
                             if (isPro) {
                                 window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank');
@@ -205,20 +208,21 @@ export default function RiskClassifierPage() {
                                 router.push('/pricing');
                             }
                         }}
-                        className={`flex items-center gap-2 px-4 py-2 font-medium rounded-lg shadow-lg transition-all border ${isPro
-                                ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-900/20 border-emerald-500/20 hover:border-emerald-400/30'
-                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border-zinc-700'
+                        variant={isPro ? "default" : "outline"}
+                        className={`gap-2 border ${isPro
+                            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-900/20 border-emerald-500/20 hover:border-emerald-400/30'
+                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border-zinc-700'
                             }`}
                     >
                         {isPro ? (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         ) : (
-                            <Lock className="w-4 h-4" />
+                            <Lock className="w-4 h-4 mr-2" />
                         )}
                         {isPro ? 'Download Trust Pack' : 'Upgrade to Unlock'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -243,23 +247,23 @@ export default function RiskClassifierPage() {
                     {/* Classification Actions */}
                     {!assessment && (
                         <div className="px-6 py-4">
-                            <button
+                            <Button
                                 onClick={handleClassify}
                                 disabled={isClassifying}
-                                className="flex items-center gap-2 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-950 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold w-full sm:w-auto"
                             >
                                 {isClassifying ? (
                                     <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
                                         Classifying...
                                     </>
                                 ) : (
                                     <>
-                                        <Scale className="w-5 h-5" />
+                                        <Scale className="w-5 h-5 mr-2" />
                                         Classify Risk
                                     </>
                                 )}
-                            </button>
+                            </Button>
 
                             {isClassifying && (
                                 <p className="text-zinc-500 text-sm mt-2">
@@ -275,13 +279,13 @@ export default function RiskClassifierPage() {
                             <div className="text-sm text-zinc-500">
                                 Assessed: {new Date(assessment.assessed_at).toLocaleString()}
                             </div>
-                            <button
+                            <Button
                                 onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium transition-colors"
+                                className="bg-blue-600 hover:bg-blue-500 text-white"
                             >
                                 Next: Verify Context
-                                <ArrowRight className="w-4 h-4" />
-                            </button>
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
                         </div>
                     )}
                 </div>
