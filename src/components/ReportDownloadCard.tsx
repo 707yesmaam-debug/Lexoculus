@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, FileText, Calendar, Hash, Shield, Trash2, RefreshCw } from 'lucide-react';
+import { Download, FileText, Shield, Trash2, RefreshCw } from 'lucide-react';
 
 interface ReportDownloadCardProps {
     reportId: string;
@@ -18,10 +18,10 @@ interface ReportDownloadCardProps {
 }
 
 const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    UNACCEPTABLE: { bg: 'bg-red-950/20', text: 'text-red-400', border: 'border-red-900/50' },
-    HIGH_RISK: { bg: 'bg-orange-950/20', text: 'text-orange-400', border: 'border-orange-900/50' },
-    LIMITED_RISK: { bg: 'bg-amber-950/20', text: 'text-amber-400', border: 'border-amber-900/50' },
-    MINIMAL_RISK: { bg: 'bg-emerald-950/20', text: 'text-emerald-400', border: 'border-emerald-900/50' },
+    UNACCEPTABLE: { bg: 'bg-[#FFF5F0]', text: 'text-[#FF4F00]', border: 'border-[#FF4F00]' },
+    HIGH_RISK: { bg: 'bg-[#FFF5F0]', text: 'text-[#FF4F00]', border: 'border-[#FF4F00]' },
+    LIMITED_RISK: { bg: 'bg-white', text: 'text-black', border: 'border-black' },
+    MINIMAL_RISK: { bg: 'bg-white', text: 'text-[#999]', border: 'border-[#E5E5E5]' },
 };
 
 function formatFileSize(bytes: number): string {
@@ -51,7 +51,7 @@ export default function ReportDownloadCard({
     };
 
     const handleDelete = async () => {
-        if (!confirm('Delete this report permanently?')) return;
+        if (!confirm('PERMANENTLY DELETE REPORT RECORD?')) return;
 
         setIsDeleting(true);
         try {
@@ -70,64 +70,64 @@ export default function ReportDownloadCard({
     };
 
     return (
-        <div className={`border ${colors.border} ${colors.bg}`}>
+        <div className={`border-2 ${colors.border} ${colors.bg} p-6`}>
             {/* Header */}
-            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-zinc-900 flex items-center justify-center">
-                        <FileText className={`w-5 h-5 ${colors.text}`} />
+            <div className="flex flex-col md:flex-row items-start justify-between gap-4 border-b border-black pb-4 mb-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-black text-white flex items-center justify-center">
+                        <FileText className="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 className="text-zinc-100 font-medium">{repoOwner}/{repoName}</h3>
-                        <p className="text-zinc-500 text-sm">{fileName}</p>
+                        <h3 className="font-serif text-xl font-bold text-black">{repoOwner}/{repoName}</h3>
+                        <p className="font-mono text-xs text-[#555] uppercase tracking-wider">{fileName}</p>
                     </div>
                 </div>
-                <span className={`px-3 py-1 text-sm font-medium border ${colors.border} ${colors.text}`}>
+                <div className={`px-4 py-1 font-mono text-xs font-bold uppercase tracking-widest border ${colors.border} ${colors.text}`}>
                     {riskClassification.replace('_', ' ')}
-                </span>
+                </div>
             </div>
 
             {/* Details */}
-            <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
                 <div>
-                    <p className="text-zinc-500 text-xs mb-1">Risk Score</p>
-                    <p className="text-zinc-200 font-mono">{riskScore}/100</p>
+                    <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">Risk Score</p>
+                    <p className="font-mono text-lg font-bold text-black">{riskScore}/100</p>
                 </div>
                 <div>
-                    <p className="text-zinc-500 text-xs mb-1">File Size</p>
-                    <p className="text-zinc-200 font-mono">{formatFileSize(fileSize)}</p>
+                    <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">File Size</p>
+                    <p className="font-mono text-lg text-black">{formatFileSize(fileSize)}</p>
                 </div>
                 <div>
-                    <p className="text-zinc-500 text-xs mb-1">Generated</p>
-                    <p className="text-zinc-200 text-sm">
+                    <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">Generated</p>
+                    <p className="font-mono text-sm text-black pt-1">
                         {new Date(generatedAt).toLocaleDateString()}
                     </p>
                 </div>
                 <div>
-                    <p className="text-zinc-500 text-xs mb-1">Signature</p>
-                    <div className="flex items-center gap-1">
-                        <Shield className={`w-4 h-4 ${hasSiganture ? 'text-emerald-400' : 'text-zinc-600'}`} />
-                        <span className={`text-sm ${hasSiganture ? 'text-emerald-400' : 'text-zinc-600'}`}>
-                            {hasSiganture ? 'Verified' : 'None'}
+                    <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">Signature</p>
+                    <div className="flex items-center gap-1 pt-1">
+                        <Shield className={`w-4 h-4 ${hasSiganture ? 'text-[#047857]' : 'text-[#999]'}`} />
+                        <span className={`font-mono text-xs uppercase ${hasSiganture ? 'text-[#047857]' : 'text-[#999]'}`}>
+                            {hasSiganture ? 'Verified' : 'Unsigned'}
                         </span>
                     </div>
                 </div>
             </div>
 
             {/* Actions */}
-            <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]">
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handleDownload}
-                        className="flex items-center gap-2 px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors"
+                        className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white transition-colors font-mono text-xs uppercase tracking-widest"
                     >
                         <Download className="w-4 h-4" />
-                        Download PDF
+                        Download_PDF
                     </button>
                     {onRefresh && (
                         <button
                             onClick={onRefresh}
-                            className="p-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+                            className="p-3 border border-black text-black hover:bg-[#F5F5F5] transition-colors"
                             title="Regenerate Report"
                         >
                             <RefreshCw className="w-4 h-4" />
@@ -138,10 +138,10 @@ export default function ReportDownloadCard({
                     <button
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="flex items-center gap-1 px-3 py-2 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 text-[#999] hover:text-[#FF4F00] transition-colors disabled:opacity-50 font-mono text-xs uppercase tracking-widest"
                     >
                         <Trash2 className="w-4 h-4" />
-                        {isDeleting ? 'Deleting...' : 'Delete'}
+                        {isDeleting ? 'Deleting...' : 'Delete_Record'}
                     </button>
                 )}
             </div>

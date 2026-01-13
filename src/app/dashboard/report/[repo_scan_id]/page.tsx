@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, FileText, CheckCircle2, Download, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 import ReportDownloadCard from '@/components/ReportDownloadCard';
 import StorageStatus from '@/components/StorageStatus';
+import Link from 'next/link';
 
 interface ReportData {
     report_id: string;
@@ -141,9 +142,11 @@ export default function ReportGeneratorPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin mb-4" />
-                <p className="text-zinc-500">Loading report data...</p>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-black border-t-[#FF4F00] animate-spin rounded-full" />
+                    <p className="font-mono text-sm text-[#555] tracking-widest uppercase">Initializing_Generator...</p>
+                </div>
             </div>
         );
     }
@@ -151,16 +154,16 @@ export default function ReportGeneratorPage() {
     // Error state (no assessment)
     if (error && !assessment) {
         return (
-            <div className="max-w-4xl mx-auto py-16">
-                <div className="bg-red-950/20 border border-red-900/50 p-6 text-center">
-                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
-                    <p className="text-zinc-400 mb-4">{error}</p>
+            <div className="max-w-5xl mx-auto p-12">
+                <div className="bg-[#FFF5F0] border-2 border-[#FF4F00] p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-[#FF4F00] mx-auto mb-6" />
+                    <h2 className="font-serif text-3xl font-bold text-black mb-4">Report Error</h2>
+                    <p className="font-mono text-black mb-8">{error}</p>
                     <button
                         onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
-                        className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="bg-black text-white hover:bg-[#FF4F00] p-4 font-mono uppercase tracking-widest px-8"
                     >
-                        Complete Context Verification
+                        Return_To_Context
                     </button>
                 </div>
             </div>
@@ -168,54 +171,51 @@ export default function ReportGeneratorPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-8 md:p-12">
             {/* Header */}
-            <div className="mb-8">
-                <button
-                    onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Context Verification
-                </button>
+            <div className="mb-12 border-b-2 border-black pb-8">
+                <Link href={`/dashboard/context-verifier/${repo_scan_id}`} className="inline-flex items-center text-[#555] hover:text-black font-mono text-xs uppercase tracking-widest mb-6 transition-colors">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back_to_Context
+                </Link>
 
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
-                    Compliance Report
+                <div className="font-mono text-xs text-[#FF4F00] mb-2 tracking-widest uppercase">PHASE_04b // DOCUMENTATION</div>
+                <h1 className="font-serif text-5xl font-bold text-black tracking-tight mb-4">
+                    Compliance Report.
                 </h1>
-                <p className="text-zinc-500">
-                    Generate and download your EU AI Act compliance report
+                <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                    Generate and sign your official EU AI Act compliance documentation.
                 </p>
             </div>
 
             {/* Assessment Info */}
             {assessment && (
-                <div className="border border-zinc-800 bg-zinc-950/50 mb-8">
-                    <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div className="border-2 border-black bg-white mb-12">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-bold text-zinc-100">
-                                {assessment.repo_owner}/{assessment.repo_name}
+                            <h2 className="font-serif text-xl font-bold text-black">
+                                {assessment.repo_owner} <span className="text-[#999]">/</span> {assessment.repo_name}
                             </h2>
-                            <p className="text-zinc-500 text-sm mt-1">
+                            <p className="font-mono text-xs text-[#555] mt-1 uppercase tracking-widest">
                                 Classification: {assessment.final_risk_classification.replace('_', ' ')}
-                                (Score: {assessment.final_risk_score})
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-zinc-400" />
-                            <span className="text-zinc-400 text-sm">Report Generator</span>
+                        <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-black" />
+                            <span className="font-mono text-xs text-black uppercase tracking-widest">Generator_Ready</span>
                         </div>
                     </div>
 
                     {/* Not approved warning */}
                     {!assessment.approved_for_report && (
-                        <div className="px-6 py-4 bg-amber-950/20 border-b border-amber-900/50 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div className="p-6 bg-[#FFF5F0] border-b border-[#FF4F00]/20 flex items-start gap-4">
+                            <AlertCircle className="w-6 h-6 text-[#FF4F00] flex-shrink-0" />
                             <div>
-                                <p className="text-amber-400 font-medium">Not Approved for Report</p>
-                                <p className="text-zinc-400 text-sm mt-1">
+                                <h3 className="font-serif text-lg font-bold text-[#FF4F00]">Approvals Pending</h3>
+                                <p className="font-mono text-xs text-black mt-1">
                                     {assessment.requires_manual_review
-                                        ? 'This assessment requires manual review before generating a report.'
-                                        : 'Please complete context verification to approve for report generation.'}
+                                        ? 'Manual review required before generation.'
+                                        : 'Complete context verification to unlock generator.'}
                                 </p>
                             </div>
                         </div>
@@ -225,10 +225,10 @@ export default function ReportGeneratorPage() {
 
             {/* Existing Report */}
             {report && (
-                <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-4">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                        <h3 className="text-lg font-medium text-zinc-200">Report Ready</h3>
+                <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center gap-3 mb-6">
+                        <CheckCircle2 className="w-6 h-6 text-[#047857]" />
+                        <h3 className="font-serif text-2xl font-bold text-black">Report Generated</h3>
                     </div>
                     <ReportDownloadCard
                         reportId={report.report_id}
@@ -247,57 +247,64 @@ export default function ReportGeneratorPage() {
 
             {/* Generate Button */}
             {!report && assessment?.approved_for_report && (
-                <div className="border border-zinc-800 bg-zinc-950/50 p-8 text-center mb-8">
-                    <FileText className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-zinc-200 mb-2">
-                        Generate Compliance Report
+                <div className="border-2 border-black bg-white p-12 text-center mb-12">
+                    <div className="w-16 h-16 bg-black text-white mx-auto flex items-center justify-center mb-6">
+                        <FileText className="w-8 h-8" />
+                    </div>
+
+                    <h3 className="font-serif text-3xl font-bold text-black mb-4">
+                        Generate Official Documentation
                     </h3>
-                    <p className="text-zinc-500 text-sm mb-6 max-w-md mx-auto">
-                        Create a professional 20-page PDF report documenting your AI system's
-                        EU AI Act compliance assessment.
+                    <p className="font-mono text-sm text-[#555] mb-8 max-w-md mx-auto leading-relaxed">
+                        Compile all verification data into a signed 20-page PDF report suitable for regulatory auditing.
                     </p>
 
                     {isGenerating ? (
                         <div className="max-w-xs mx-auto">
-                            <div className="flex items-center justify-center gap-2 mb-3">
-                                <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
-                                <span className="text-zinc-400">Generating report...</span>
+                            <div className="flex items-center justify-center gap-3 mb-4 font-mono text-xs uppercase tracking-widest text-[#555]">
+                                <Loader2 className="w-4 h-4 text-[#FF4F00] animate-spin" />
+                                <span>Compiling_Data...</span>
                             </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-4 border border-black p-0.5 bg-white">
                                 <div
-                                    className="h-full bg-blue-500 transition-all duration-300"
+                                    className="h-full bg-black transition-all duration-300"
                                     style={{ width: `${progress}%` }}
                                 />
                             </div>
-                            <p className="text-zinc-600 text-xs mt-2">
-                                This may take a few seconds
-                            </p>
+                            <div className="flex justify-between mt-2 font-mono text-[10px] text-[#999]">
+                                <span>START</span>
+                                <span>FINISH</span>
+                            </div>
                         </div>
                     ) : (
                         <button
                             onClick={handleGenerate}
-                            className="flex items-center gap-2 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-950 font-semibold transition-colors mx-auto"
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-black hover:bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                         >
                             <FileText className="w-5 h-5" />
-                            Generate PDF Report
+                            Generate_PDF_Report
+                            <ArrowRight className="w-4 h-4" />
                         </button>
                     )}
 
                     {error && (
-                        <div className="mt-4 bg-red-950/20 border border-red-900/50 p-3 text-left max-w-md mx-auto">
-                            <p className="text-red-400 text-sm">{error}</p>
+                        <div className="mt-8 bg-[#FFF5F0] border border-[#FF4F00] p-4 inline-block text-left max-w-md">
+                            <p className="font-mono text-xs text-[#FF4F00] font-bold uppercase mb-1">Error_Log:</p>
+                            <p className="font-mono text-xs text-black">{error}</p>
                         </div>
                     )}
                 </div>
             )}
 
             {/* Storage Status */}
-            <StorageStatus />
+            <div className="mb-12">
+                <StorageStatus />
+            </div>
 
             {/* Report Info */}
-            <div className="mt-8 border border-zinc-800 bg-zinc-950/50 p-6">
-                <h4 className="text-zinc-200 font-medium mb-4">What's Included in the Report</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-8">
+                <h4 className="font-serif text-lg font-bold text-black mb-6">Included in Documentation</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
                     {[
                         'Executive Summary',
                         'System Overview',
@@ -308,15 +315,16 @@ export default function ReportGeneratorPage() {
                         'Appendices',
                         'Compliance Certificate',
                     ].map((section, i) => (
-                        <div key={i} className="flex items-center gap-2 text-zinc-400 text-sm">
-                            <CheckCircle2 className="w-4 h-4 text-zinc-600" />
+                        <div key={i} className="flex items-center gap-3 font-mono text-sm text-[#555]">
+                            <div className="w-1.5 h-1.5 bg-black" />
                             {section}
                         </div>
                     ))}
                 </div>
-                <p className="text-zinc-600 text-xs mt-4">
-                    Reports are digitally signed and stored securely for 30 days.
-                </p>
+                <div className="mt-8 pt-6 border-t border-[#E5E5E5] flex items-center gap-2 font-mono text-xs text-[#999] uppercase tracking-wide">
+                    <CheckCircle2 className="w-4 h-4 text-[#047857]" />
+                    Reports Are Digitally Signed & Stored For 30 Days
+                </div>
             </div>
         </div>
     );
