@@ -8,32 +8,27 @@ interface RiskScoreGaugeProps {
 export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugeProps) {
     // Determine color based on score
     let colorClasses: string;
-    let bgClasses: string;
     let label: string;
 
     if (score >= 81) {
-        colorClasses = 'text-red-400';
-        bgClasses = 'bg-red-500';
-        label = 'Unacceptable';
+        colorClasses = 'text-[#FF4F00]';
+        label = 'UNACCEPTABLE';
     } else if (score >= 51) {
-        colorClasses = 'text-orange-400';
-        bgClasses = 'bg-orange-500';
-        label = 'High Risk';
+        colorClasses = 'text-[#FF4F00]';
+        label = 'HIGH_RISK';
     } else if (score >= 21) {
-        colorClasses = 'text-amber-400';
-        bgClasses = 'bg-amber-500';
-        label = 'Limited Risk';
+        colorClasses = 'text-black';
+        label = 'LIMITED_RISK';
     } else {
-        colorClasses = 'text-emerald-400';
-        bgClasses = 'bg-emerald-500';
-        label = 'Minimal Risk';
+        colorClasses = 'text-[#999]';
+        label = 'MINIMAL_RISK';
     }
 
     // Size configurations
     const sizeConfig = {
-        sm: { width: 80, height: 80, strokeWidth: 6, fontSize: 'text-lg' },
-        md: { width: 120, height: 120, strokeWidth: 8, fontSize: 'text-2xl' },
-        lg: { width: 160, height: 160, strokeWidth: 10, fontSize: 'text-3xl' },
+        sm: { width: 80, height: 80, strokeWidth: 4, fontSize: 'text-sm' },
+        md: { width: 120, height: 120, strokeWidth: 6, fontSize: 'text-xl' },
+        lg: { width: 160, height: 160, strokeWidth: 8, fontSize: 'text-2xl' },
     };
 
     const config = sizeConfig[size];
@@ -42,7 +37,7 @@ export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugePro
     const strokeDashoffset = circumference - (score / 100) * circumference;
 
     return (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-4">
             <div className="relative" style={{ width: config.width, height: config.height }}>
                 {/* Background circle */}
                 <svg
@@ -55,9 +50,9 @@ export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugePro
                         cy={config.height / 2}
                         r={radius}
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#E5E5E5"
                         strokeWidth={config.strokeWidth}
-                        className="text-zinc-800"
+                        className="opacity-50"
                     />
                     {/* Progress circle */}
                     <circle
@@ -67,7 +62,7 @@ export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugePro
                         fill="none"
                         stroke="currentColor"
                         strokeWidth={config.strokeWidth}
-                        strokeLinecap="round"
+                        strokeLinecap="butt" // Sharp edges
                         strokeDasharray={circumference}
                         strokeDashoffset={strokeDashoffset}
                         className={colorClasses}
@@ -76,24 +71,17 @@ export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugePro
                 </svg>
 
                 {/* Score text */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className={`font-mono font-bold ${config.fontSize} ${colorClasses}`}>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className={`font-mono font-bold ${config.fontSize} ${colorClasses} tracking-tighter`}>
                         {score}
                     </span>
+                    <span className="text-[10px] uppercase font-mono text-[#999] tracking-widest">Score</span>
                 </div>
             </div>
 
             {/* Label */}
-            <div className={`text-sm font-medium ${colorClasses}`}>
+            <div className={`text-xs font-mono uppercase tracking-widest font-bold border px-2 py-1 ${colorClasses} border-current`}>
                 {label}
-            </div>
-
-            {/* Score bar alternative view */}
-            <div className="w-full max-w-[160px] h-2 bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                    className={`h-full ${bgClasses} transition-all duration-500`}
-                    style={{ width: `${score}%` }}
-                />
             </div>
         </div>
     );

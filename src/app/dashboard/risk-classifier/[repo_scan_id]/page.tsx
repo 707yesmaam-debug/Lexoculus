@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye } from 'lucide-react';
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -77,7 +78,7 @@ export default function RiskClassifierPage() {
                         repo_owner: assessmentData.repo_owner,
                         primary_language: assessmentData.primary_language,
                         is_ai_system: true, // If assessment exists, it's an AI system
-                        confidence_score: 0, // Will be fetched separately if needed
+                        confidence_score: 0,
                     });
                 } else {
                     // Fetch capability analysis
@@ -150,9 +151,11 @@ export default function RiskClassifierPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin mb-4" />
-                <p className="text-zinc-500">Loading analysis data...</p>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-black border-t-[#FF4F00] animate-spin rounded-full" />
+                    <p className="font-mono text-sm text-[#555] tracking-widest uppercase">Initializing_Risk_Matrix...</p>
+                </div>
             </div>
         );
     }
@@ -160,17 +163,16 @@ export default function RiskClassifierPage() {
     // Error state
     if (error && !analysis) {
         return (
-            <div className="max-w-4xl mx-auto py-16">
-                <div className="bg-red-950/20 border border-red-900/50 p-6 text-center">
-                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
-                    <p className="text-zinc-400 mb-4">{error}</p>
+            <div className="max-w-5xl mx-auto p-12">
+                <div className="bg-[#FFF5F0] border-2 border-[#FF4F00] p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-[#FF4F00] mx-auto mb-6" />
+                    <h2 className="font-serif text-3xl font-bold text-black mb-4">Assessment Error</h2>
+                    <p className="font-mono text-black mb-8">{error}</p>
                     <Button
-                        variant="secondary"
                         onClick={() => router.push('/dashboard/scanner')}
-                        className="mt-4 border-zinc-800 text-zinc-300 hover:bg-zinc-800"
+                        className="bg-black text-white hover:bg-[#FF4F00] rounded-none font-mono uppercase tracking-widest px-8"
                     >
-                        Back to Scanner
+                        Return_To_Scanner
                     </Button>
                 </div>
             </div>
@@ -178,113 +180,105 @@ export default function RiskClassifierPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-8 md:p-12">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-8">
-                <div>
-                    <Button
-                        variant="ghost"
-                        onClick={() => router.push(`/dashboard/analyzer/${repo_scan_id}`)}
-                        className="text-zinc-500 hover:text-zinc-300 mb-4 pl-0 hover:bg-transparent"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Capability Analysis
-                    </Button>
+            <div className="mb-12 border-b-2 border-black pb-8">
+                <Link href={`/dashboard/analyzer/${repo_scan_id}`} className="inline-flex items-center text-[#555] hover:text-black font-mono text-xs uppercase tracking-widest mb-6 transition-colors">
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back_to_Analysis
+                </Link>
 
-                    <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
-                        Risk Classification
-                    </h1>
-                    <p className="text-zinc-500">
-                        EU AI Act Annex III Risk Mapping
-                    </p>
-                </div>
+                <div className="flex flex-col md:flex-row items-end justify-between gap-6">
+                    <div>
+                        <div className="font-mono text-xs text-[#FF4F00] mb-2 tracking-widest uppercase">PHASE_04 // RISK_MAPPING</div>
+                        <h1 className="font-serif text-5xl font-bold text-black tracking-tight mb-4">
+                            Risk Classification.
+                        </h1>
+                        <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                            EU AI Act Annex III alignment and heuristic risk tier determination.
+                        </p>
+                    </div>
 
-                <div className="flex gap-3 mt-8 sm:mt-0">
-                    <Button
-                        onClick={() => {
-                            if (isPro) {
-                                window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank');
-                            } else {
-                                router.push('/pricing');
-                            }
-                        }}
-                        variant={isPro ? "default" : "outline"}
-                        className={`gap-2 border ${isPro
-                            ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-emerald-900/20 border-emerald-500/20 hover:border-emerald-400/30'
-                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border-zinc-700'
-                            }`}
-                    >
-                        {isPro ? (
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        ) : (
-                            <Lock className="w-4 h-4 mr-2" />
-                        )}
-                        {isPro ? 'Download Trust Pack' : 'Upgrade to Unlock'}
-                    </Button>
+                    <div className="flex gap-4">
+                        <Button
+                            onClick={() => {
+                                if (isPro) {
+                                    window.open(`/api/reports/trust-pack/${repo_scan_id}`, '_blank');
+                                } else {
+                                    router.push('/pricing');
+                                }
+                            }}
+                            className={`rounded-none font-mono text-xs uppercase tracking-widest border border-black h-10 px-6 ${isPro
+                                    ? 'bg-black text-white hover:bg-[#FF4F00]'
+                                    : 'bg-white text-[#999] hover:text-black hover:border-black'
+                                }`}
+                        >
+                            {isPro ? (
+                                <>Download_Trust_Pack</>
+                            ) : (
+                                <><Lock className="w-3 h-3 mr-2" /> Upgrade_To_Access</>
+                            )}
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             {/* Repo Info */}
             {analysis && (
-                <div className="border border-zinc-800 bg-zinc-950/50 mb-8">
-                    <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div className="border-2 border-black bg-white mb-12">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-bold text-zinc-100">
-                                {analysis.repo_owner}/{analysis.repo_name}
+                            <h2 className="font-serif text-2xl font-bold text-black items-center flex gap-2">
+                                {analysis.repo_owner} <span className="text-[#999]">/</span> {analysis.repo_name}
                             </h2>
-                            <p className="text-zinc-500 text-sm mt-1">
-                                {analysis.primary_language || 'Unknown language'}
-                            </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Scale className="w-5 h-5 text-zinc-400" />
-                            <span className="text-zinc-400 text-sm">Annex III Assessment</span>
+                        <div className="flex items-center gap-3">
+                            <Scale className="w-5 h-5 text-black" />
+                            <span className="font-mono text-xs text-black uppercase tracking-widest">Annex III Assessment</span>
                         </div>
                     </div>
 
                     {/* Classification Actions */}
                     {!assessment && (
-                        <div className="px-6 py-4">
+                        <div className="p-8 flex flex-col items-center text-center">
+                            <Scale className="w-16 h-16 text-black mb-6" />
+                            <h3 className="font-serif text-2xl font-bold text-black mb-2">Ready to Classify</h3>
+                            <p className="font-mono text-sm text-[#555] mb-8 max-w-md">
+                                Perform risk mapping against EU AI Act Database of High-Risk Systems.
+                            </p>
+
                             <Button
                                 onClick={handleClassify}
                                 disabled={isClassifying}
-                                className="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold w-full sm:w-auto"
+                                className="bg-black hover:bg-[#FF4F00] text-white rounded-none h-12 px-8 font-mono text-sm uppercase tracking-widest w-full max-w-xs transition-all"
                             >
                                 {isClassifying ? (
                                     <>
                                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                        Classifying...
+                                        MAPPING_RISKS...
                                     </>
                                 ) : (
                                     <>
-                                        <Scale className="w-5 h-5 mr-2" />
-                                        Classify Risk
+                                        INITIATE_RISK_MAPPING
                                     </>
                                 )}
                             </Button>
-
-                            {isClassifying && (
-                                <p className="text-zinc-500 text-sm mt-2">
-                                    Mapping capabilities against EU AI Act Annex III articles...
-                                </p>
-                            )}
                         </div>
                     )}
 
                     {/* Assessment exists - show proceed button */}
                     {assessment && (
-                        <div className="px-6 py-4 flex items-center justify-between">
-                            <div className="text-sm text-zinc-500">
-                                Assessed: {new Date(assessment.assessed_at).toLocaleString()}
+                        <div className="p-6 bg-white flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-2 font-mono text-xs text-[#555]">
+                                <span>ASSESSED:</span>
+                                <span>{new Date(assessment.assessed_at).toLocaleString()}</span>
                             </div>
+
                             <Button
                                 onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
-                                className="bg-blue-600 hover:bg-blue-500 text-white"
+                                className="bg-[#FF4F00] hover:bg-black text-white rounded-none h-10 px-6 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
                             >
-                                Next: Verify Context
-                                <ArrowRight className="w-4 h-4 ml-2" />
+                                Verify_Context <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
                     )}
@@ -293,26 +287,28 @@ export default function RiskClassifierPage() {
 
             {/* Error Alert */}
             {error && (
-                <div className="mb-8 bg-red-950/20 border border-red-900/50 p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-red-400 font-medium">Classification Failed</p>
-                        <p className="text-zinc-400 text-sm mt-1">{error}</p>
+                <div className="mb-12 bg-[#FFF5F0] border-l-4 border-[#FF4F00] p-6 flex items-start gap-4">
+                    <AlertCircle className="w-6 h-6 text-[#FF4F00] flex-shrink-0" />
+                    <div className="flex-1">
+                        <h3 className="font-serif text-lg font-bold text-[#FF4F00]">Classification Failed</h3>
+                        <p className="font-mono text-xs text-black mt-1 mb-0">{error}</p>
                     </div>
                 </div>
             )}
 
             {/* Assessment Results */}
             {assessment && (
-                <RiskClassificationCard
-                    classification={assessment.risk_classification}
-                    score={assessment.risk_score}
-                    narrative={assessment.risk_narrative}
-                    matchedArticles={assessment.matched_annex_iii_articles}
-                    keyFindings={assessment.key_findings}
-                    manualReviewNeeded={assessment.manual_review_needed}
-                    manualReviewReason={assessment.manual_review_reason}
-                />
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <RiskClassificationCard
+                        classification={assessment.risk_classification}
+                        score={assessment.risk_score}
+                        narrative={assessment.risk_narrative}
+                        matchedArticles={assessment.matched_annex_iii_articles}
+                        keyFindings={assessment.key_findings}
+                        manualReviewNeeded={assessment.manual_review_needed}
+                        manualReviewReason={assessment.manual_review_reason}
+                    />
+                </div>
             )}
         </div>
     );

@@ -1,10 +1,7 @@
 'use client';
 
-import { AlertTriangle, Shield, ShieldAlert, ShieldCheck, ShieldX, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Shield, ShieldAlert, ShieldCheck, ShieldX, AlertCircle, FileText } from 'lucide-react';
 import RiskScoreGauge from './RiskScoreGauge';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -31,55 +28,25 @@ interface RiskClassificationCardProps {
 function getRiskIcon(classification: RiskClassification) {
     switch (classification) {
         case 'UNACCEPTABLE':
-            return <ShieldX className="w-8 h-8 text-red-500" />;
+            return <ShieldX className="w-12 h-12 text-[#FF4F00]" />;
         case 'HIGH_RISK':
-            return <ShieldAlert className="w-8 h-8 text-orange-500" />;
+            return <ShieldAlert className="w-12 h-12 text-[#FF4F00]" />;
         case 'LIMITED_RISK':
-            return <Shield className="w-8 h-8 text-amber-500" />;
+            return <Shield className="w-12 h-12 text-black" />;
         case 'MINIMAL_RISK':
-            return <ShieldCheck className="w-8 h-8 text-emerald-500" />;
+            return <ShieldCheck className="w-12 h-12 text-[#999]" />;
     }
 }
 
-function getRiskColors(classification: RiskClassification) {
+function getRiskColor(classification: RiskClassification) {
     switch (classification) {
         case 'UNACCEPTABLE':
-            return {
-                bg: 'bg-red-950/10',
-                border: 'border-red-900/50',
-                text: 'text-red-500',
-                badge: 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-900/50',
-            };
         case 'HIGH_RISK':
-            return {
-                bg: 'bg-orange-950/10',
-                border: 'border-orange-900/50',
-                text: 'text-orange-500',
-                badge: 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border-orange-900/50',
-            };
+            return 'text-[#FF4F00] border-[#FF4F00]';
         case 'LIMITED_RISK':
-            return {
-                bg: 'bg-amber-950/10',
-                border: 'border-amber-900/50',
-                text: 'text-amber-500',
-                badge: 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-900/50',
-            };
-        case 'MINIMAL_RISK':
-            return {
-                bg: 'bg-emerald-950/10',
-                border: 'border-emerald-900/50',
-                text: 'text-emerald-500',
-                badge: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-900/50',
-            };
-    }
-}
-
-function getRiskLabel(classification: RiskClassification) {
-    switch (classification) {
-        case 'UNACCEPTABLE': return 'UNACCEPTABLE RISK';
-        case 'HIGH_RISK': return 'HIGH RISK';
-        case 'LIMITED_RISK': return 'LIMITED RISK';
-        case 'MINIMAL_RISK': return 'MINIMAL RISK';
+            return 'text-black border-black';
+        default:
+            return 'text-[#999] border-[#999]';
     }
 }
 
@@ -92,50 +59,49 @@ export default function RiskClassificationCard({
     manualReviewNeeded,
     manualReviewReason,
 }: RiskClassificationCardProps) {
-    const colors = getRiskColors(classification);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-12">
             {/* Main Risk Card */}
-            <Card className={`${colors.border} ${colors.bg}`}>
-                <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row items-center gap-8">
-                        {/* Risk Icon & Label */}
-                        <div className="flex flex-col items-center min-w-[160px]">
-                            {getRiskIcon(classification)}
-                            <h2 className={`text-xl font-bold mt-3 ${colors.text}`}>
-                                {getRiskLabel(classification)}
-                            </h2>
-                        </div>
+            <div className={`border-2 p-8 ${classification.includes('HIGH') || classification.includes('UNACCEPTABLE') ? 'border-[#FF4F00] bg-[#FFF5F0]' : 'border-black bg-white'}`}>
+                <div className="flex flex-col md:flex-row items-center gap-12">
 
-                        {/* Divider */}
-                        <Separator orientation="vertical" className="hidden md:block h-24 bg-zinc-800" />
-
-                        {/* Score Gauge */}
-                        <div className="flex-shrink-0">
-                            <RiskScoreGauge score={score} size="md" />
-                        </div>
-
-                        {/* Divider */}
-                        <Separator orientation="vertical" className="hidden md:block h-24 bg-zinc-800" />
-
-                        {/* Narrative */}
-                        <div className="flex-1">
-                            <p className="text-zinc-300 text-sm leading-relaxed">
-                                {narrative}
-                            </p>
-                        </div>
+                    {/* Gauge */}
+                    <div className="flex-shrink-0">
+                        <RiskScoreGauge score={score} size="lg" />
                     </div>
-                </CardContent>
-            </Card>
+
+                    {/* Divider */}
+                    <div className="hidden md:block w-px h-32 bg-[#E5E5E5]" />
+
+                    {/* Classification & Narrative */}
+                    <div className="flex-1 text-center md:text-left">
+                        <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
+                            {getRiskIcon(classification)}
+                            <div>
+                                <h2 className={`text-4xl font-serif font-bold tracking-tight ${classification.includes('HIGH') || classification.includes('UNACCEPTABLE') ? 'text-[#FF4F00]' : 'text-black'}`}>
+                                    {classification.replace('_', ' ')}
+                                </h2>
+                                <p className="font-mono text-xs text-[#555] uppercase tracking-widest mt-1">
+                                    EU AI ACT // ANNEX III
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="font-mono text-sm leading-relaxed text-black max-w-2xl">
+                            {narrative}
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             {/* Manual Review Warning */}
             {manualReviewNeeded && (
-                <div className="bg-amber-950/20 border border-amber-900/50 rounded-lg p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="border border-[#FF4F00] bg-[#FFF5F0] p-6 flex items-start gap-4">
+                    <AlertCircle className="w-6 h-6 text-[#FF4F00] flex-shrink-0" />
                     <div>
-                        <p className="text-amber-400 font-medium text-sm">Manual Review Recommended</p>
-                        <p className="text-zinc-400 text-sm mt-1">
+                        <h4 className="font-serif text-lg font-bold text-[#FF4F00]">Manual Review Recommended</h4>
+                        <p className="font-mono text-xs text-black mt-2">
                             {manualReviewReason || 'This assessment may require human verification.'}
                         </p>
                     </div>
@@ -144,75 +110,73 @@ export default function RiskClassificationCard({
 
             {/* Matched Articles */}
             {matchedArticles.length > 0 && (
-                <Card>
-                    <CardHeader className="pb-3 border-b border-zinc-800">
-                        <div className="flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-zinc-400" />
-                            <CardTitle className="text-base font-medium text-zinc-200">Matched Annex III Articles</CardTitle>
-                            <Badge variant="secondary" className="ml-auto font-mono">
-                                {matchedArticles.length} match{matchedArticles.length !== 1 ? 'es' : ''}
-                            </Badge>
+                <div className="border-2 border-black bg-white">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-black" />
+                            <h3 className="font-serif text-xl font-bold text-black">Matched Articles</h3>
                         </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <div className="divide-y divide-zinc-800">
-                            {matchedArticles.map((article, i) => {
-                                const articleColors = getRiskColors(article.riskTier);
-                                return (
-                                    <div key={i} className="p-4">
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-zinc-200 font-medium">{article.article}</span>
-                                                    <Badge variant="outline" className={`${articleColors.badge} border`}>
-                                                        {article.riskTier.replace('_', ' ')}
-                                                    </Badge>
-                                                    {article.applicable === 'conditional' && (
-                                                        <Badge variant="outline" className="text-zinc-400 border-zinc-700">
-                                                            Conditional
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <p className="text-zinc-400 text-sm">{article.category}</p>
-                                                <p className="text-zinc-500 text-xs mt-2">{article.reasoning}</p>
-                                            </div>
+                        <span className="font-mono text-xs text-white bg-black px-2 py-1 uppercase tracking-widest">
+                            {matchedArticles.length} Match{matchedArticles.length !== 1 ? 'es' : ''}
+                        </span>
+                    </div>
+
+                    <div className="divide-y divide-black">
+                        {matchedArticles.map((article, i) => (
+                            <div key={i} className="p-6 hover:bg-[#FAFAFA] transition-colors">
+                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <span className="font-serif font-bold text-lg text-black">{article.article}</span>
+                                            <span className={`font-mono text-[10px] uppercase border px-2 py-0.5 ${getRiskColor(article.riskTier)}`}>
+                                                {article.riskTier.replace('_', ' ')}
+                                            </span>
+                                            {article.applicable === 'conditional' && (
+                                                <span className="font-mono text-[10px] uppercase border border-[#999] text-[#999] px-2 py-0.5">
+                                                    Conditional
+                                                </span>
+                                            )}
                                         </div>
+                                        <p className="font-mono text-xs text-[#555] uppercase tracking-wide mb-3">{article.category}</p>
+                                        <p className="font-mono text-sm text-black mb-4">{article.reasoning}</p>
+
                                         {article.requirements && article.requirements.length > 0 && (
-                                            <div className="mt-3 pt-3 border-t border-zinc-800">
-                                                <p className="text-xs text-zinc-500 mb-1">Requirements:</p>
-                                                <ul className="text-xs text-zinc-400 list-disc list-inside space-y-0.5">
-                                                    {article.requirements.slice(0, 3).map((req, j) => (
-                                                        <li key={j}>{req}</li>
+                                            <div className="bg-[#F5F5F5] p-4 border border-[#E5E5E5]">
+                                                <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-2">Requirements</p>
+                                                <ul className="space-y-1">
+                                                    {article.requirements.map((req, j) => (
+                                                        <li key={j} className="font-mono text-xs text-black flex items-start gap-2">
+                                                            <span className="mt-1 w-1 h-1 bg-black flex-shrink-0" />
+                                                            {req}
+                                                        </li>
                                                     ))}
                                                 </ul>
                                             </div>
                                         )}
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
 
             {/* Key Findings */}
-            <Card>
-                <CardHeader className="pb-3 border-b border-zinc-800">
-                    <CardTitle className="text-base font-medium text-zinc-200">Key Findings</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                    <ul className="space-y-2">
+            <div className="border-2 border-black bg-white">
+                <div className="px-6 py-4 border-b border-black bg-[#F5F5F5]">
+                    <h3 className="font-serif text-xl font-bold text-black">Key Findings</h3>
+                </div>
+                <div className="p-6">
+                    <ul className="space-y-3">
                         {keyFindings.map((finding, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                                <span className="text-zinc-500 mt-1">•</span>
-                                <span className={finding.includes('⚠️') ? 'text-amber-400' : 'text-zinc-300'}>
-                                    {finding}
-                                </span>
+                            <li key={i} className="flex items-start gap-3 font-mono text-sm text-black">
+                                <span className="mt-1.5 w-1.5 h-1.5 bg-[#FF4F00] flex-shrink-0" />
+                                {finding}
                             </li>
                         ))}
                     </ul>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

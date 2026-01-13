@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, ArrowRight, FileText } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, CheckCircle2, ArrowRight, FileText, Lock } from 'lucide-react';
 import QuestionSet from '@/components/QuestionSet';
 import FinalAssessmentCard from '@/components/FinalAssessmentCard';
+import { Button } from "@/components/ui/button";
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -178,9 +179,11 @@ export default function ContextVerifierPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin mb-4" />
-                <p className="text-zinc-500">Loading verification data...</p>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-black border-t-[#FF4F00] animate-spin rounded-full" />
+                    <p className="font-mono text-sm text-[#555] tracking-widest uppercase">Loading_Questionnaire...</p>
+                </div>
             </div>
         );
     }
@@ -188,63 +191,64 @@ export default function ContextVerifierPage() {
     // Error state
     if (error && !questionsData && !finalAssessment) {
         return (
-            <div className="max-w-4xl mx-auto py-16">
-                <div className="bg-red-950/20 border border-red-900/50 p-6 text-center">
-                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
-                    <p className="text-zinc-400 mb-4">{error}</p>
-                    <button
+            <div className="max-w-5xl mx-auto p-12">
+                <div className="bg-[#FFF5F0] border-2 border-[#FF4F00] p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-[#FF4F00] mx-auto mb-6" />
+                    <h2 className="font-serif text-3xl font-bold text-black mb-4">Verification Error</h2>
+                    <p className="font-mono text-black mb-8">{error}</p>
+                    <Button
                         onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                        className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="bg-black text-white hover:bg-[#FF4F00] rounded-none font-mono uppercase tracking-widest px-8"
                     >
-                        Back to Risk Classifier
-                    </button>
+                        Return_To_Classifier
+                    </Button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-8 md:p-12">
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-12 border-b-2 border-black pb-8">
                 <button
                     onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                    className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+                    className="flex items-center gap-2 text-[#555] hover:text-black transition-colors mb-6 font-mono text-xs uppercase tracking-widest"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Risk Classification
+                    Back_to_Risk_Classification
                 </button>
 
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
-                    Context Verification
+                <div className="font-mono text-xs text-[#FF4F00] mb-2 tracking-widest uppercase">PHASE_04a // CONTEXTUAL_ANALYSIS</div>
+                <h1 className="text-5xl font-serif font-bold text-black tracking-tight mb-4">
+                    Context Verification.
                 </h1>
-                <p className="text-zinc-500">
-                    Verify your AI system context for accurate compliance assessment
+                <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                    Verify AI system operational context for accurate regulatory compliance assessment.
                 </p>
             </div>
 
             {/* Show Final Assessment if exists */}
             {finalAssessment && (
-                <>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Repo Info */}
-                    <div className="border border-zinc-800 bg-zinc-950/50 mb-8">
+                    <div className="border-2 border-black bg-white mb-12">
                         <div className="px-6 py-4 flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-zinc-100">
+                                <h2 className="font-serif text-xl font-bold text-black">
                                     {questionsData?.repo_owner || 'repo'}/{questionsData?.repo_name || 'name'}
                                 </h2>
-                                <p className="text-zinc-500 text-sm mt-1">
-                                    Context verification complete
+                                <p className="font-mono text-xs text-[#555] mt-1 uppercase tracking-widest">
+                                    Verification Complete
                                 </p>
                             </div>
                             {finalAssessment.approved_for_report && (
                                 <button
                                     onClick={() => router.push(`/dashboard/report/${repo_scan_id}`)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
+                                    className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white font-mono text-xs uppercase tracking-widest transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                                 >
                                     <FileText className="w-4 h-4" />
-                                    Generate Report
+                                    Generate_Report
                                     <ArrowRight className="w-4 h-4" />
                                 </button>
                             )}
@@ -262,50 +266,50 @@ export default function ContextVerifierPage() {
                         requiresManualReview={finalAssessment.requires_manual_review}
                         escalationReason={finalAssessment.escalation_reason}
                     />
-                </>
+                </div>
             )}
 
             {/* Show Questionnaire if no final assessment */}
             {!finalAssessment && questionsData && (
                 <>
                     {/* Repo Info Card */}
-                    <div className="border border-zinc-800 bg-zinc-950/50 mb-8">
-                        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                    <div className="border-2 border-black bg-white mb-12">
+                        <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-zinc-100">
+                                <h2 className="font-serif text-xl font-bold text-black">
                                     {questionsData.repo_owner}/{questionsData.repo_name}
                                 </h2>
-                                <p className="text-zinc-500 text-sm mt-1">
+                                <p className="font-mono text-xs text-[#555] mt-1 uppercase tracking-widest">
                                     Preliminary: {questionsData.preliminary_classification.replace('_', ' ')}
                                     (Score: {questionsData.preliminary_score})
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-5 h-5 text-zinc-400" />
-                                <span className="text-zinc-400 text-sm">Context Verification</span>
+                                <CheckCircle2 className="w-5 h-5 text-black" />
+                                <span className="font-mono text-xs text-black uppercase tracking-widest">Context Verification</span>
                             </div>
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="px-6 py-4">
-                            <div className="flex items-center justify-between text-sm mb-2">
-                                <span className="text-zinc-400">Progress</span>
-                                <span className="text-zinc-200 font-mono">{completionPercentage}%</span>
+                        <div className="px-6 py-6">
+                            <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest mb-2">
+                                <span className="text-[#555]">Completion_Status</span>
+                                <span className="text-black font-bold">{completionPercentage}%</span>
                             </div>
-                            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                            <div className="h-4 border border-black p-0.5 bg-white">
                                 <div
-                                    className="h-full bg-blue-500 transition-all duration-300"
+                                    className="h-full bg-black transition-all duration-300"
                                     style={{ width: `${completionPercentage}%` }}
                                 />
                             </div>
-                            <p className="text-zinc-600 text-xs mt-2">
+                            <p className="text-[#999] font-mono text-xs mt-2 uppercase tracking-wide">
                                 {answeredQuestions} of {totalQuestions} questions answered
                             </p>
                         </div>
                     </div>
 
                     {/* Question Sets */}
-                    <div className="space-y-4 mb-8">
+                    <div className="space-y-8 mb-12">
                         {questionsData.question_sets.map((set, idx) => (
                             <QuestionSet
                                 key={set.set_id}
@@ -320,32 +324,32 @@ export default function ContextVerifierPage() {
 
                     {/* Error Alert */}
                     {error && (
-                        <div className="mb-8 bg-red-950/20 border border-red-900/50 p-4 flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div className="mb-8 bg-[#FFF5F0] border border-[#FF4F00] p-4 flex items-start gap-4">
+                            <AlertCircle className="w-5 h-5 text-[#FF4F00] flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-red-400 font-medium">Verification Failed</p>
-                                <p className="text-zinc-400 text-sm mt-1">{error}</p>
+                                <p className="font-serif text-lg font-bold text-[#FF4F00]">Verification Failed</p>
+                                <p className="font-mono text-xs text-black mt-1">{error}</p>
                             </div>
                         </div>
                     )}
 
                     {/* Submit Button */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-end sticky bottom-8">
                         <button
                             onClick={handleSubmit}
                             disabled={!isComplete || isSubmitting}
-                            className="flex items-center gap-2 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-950 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-3 px-8 py-4 bg-black hover:bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#999] shadow-[6px_6px_0px_0px_rgba(255,255,255,1),_6px_6px_0px_2px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1),_2px_2px_0px_2px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]"
                         >
                             {isSubmitting ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin" />
-                                    Verifying...
+                                    Submitting_Analysis...
                                 </>
                             ) : (
                                 <>
                                     <CheckCircle2 className="w-5 h-5" />
-                                    Complete Verification
-                                    <ArrowRight className="w-4 h-4" />
+                                    Finalize_Verification
+                                    <ArrowRight className="w-5 h-5" />
                                 </>
                             )}
                         </button>

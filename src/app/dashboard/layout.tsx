@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation'; // Added useParams
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import OpticalLogo from '@/components/OpticalLogo';
@@ -13,7 +13,10 @@ export default function DashboardLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
+    const params = useParams(); // Get params
     const [email, setEmail] = useState<string | null>(null);
+
+    const repo_scan_id = params?.repo_scan_id as string | undefined;
 
     useEffect(() => {
         const supabase = createClient();
@@ -47,11 +50,36 @@ export default function DashboardLayout({
         router.push('/auth/login');
     };
 
+    // Dynamic Navigation items
     const navItems = [
-        { name: '01_SCANNER', href: '/dashboard/scanner', status: '[ACTIVE]' },
-        { name: '02_INTEGRATIONS', href: '/dashboard/integrations', status: '[LINKED]' },
-        { name: '03_ANALYSIS', href: '#', status: '[LOCKED]', disabled: true },
-        { name: '04_REPORTS', href: '#', status: '[LOCKED]', disabled: true },
+        {
+            name: '01_SCANNER',
+            href: '/dashboard/scanner',
+            status: '[ACTIVE]',
+            isActive: pathname === '/dashboard/scanner'
+        },
+        {
+            name: '02_INTEGRATIONS',
+            href: '/dashboard/integrations',
+            status: '[LINKED]',
+            isActive: pathname === '/dashboard/integrations'
+        },
+        {
+            name: '03_ANALYSIS',
+            // Link to the current analysis if ID exists, otherwise blocked
+            href: repo_scan_id ? `/dashboard/analyzer/${repo_scan_id}` : '#',
+            status: repo_scan_id ? '[IN_PROGRESS]' : '[LOCKED]',
+            disabled: !repo_scan_id,
+            // Active if we are in analyzer, risk, or context pages
+            isActive: pathname.includes('/analyzer/') || pathname.includes('/risk-classifier/') || pathname.includes('/context-verifier/')
+        },
+        {
+            name: '04_REPORTS',
+            href: repo_scan_id ? `/dashboard/report/${repo_scan_id}` : '#',
+            status: repo_scan_id ? '[AVAILABLE]' : '[LOCKED]',
+            disabled: !repo_scan_id,
+            isActive: pathname.includes('/report/')
+        },
     ];
 
     return (
@@ -68,7 +96,6 @@ export default function DashboardLayout({
 
                     <nav className="flex flex-col gap-2 font-mono text-sm">
                         {navItems.map((item) => {
-                            const isActive = pathname.startsWith(item.href) && item.href !== '#';
                             return (
                                 <Link
                                     key={item.name}
@@ -76,12 +103,12 @@ export default function DashboardLayout({
                                     className={`
                                         group flex items-center justify-between p-3 border 
                                         transition-none cursor-pointer select-none
-                                        ${isActive ? 'bg-black text-white border-black' : 'border-transparent hover:border-black hover:bg-white text-black'}
+                                        ${item.isActive ? 'bg-black text-white border-black' : 'border-transparent hover:border-black hover:bg-white text-black'}
                                         ${item.disabled ? 'opacity-50 cursor-not-allowed hover:border-transparent hover:bg-transparent' : ''}
                                     `}
                                 >
                                     <span>{item.name}</span>
-                                    <span className={`text-[10px] ${isActive ? 'text-[#FF4F00]' : 'text-[#999] group-hover:text-[#FF4F00]'}`}>
+                                    <span className={`text-[10px] ${item.isActive ? 'text-[#FF4F00]' : 'text-[#999] group-hover:text-[#FF4F00]'}`}>
                                         {item.status}
                                     </span>
                                 </Link>
