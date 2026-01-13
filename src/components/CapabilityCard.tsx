@@ -1,6 +1,6 @@
 'use client';
 
-import { Brain, Code2, Database, Cpu, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Code2, Database, Cpu, AlertTriangle, CheckCircle, XCircle, Square } from 'lucide-react';
 
 interface RiskIndicators {
     uses_computer_vision?: boolean;
@@ -30,16 +30,16 @@ interface CapabilityCardProps {
 
 function RiskIndicatorRow({ label, value }: { label: string; value: boolean }) {
     return (
-        <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors px-2">
-            <span className="text-zinc-400 text-sm">{label}</span>
+        <div className={`flex items-center justify-between py-3 border-b border-black last:border-0 px-4 transition-colors ${value ? 'bg-[#FFF5F0]' : 'bg-white'}`}>
+            <span className="text-black font-mono text-xs uppercase tracking-wide">{label}</span>
             {value ? (
-                <span className="flex items-center gap-1.5 text-amber-400 text-sm font-mono tracking-tight">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-2 text-[#FF4F00] text-xs font-bold font-mono tracking-widest uppercase">
+                    <AlertTriangle className="w-4 h-4" />
                     DETECTED
                 </span>
             ) : (
-                <span className="flex items-center gap-1.5 text-zinc-700 text-sm font-mono tracking-tight opacity-50">
-                    <XCircle className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-2 text-[#999] text-xs font-mono tracking-widest uppercase opacity-50">
+                    <Square className="w-3 h-3" />
                     NULL
                 </span>
             )}
@@ -49,11 +49,11 @@ function RiskIndicatorRow({ label, value }: { label: string; value: boolean }) {
 
 function CodeIndicator({ label, active }: { label: string; active: boolean }) {
     return (
-        <div className={`px-3 py-2 border text-sm font-mono tracking-tight transition-all ${active
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
-            : 'bg-zinc-950/30 border-white/5 text-zinc-600'
+        <div className={`px-4 py-3 border border-black text-xs font-mono tracking-widest uppercase flex items-center justify-center gap-2 transition-all ${active
+            ? 'bg-black text-white'
+            : 'bg-white text-[#999] border-[#E5E5E5]'
             }`}>
-            {active ? <CheckCircle className="w-3.5 h-3.5 inline mr-2" /> : null}
+            {active ? <CheckCircle className="w-3 h-3" /> : <div className="w-3 h-3 border border-[#999]" />}
             {label}
         </div>
     );
@@ -73,123 +73,126 @@ export default function CapabilityCard({
     hasModelSerialization,
 }: CapabilityCardProps) {
     const riskIndicatorLabels: { key: keyof RiskIndicators; label: string }[] = [
-        { key: 'uses_computer_vision', label: 'Computer Vision' },
-        { key: 'uses_biometric_processing', label: 'Biometric Processing' },
-        { key: 'uses_emotion_recognition', label: 'Emotion Recognition' },
-        { key: 'uses_critical_infrastructure', label: 'Critical Infrastructure' },
+        { key: 'uses_computer_vision', label: 'Comp. Vision' },
+        { key: 'uses_biometric_processing', label: 'Biometrics' },
+        { key: 'uses_emotion_recognition', label: 'Emotion Rec.' },
+        { key: 'uses_critical_infrastructure', label: 'Critical Infra' },
         { key: 'uses_generative_ai', label: 'Generative AI' },
-        { key: 'uses_nlp', label: 'Natural Language Processing' },
-        { key: 'uses_nlp_decision_making', label: 'NLP Decision Making' },
-        { key: 'targets_vulnerable_persons', label: 'Targets Vulnerable Persons' },
-        { key: 'high_impact_decision_making', label: 'High-Impact Decisions' },
+        { key: 'uses_nlp', label: 'NLP / LLM' },
+        { key: 'uses_nlp_decision_making', label: 'Auto-Decision' },
+        { key: 'targets_vulnerable_persons', label: 'Vulnerable Grp' },
+        { key: 'high_impact_decision_making', label: 'Hi-Imp Decision' },
     ];
 
     const detectedRisks = riskIndicatorLabels.filter(r => riskIndicators[r.key]);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Capabilities Section */}
-            <div className="glass-panel rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-blue-400" />
-                    <h3 className="text-zinc-200 font-medium tracking-wide text-sm uppercase">Detailed Capabilities</h3>
-                    <span className="ml-auto text-xs text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+            <div className="border-2 border-black bg-white">
+                <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
+                    <Brain className="w-5 h-5 text-black" />
+                    <h3 className="text-black font-serif font-bold text-lg">System Capabilities</h3>
+                    <span className="ml-auto text-[10px] text-white bg-black px-2 py-1 font-mono uppercase tracking-widest">
                         {capabilities.length} SIGNALS
                     </span>
                 </div>
-                <div className="p-4">
+                <div className="p-6">
                     {capabilities.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-3">
                             {capabilities.map((cap, i) => (
-                                <span key={i} className="px-3 py-1 bg-blue-500/5 border border-blue-500/20 text-blue-300 text-xs font-mono hover:bg-blue-500/10 transition-colors cursor-default">
+                                <span key={i} className="px-3 py-1.5 border border-black text-black text-xs font-mono uppercase tracking-wide hover:bg-black hover:text-white transition-colors cursor-default">
                                     {cap}
                                 </span>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-zinc-600 text-sm italic font-mono">No specific AI capabilities signature detected.</p>
+                        <p className="text-[#999] text-xs font-mono uppercase tracking-widest">No_Signals_Detected</p>
                     )}
                 </div>
             </div>
 
             {/* Frameworks & Libraries */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-2 gap-8">
                 {/* Frameworks */}
-                <div className="glass-panel rounded-lg overflow-hidden">
-                    <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-                        <Code2 className="w-5 h-5 text-purple-400" />
-                        <h3 className="text-zinc-200 font-medium tracking-wide text-sm uppercase">Core Frameworks</h3>
+                <div className="border-2 border-black bg-white">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
+                        <Code2 className="w-5 h-5 text-black" />
+                        <h3 className="text-black font-serif font-bold text-lg">Core Frameworks</h3>
                     </div>
-                    <div className="p-4">
+                    <div className="p-6">
                         {frameworks.length > 0 ? (
-                            <ul className="space-y-1">
+                            <ul className="space-y-2">
                                 {frameworks.map((fw, i) => (
-                                    <li key={i} className="text-zinc-300 text-sm flex items-center gap-2 p-1.5 bg-white/[0.02] border border-white/5 rounded">
-                                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
+                                    <li key={i} className="text-black text-sm flex items-center gap-3 font-mono">
+                                        <div className="w-2 h-2 bg-[#FF4F00]" />
                                         {fw}
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-zinc-600 text-sm italic font-mono">No frameworks detected.</p>
+                            <p className="text-[#999] text-xs font-mono uppercase tracking-widest">None_Detected</p>
                         )}
                     </div>
                 </div>
 
                 {/* Libraries */}
-                <div className="glass-panel rounded-lg overflow-hidden">
-                    <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-                        <Database className="w-5 h-5 text-zinc-400" />
-                        <h3 className="text-zinc-200 font-medium tracking-wide text-sm uppercase">Dependencies</h3>
+                <div className="border-2 border-black bg-white">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
+                        <Database className="w-5 h-5 text-black" />
+                        <h3 className="text-black font-serif font-bold text-lg">Dependencies</h3>
                     </div>
-                    <div className="p-4">
+                    <div className="p-6">
                         {libraries.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-2">
                                 {libraries.slice(0, 12).map((lib, i) => (
-                                    <span key={i} className="px-2 py-0.5 bg-black/20 border border-white/10 text-zinc-400 text-[10px] font-mono hover:text-white transition-colors">
+                                    <span key={i} className="px-2 py-1 bg-[#F5F5F5] border border-[#E5E5E5] text-[#555] text-[10px] font-mono uppercase">
                                         {lib}
                                     </span>
                                 ))}
                                 {libraries.length > 12 && (
-                                    <span className="px-2 py-0.5 text-zinc-600 text-[10px] font-mono">
-                                        +{libraries.length - 12} more
+                                    <span className="px-2 py-1 text-black border border-black text-[10px] font-mono bg-black text-white">
+                                        +{libraries.length - 12} MORE
                                     </span>
                                 )}
                             </div>
                         ) : (
-                            <p className="text-zinc-600 text-sm italic font-mono">No AI libraries detected.</p>
+                            <p className="text-[#999] text-xs font-mono uppercase tracking-widest">No_AI_Libs_Found</p>
                         )}
                     </div>
                 </div>
             </div>
 
             {/* Code Structure Indicators */}
-            <div className="glass-panel rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
-                    <Cpu className="w-5 h-5 text-emerald-400" />
-                    <h3 className="text-zinc-200 font-medium tracking-wide text-sm uppercase">Architecture Patterns</h3>
+            <div className="border-2 border-black bg-white">
+                <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
+                    <Cpu className="w-5 h-5 text-black" />
+                    <h3 className="text-black font-serif font-bold text-lg">Architecture Patterns</h3>
                 </div>
-                <div className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                    <CodeIndicator label="ML Pipeline" active={hasMLPipeline} />
+                <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <CodeIndicator label="Pipeline" active={hasMLPipeline} />
                     <CodeIndicator label="Training" active={hasTrainingCode} />
                     <CodeIndicator label="Inference" active={hasInferenceCode} />
                     <CodeIndicator label="Data Proc" active={hasDataProcessing} />
-                    <CodeIndicator label="Serialization" active={hasModelSerialization} />
+                    <CodeIndicator label="Serializ." active={hasModelSerialization} />
                 </div>
             </div>
 
             {/* Risk Indicators */}
-            <div className="glass-panel rounded-lg overflow-hidden border-orange-500/20">
-                <div className="px-4 py-3 border-b border-white/5 bg-orange-500/[0.02] flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-orange-400" />
-                    <h3 className="text-orange-200 font-medium tracking-wide text-sm uppercase">EU AI Act • Risk Triggers</h3>
+            <div className="border-2 border-black bg-white relative">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#FF4F00]"></div>
+                <div className="px-6 py-4 border-b border-black bg-[#FFF5F0] flex items-center justify-between ml-1">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-5 h-5 text-[#FF4F00]" />
+                        <h3 className="text-[#FF4F00] font-serif font-bold text-lg">EU AI Act • Risk Triggers</h3>
+                    </div>
                     {detectedRisks.length > 0 && (
-                        <span className="ml-auto px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-[10px] font-mono uppercase">
-                            {detectedRisks.length} Risk Signals
+                        <span className="px-3 py-1 bg-[#FF4F00] text-white text-[10px] font-mono uppercase tracking-widest font-bold">
+                            {detectedRisks.length} ALERT(S)
                         </span>
                     )}
                 </div>
-                <div className="p-4">
+                <div className="p-0 ml-1">
                     {riskIndicatorLabels.map((indicator) => (
                         <RiskIndicatorRow
                             key={indicator.key}
@@ -201,14 +204,14 @@ export default function CapabilityCard({
             </div>
 
             {/* Languages & Model Types (compact) */}
-            <div className="flex flex-wrap gap-6 text-xs font-mono uppercase tracking-wider opacity-70">
+            <div className="flex flex-wrap gap-8 text-xs font-mono uppercase tracking-wider text-[#555] border-t border-black pt-4">
                 <div className="flex items-center gap-2">
-                    <span className="text-zinc-500">primary_lang:</span>
-                    <span className="text-blue-300">{languages.join(', ') || 'UNKNOWN'}</span>
+                    <span className="font-bold text-black">PRIMARY_LANG:</span>
+                    <span>{languages.join(', ') || 'UNKNOWN'}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-zinc-500">model_arch:</span>
-                    <span className="text-purple-300">{modelTypes.join(', ') || 'NONE_DETECTED'}</span>
+                    <span className="font-bold text-black">MODEL_ARCH:</span>
+                    <span>{modelTypes.join(', ') || 'NONE_DETECTED'}</span>
                 </div>
             </div>
         </div>

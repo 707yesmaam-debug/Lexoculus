@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Brain, ArrowRight, Clock, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Brain, ArrowRight, Clock, RefreshCw, CheckCircle2, ShieldAlert } from 'lucide-react';
 import CapabilityCard from '@/components/CapabilityCard';
 import ConfidenceBadge from '@/components/ConfidenceBadge';
 import { Button } from "@/components/ui/button";
+import Link from 'next/link';
 
 interface RepoScanData {
     repo_scan_id: string;
@@ -117,9 +118,11 @@ export default function AnalyzerPage() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto py-16 flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin mb-4" />
-                <p className="text-zinc-500">Loading repository data...</p>
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-2 border-black border-t-[#FF4F00] animate-spin rounded-full" />
+                    <p className="font-mono text-sm text-[#555] tracking-widest uppercase">Initializing_Scan_Sequence...</p>
+                </div>
             </div>
         );
     }
@@ -127,17 +130,16 @@ export default function AnalyzerPage() {
     // Error state
     if (error && !repoScan) {
         return (
-            <div className="max-w-4xl mx-auto py-16">
-                <div className="bg-red-950/20 border border-red-900/50 p-6 text-center">
-                    <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
-                    <p className="text-zinc-400 mb-4">{error}</p>
+            <div className="max-w-5xl mx-auto p-12">
+                <div className="bg-[#FFF5F0] border-2 border-[#FF4F00] p-8 text-center">
+                    <AlertCircle className="w-12 h-12 text-[#FF4F00] mx-auto mb-6" />
+                    <h2 className="font-serif text-3xl font-bold text-black mb-4">Critical Error</h2>
+                    <p className="font-mono text-black mb-8">{error}</p>
                     <Button
-                        variant="secondary"
                         onClick={() => router.push('/dashboard/scanner')}
-                        className="mt-4 border-zinc-800 text-zinc-300 hover:bg-zinc-800"
+                        className="bg-black text-white hover:bg-[#FF4F00] rounded-none font-mono uppercase tracking-widest px-8"
                     >
-                        Back to Scanner
+                        Return_To_Base
                     </Button>
                 </div>
             </div>
@@ -145,97 +147,113 @@ export default function AnalyzerPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-8 md:p-12">
             {/* Header */}
-            <div className="mb-8">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.push('/dashboard/scanner')}
-                    className="text-zinc-500 hover:text-zinc-300 mb-4 pl-0 hover:bg-transparent"
-                >
+            <div className="mb-12 border-b-2 border-black pb-8">
+                <Link href="/dashboard/scanner" className="inline-flex items-center text-[#555] hover:text-black font-mono text-xs uppercase tracking-widest mb-6 transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Scanner
-                </Button>
+                    Back_To_Scanner
+                </Link>
 
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">
-                    Capability Analysis
-                </h1>
-                <p className="text-zinc-500">
-                    AI-powered analysis of repository structure and capabilities
-                </p>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div className="font-mono text-xs text-[#FF4F00] mb-2 tracking-widest uppercase">PHASE_03 // ANALYSIS</div>
+                        <h1 className="font-serif text-5xl font-bold text-black tracking-tight mb-4">
+                            Capability Audit.
+                        </h1>
+                        <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                            Deep learning architectural analysis and heuristic risk pattern matching.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Repo Info Card */}
             {repoScan && (
-                <div className="border border-zinc-800 bg-zinc-950/50 mb-8">
-                    <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div className="border-2 border-black bg-white mb-12">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-bold text-zinc-100">
-                                {repoScan.repo_owner}/{repoScan.repo_name}
+                            <h2 className="font-serif text-2xl font-bold text-black items-center flex gap-2">
+                                {repoScan.repo_owner} <span className="text-[#999]">/</span> {repoScan.repo_name}
                             </h2>
-                            {repoScan.repo_description && (
-                                <p className="text-zinc-500 text-sm mt-1">{repoScan.repo_description}</p>
-                            )}
                         </div>
-                        <div className="text-right text-sm">
-                            <div className="text-zinc-400">{repoScan.primary_language || 'Unknown'}</div>
-                            <div className="text-zinc-600">{repoScan.total_files} files</div>
+                        <div className="text-right">
+                            <span className="bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-widest">
+                                {repoScan.primary_language || 'UNKNOWN'}
+                            </span>
                         </div>
                     </div>
 
                     {/* Analysis Actions */}
-                    <div className="px-6 py-4">
+                    <div className="p-8">
                         {!analysis ? (
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                <Button
-                                    onClick={handleAnalyze}
-                                    disabled={isAnalyzing}
-                                    className="bg-zinc-100 hover:bg-white text-zinc-950 font-semibold w-full sm:w-auto"
-                                >
-                                    {isAnalyzing ? (
-                                        <>
-                                            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                                            Analyzing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Brain className="w-5 h-5 mr-2" />
-                                            Analyze Capabilities
-                                        </>
-                                    )}
-                                </Button>
+                            <div className="flex flex-col items-center justify-center py-8 text-center space-y-6">
+                                <div className="p-4 border border-black bg-[#F5F5F5]">
+                                    <Brain className="w-12 h-12 text-black" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif text-xl font-bold mb-2">Ready for Inspection</h3>
+                                    <p className="font-mono text-xs text-[#555] max-w-md mx-auto">
+                                        Initiate the deep scan to map architecture, detect AI frameworks, and identify potential EU AI Act high-risk vectors.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+                                    <Button
+                                        onClick={handleAnalyze}
+                                        disabled={isAnalyzing}
+                                        className="w-full bg-black hover:bg-[#FF4F00] text-white rounded-none h-12 font-mono text-sm uppercase tracking-widest transition-all"
+                                    >
+                                        {isAnalyzing ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                INITIATE_SCAN
+                                            </>
+                                        )}
+                                    </Button>
 
-                                {isAnalyzing && (
-                                    <div className="flex items-center gap-2 text-zinc-500 text-sm">
-                                        <Clock className="w-4 h-4" />
-                                        This may take 10-30 seconds
-                                    </div>
-                                )}
+                                    {isAnalyzing && (
+                                        <div className="flex items-center gap-2 text-[#555] font-mono text-[10px] uppercase animate-pulse">
+                                            <div className="w-2 h-2 bg-[#FF4F00] rounded-full" />
+                                            Heuristic_Analysis_In_Progress...
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-                                <div className="flex items-center gap-4">
-                                    <ConfidenceBadge score={analysis.confidence_score} />
-                                    <span className="text-zinc-600 text-sm">
-                                        Analyzed in {(analysis.analysis_duration_ms / 1000).toFixed(1)}s
-                                    </span>
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-6">
+                                    <div className="text-center md:text-left">
+                                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">Confidence Score</div>
+                                        <div className="font-serif text-3xl font-bold text-black">
+                                            {(analysis.confidence_score * 100).toFixed(0)}%
+                                        </div>
+                                    </div>
+                                    <div className="h-8 w-px bg-[#E5E5E5]" />
+                                    <div className="text-center md:text-left">
+                                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-widest mb-1">Scan Duration</div>
+                                        <div className="font-serif text-3xl font-bold text-black">
+                                            {(analysis.analysis_duration_ms / 1000).toFixed(2)}s
+                                        </div>
+                                    </div>
                                 </div>
+
                                 {analysis.is_ai_system ? (
                                     <Button
                                         onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white"
+                                        className="bg-[#FF4F00] hover:bg-black text-white rounded-none h-12 px-8 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-0 hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
                                     >
-                                        Next: Risk Classification
-                                        <ArrowRight className="w-4 h-4 ml-2" />
+                                        Proceed_To_Classification <ArrowRight className="w-4 h-4 ml-3" />
                                     </Button>
                                 ) : (
-                                    <Button
-                                        onClick={() => router.push('/dashboard/scanner')}
-                                        className="bg-emerald-600/90 hover:bg-emerald-600 text-white border-0"
-                                    >
-                                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                                        Audit Complete
-                                    </Button>
+                                    <div className="flex flex-col items-end">
+                                        <div className="px-4 py-2 bg-[#F0FFF4] border border-[#10B981] text-[#047857] font-mono text-xs uppercase tracking-widest flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            Audit_Complete_//_No_Risk
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -245,18 +263,17 @@ export default function AnalyzerPage() {
 
             {/* Error Alert */}
             {error && (
-                <div className="mb-8 bg-red-950/20 border border-red-900/50 p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-red-400 font-medium">Analysis Failed</p>
-                        <p className="text-zinc-400 text-sm mt-1">{error}</p>
+                <div className="mb-12 bg-[#FFF5F0] border-l-4 border-[#FF4F00] p-6 flex items-start gap-4">
+                    <ShieldAlert className="w-6 h-6 text-[#FF4F00] flex-shrink-0" />
+                    <div className="flex-1">
+                        <h3 className="font-serif text-lg font-bold text-[#FF4F00]">Analysis Interrupted</h3>
+                        <p className="font-mono text-xs text-black mt-1 mb-4">{error}</p>
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             onClick={handleAnalyze}
-                            className="mt-3 text-zinc-300 hover:text-white"
+                            className="border-black text-black hover:bg-black hover:text-white rounded-none font-mono text-xs uppercase tracking-widest h-8"
                         >
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Try Again
+                            Retry_Sequence
                         </Button>
                     </div>
                 </div>
@@ -264,26 +281,32 @@ export default function AnalyzerPage() {
 
             {/* Analysis Results */}
             {analysis && (
-                <div className="space-y-6">
-                    {/* AI System Status */}
-                    <div className={`border p-6 ${analysis.is_ai_system
-                        ? 'bg-blue-950/20 border-blue-900/50'
-                        : 'bg-zinc-900 border-zinc-800'
+                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {/* AI System Status Banner */}
+                    <div className={`border-2 p-8 relative overflow-hidden ${analysis.is_ai_system
+                        ? 'border-[#FF4F00] bg-[#FFF5F0]'
+                        : 'border-black bg-[#F5F5F5]'
                         }`}>
-                        <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 flex items-center justify-center ${analysis.is_ai_system ? 'bg-blue-500/20' : 'bg-zinc-800'
+
+                        {analysis.is_ai_system && (
+                            <div className="absolute top-0 right-0 p-2 bg-[#FF4F00] text-white">
+                                <AlertCircle className="w-6 h-6" />
+                            </div>
+                        )}
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-6 relative z-10">
+                            <div className={`w-16 h-16 flex items-center justify-center border-2 ${analysis.is_ai_system ? 'border-[#FF4F00] bg-white text-[#FF4F00]' : 'border-black bg-white text-black'
                                 }`}>
-                                <Brain className={`w-6 h-6 ${analysis.is_ai_system ? 'text-blue-400' : 'text-zinc-500'
-                                    }`} />
+                                <Brain className="w-8 h-8" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-zinc-100">
-                                    {analysis.is_ai_system ? 'AI System Detected' : 'Not an AI System'}
+                                <h3 className={`font-serif text-2xl font-bold mb-2 ${analysis.is_ai_system ? 'text-[#FF4F00]' : 'text-black'}`}>
+                                    {analysis.is_ai_system ? 'AI System Detected' : 'Non-AI System'}
                                 </h3>
-                                <p className="text-zinc-500 text-sm mt-1">
+                                <p className="font-mono text-sm text-black max-w-2xl">
                                     {analysis.is_ai_system
-                                        ? 'This repository contains AI/ML components that may require regulatory assessment.'
-                                        : 'No AI/ML components detected. This repository does not fall under the EU AI Act. No further action required.'}
+                                        ? 'Positive identification of Machine Learning components. This repository falls under the scope of the EU AI Act classification framework.'
+                                        : 'Negative for active Machine Learning components. This system does not demonstrate regulatory risk under current heuristics.'}
                                 </p>
                             </div>
                         </div>
@@ -306,17 +329,19 @@ export default function AnalyzerPage() {
 
                     {/* Analysis Notes */}
                     {analysis.analysis_notes && (
-                        <div className="border border-zinc-800 bg-zinc-950/50 p-4">
-                            <h4 className="text-zinc-400 text-sm font-medium mb-2">Analysis Reasoning</h4>
-                            <p className="text-zinc-300 text-sm leading-relaxed">{analysis.analysis_notes}</p>
+                        <div className="border-2 border-black bg-white p-8">
+                            <h4 className="font-mono text-xs text-[#999] uppercase tracking-widest mb-4">Reasoning_Engine_Output</h4>
+                            <p className="font-mono text-sm text-black leading-relaxed whitespace-pre-wrap border-l-2 border-[#E5E5E5] pl-4">
+                                {analysis.analysis_notes}
+                            </p>
                         </div>
                     )}
 
                     {/* Metadata Footer */}
-                    <div className="flex flex-wrap gap-4 text-xs text-zinc-600 border-t border-zinc-800 pt-4">
-                        <span>Model: {analysis.llm_model_used}</span>
-                        <span>Duration: {analysis.analysis_duration_ms}ms</span>
-                        <span>Analyzed: {new Date(analysis.analyzed_at).toLocaleString()}</span>
+                    <div className="flex flex-wrap gap-6 text-[10px] font-mono uppercase tracking-wider text-[#999] border-t border-[#E5E5E5] pt-8">
+                        <span>MODEL_USED: {analysis.llm_model_used}</span>
+                        <span>ANALYSIS_ID: {analysis.analysis_id}</span>
+                        <span>TIMESTAMP: {new Date(analysis.analyzed_at).toISOString()}</span>
                     </div>
                 </div>
             )}
