@@ -58,17 +58,17 @@ export default function RepoSelector({ onSelect }: RepoSelectorProps) {
 
     if (loading) {
         return (
-            <div className="w-full h-12 bg-zinc-900 border border-zinc-800 flex items-center px-4 gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-500" />
-                <span className="text-zinc-500 text-sm font-mono">Loading repositories...</span>
+            <div className="w-full p-4 border border-black flex items-center gap-3">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="font-mono text-xs uppercase tracking-widest">Fetching_Manifest...</span>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="w-full p-4 bg-red-950/20 border border-red-900/50 text-red-400 text-sm font-mono">
-                Error: {error}
+            <div className="w-full p-4 border border-red-500 bg-red-50 text-red-500 font-mono text-xs">
+                ERR_FETCH_FAILED: {error}
             </div>
         );
     }
@@ -78,61 +78,61 @@ export default function RepoSelector({ onSelect }: RepoSelectorProps) {
             <Button
                 variant="outline"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full justify-between py-6 bg-zinc-900 border-zinc-800 hover:bg-zinc-800 hover:text-zinc-300 text-zinc-300 font-normal"
+                className="w-full justify-between py-8 px-6 bg-white border-0 hover:bg-[#F5F5F5] hover:text-black text-black font-normal rounded-none transition-none"
             >
                 {selectedRepo ? (
-                    <span className="font-medium text-zinc-100">{selectedRepo}</span>
+                    <span className="font-serif font-bold text-xl">{selectedRepo}</span>
                 ) : (
-                    <span className="text-zinc-500">Select a repository to scan...</span>
+                    <span className="font-mono text-xs text-[#999] uppercase tracking-widest">Select Target System...</span>
                 )}
-                <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </Button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 shadow-xl z-50 max-h-[400px] flex flex-col">
-                    <div className="p-2 border-b border-zinc-800 sticky top-0 bg-zinc-900 z-10">
+                <div className="border-t border-black bg-white z-50 max-h-[400px] flex flex-col">
+                    <div className="p-4 border-b border-black">
                         <div className="relative">
-                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-black" />
                             <input
                                 type="text"
-                                placeholder="Filter repositories..."
+                                placeholder="FILTER_REPOSITORIES"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-zinc-950/50 border border-zinc-800 text-zinc-200 pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-zinc-600 focus:ring-0 disabled:opacity-50"
+                                className="w-full bg-[#F5F5F5] border border-black pl-10 pr-4 py-2 font-mono text-xs focus:outline-none focus:bg-white placeholder:text-[#999]"
                                 autoFocus
                             />
                         </div>
                     </div>
 
-                    <div className="overflow-y-auto flex-1 p-1">
+                    <div className="overflow-y-auto flex-1">
                         {filteredRepos.length === 0 ? (
-                            <div className="p-8 text-center text-zinc-500 text-sm">No repositories found.</div>
+                            <div className="p-8 text-center font-mono text-xs text-[#999]">NO_MATCH_FOUND</div>
                         ) : (
                             filteredRepos.map((repo) => (
                                 <button
                                     key={repo.repo_url}
                                     onClick={() => handleSelect(repo)}
-                                    className="w-full group flex items-start gap-3 p-3 hover:bg-zinc-800/50 transition-colors border border-transparent hover:border-zinc-800 text-left"
+                                    className="w-full group flex items-start gap-4 p-6 border-b border-[#E5E5E5] hover:bg-black hover:text-white transition-colors text-left last:border-0"
                                 >
-                                    <div className={`mt-0.5 p-1.5 rounded-sm flex-shrink-0 ${repo.visibility === 'private' ? 'bg-amber-950/30 text-amber-500' : 'bg-zinc-800 text-zinc-400'}`}>
-                                        {repo.visibility === 'private' ? <Lock className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                    <div className={`mt-0.5 p-1 border ${repo.visibility === 'private' ? 'border-[#FF4F00] text-[#FF4F00] bg-[#FF4F00]/10' : 'border-black text-black bg-transparent group-hover:border-white group-hover:text-white'}`}>
+                                        {repo.visibility === 'private' ? <Lock className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-zinc-200 group-hover:text-white truncate">{repo.name}</span>
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <span className="font-serif font-bold text-lg">{repo.name}</span>
                                             {repo.language && (
-                                                <span className="text-[10px] uppercase tracking-wider text-zinc-500 border border-zinc-800 px-1.5 py-0.5 rounded-sm">{repo.language}</span>
+                                                <span className="font-mono text-[10px] uppercase border border-black px-1 py-0.5 group-hover:border-white">{repo.language}</span>
                                             )}
                                         </div>
                                         {repo.description && (
-                                            <p className="text-xs text-zinc-500 truncate mt-0.5 max-w-[90%]">{repo.description}</p>
+                                            <p className="font-mono text-xs text-[#555] group-hover:text-[#999] truncate mb-2">{repo.description}</p>
                                         )}
-                                        <div className="flex items-center gap-4 mt-2 text-xs text-zinc-600 font-mono">
+                                        <div className="flex items-center gap-4 font-mono text-[10px] text-[#999] group-hover:text-gray-400">
                                             <span className="flex items-center gap-1">
-                                                <Star className="w-3 h-3" /> {repo.stars}
+                                                ★ {repo.stars}
                                             </span>
-                                            <span className="text-zinc-700">|</span>
-                                            <span>Updated {new Date(repo.updated_at).toLocaleDateString()}</span>
+                                            <span>|</span>
+                                            <span>UPDATED: {new Date(repo.updated_at).toLocaleDateString()}</span>
                                         </div>
                                     </div>
                                 </button>

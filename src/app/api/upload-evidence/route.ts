@@ -15,6 +15,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Security: Validate File Size (Max 5MB)
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        if (file.size > MAX_SIZE) {
+            return NextResponse.json(
+                { error: 'File size exceeds 5MB limit' },
+                { status: 413 }
+            );
+        }
+
+        // Security: Validate File Type
+        const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            return NextResponse.json(
+                { error: 'Invalid file type. Only PDF, PNG, and JPEG are allowed.' },
+                { status: 415 }
+            );
+        }
+
         // 1. Authenticate
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();

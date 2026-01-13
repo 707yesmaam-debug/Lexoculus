@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, ExternalLink, RefreshCw, Check, X, Lock, Play } from 'lucide-react';
+import { Shield, ExternalLink, RefreshCw, Check, X, Lock, Play, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GitHubActionSetupModal from '@/components/GitHubActionSetupModal';
 import Link from 'next/link';
@@ -99,54 +99,58 @@ export default function IntegrationsPage() {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="max-w-5xl mx-auto p-12">
+
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
-                    <Shield className="w-6 h-6 text-blue-500" />
-                    Integrations
-                </h1>
-                <p className="text-zinc-400 mt-2 max-w-2xl">
-                    Connect ComplianceAI to your development workflow. Automatically scan every Pull Request for EU AI Act compliance risks.
+            <div className="mb-12 border-b-2 border-black pb-8">
+                <div className="font-mono text-xs text-[#FF4F00] mb-4 tracking-widest uppercase">
+                    PHASE_02 // INTEGRATION
+                </div>
+                <h1 className="font-serif text-5xl font-bold mb-4 tracking-tight">System Guardian.</h1>
+                <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                    Connect LexOculus to your development workflow.
+                    Automatically audit every Pull Request against the EU AI Act.
                 </p>
             </div>
 
             {/* Pro Banner if not subscribed */}
             {!loading && !isPro && (
-                <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg p-6 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                <Lock className="w-4 h-4 text-purple-400" />
-                                Unlock GitHub PR Scanning
-                            </h3>
-                            <p className="text-zinc-400 text-sm max-w-lg">
-                                Automated PR scanning is a Pro feature. Upgrade to protect your codebase continuously and block non-compliant AI changes.
-                            </p>
-                        </div>
-                        <Button className="bg-white text-black hover:bg-zinc-200">
-                            Upgrade to Pro
-                        </Button>
+                <div className="border border-black bg-[#F5F5F5] p-6 mb-12 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-8 h-8 border-l border-b border-black md:block hidden"></div>
+
+                    <div className="space-y-2 z-10">
+                        <h3 className="font-serif text-xl font-bold flex items-center gap-2">
+                            <Lock className="w-5 h-5 text-[#FF4F00]" />
+                            Unlock Guardian Protocol
+                        </h3>
+                        <p className="font-mono text-xs text-[#555] max-w-lg">
+                            Continuous compliance scanning is restricted to authorized accounts.
+                            Upgrade to activate the CI/CD defense layer.
+                        </p>
                     </div>
+                    <Button className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 z-10 transition-colors">
+                        Upgrade_Account -&gt;
+                    </Button>
                 </div>
             )}
 
             {/* Repository List */}
-            <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-lg overflow-hidden">
-                <div className="p-4 border-b border-zinc-800/50 bg-zinc-900/80 flex items-center justify-between">
-                    <h3 className="font-medium text-zinc-200">Your Repositories</h3>
-                    <Button variant="ghost" size="sm" onClick={fetchData} className="text-zinc-500 hover:text-white">
+            <div className="border-2 border-black bg-white">
+                <div className="p-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                    <h3 className="font-bold text-sm uppercase tracking-widest">Available Systems</h3>
+                    <Button variant="ghost" size="sm" onClick={fetchData} className="text-black hover:bg-black hover:text-white rounded-none">
                         <RefreshCw className="w-4 h-4" />
                     </Button>
                 </div>
 
-                <div className="divide-y divide-zinc-800/50">
+                <div className="divide-y divide-[#E5E5E5]">
                     {loading ? (
-                        <div className="p-8 text-center text-zinc-500">Loading repositories...</div>
+                        <div className="p-12 text-center font-mono text-xs text-[#999] uppercase tracking-widest">
+                            Scanning_Network...
+                        </div>
                     ) : repos.length === 0 ? (
-                        <div className="p-8 text-center text-zinc-500">
-                            No repositories found. Please connect your GitHub account.
+                        <div className="p-12 text-center font-mono text-xs text-[#999]">
+                            NO_REPOSITORIES_DETECTED. CHECK_SOURCE_CONNECTION.
                         </div>
                     ) : (
                         repos.map((repo) => {
@@ -154,31 +158,31 @@ export default function IntegrationsPage() {
                             const isActive = !!install;
 
                             return (
-                                <div key={repo.name} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-zinc-800/30 transition-colors">
+                                <div key={repo.name} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-[#F9F9F9] transition-colors group">
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <span className="font-mono text-sm text-zinc-300">{repo.name}</span>
+                                            <span className="font-serif font-bold text-xl">{repo.name}</span>
                                             {repo.visibility === 'private' && (
-                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-500 border border-zinc-700">PRIVATE</span>
+                                                <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-black text-white">PRIVATE</span>
                                             )}
                                             {isActive && (
-                                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                <span className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono uppercase bg-[#FF4F00] text-white">
                                                     <Check className="w-3 h-3" /> ACTIVE
                                                 </span>
                                             )}
                                         </div>
                                         {isActive && (
-                                            <div className="mt-1 text-xs text-zinc-500 flex items-center gap-3">
-                                                <span>{install.pr_scan_count} PRs scanned</span>
+                                            <div className="mt-2 text-[10px] font-mono text-[#555] flex items-center gap-4">
+                                                <span>SCANNED_PRS: {install.pr_scan_count}</span>
                                                 {install.last_scan_at && (
-                                                    <span>Last scan: {new Date(install.last_scan_at).toLocaleDateString()}</span>
+                                                    <span>LAST_AUDIT: {new Date(install.last_scan_at).toLocaleDateString()}</span>
                                                 )}
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center gap-3">
-                                        <a href={repo.repo_url} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <a href={repo.repo_url} target="_blank" rel="noopener noreferrer" className="text-[#999] hover:text-black transition-colors">
                                             <ExternalLink className="w-4 h-4" />
                                         </a>
 
@@ -186,19 +190,19 @@ export default function IntegrationsPage() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="border-red-900/30 text-red-400 hover:bg-red-950/30 hover:border-red-900/50 text-xs h-8"
+                                                className="border-red-500 text-red-500 hover:bg-red-50 rounded-none font-mono text-[10px] uppercase tracking-widest h-8"
                                                 onClick={() => handleDisable(repo.full_name)}
                                             >
-                                                Disable
+                                                Deactivate
                                             </Button>
                                         ) : (
                                             <Button
                                                 size="sm"
                                                 disabled={!isPro}
-                                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8"
+                                                className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-[10px] uppercase tracking-widest px-4 h-8 transition-colors disabled:opacity-50"
                                                 onClick={() => handleEnable(repo.full_name)}
                                             >
-                                                {isPro ? 'Setup Guardian' : <><Lock className="w-3 h-3 mr-1.5" /> Locked</>}
+                                                {isPro ? 'Deploy_Guardian' : <><Lock className="w-3 h-3 mr-1.5" /> LOCKED</>}
                                             </Button>
                                         )}
                                     </div>

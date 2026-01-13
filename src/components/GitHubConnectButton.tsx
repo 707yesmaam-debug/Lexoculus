@@ -61,21 +61,21 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
 
     if (isConnected) {
         return (
-            <div className="w-full bg-zinc-900 border border-zinc-800 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="bg-emerald-500/10 p-2 rounded-full border border-emerald-500/20">
-                        <CheckCircle className="w-5 h-5 text-emerald-500" />
+            <div className="w-full bg-[#F5F5F5] border border-black p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="bg-black text-white p-2">
+                        <CheckCircle className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="text-zinc-200 font-medium text-sm">GitHub Connected</h3>
-                        <p className="text-zinc-500 text-xs">Ready to ingest repositories</p>
+                        <h3 className="font-serif font-bold text-lg">GitHub Connected</h3>
+                        <p className="font-mono text-xs text-[#555] uppercase tracking-wider">Ready for ingestion</p>
                     </div>
                 </div>
 
                 <button
                     onClick={handleDisconnect}
                     disabled={isDisconnecting}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-950/30 hover:bg-red-950/50 border border-red-900/30 hover:border-red-900/50 text-red-400 text-xs font-medium transition-colors rounded-sm ml-auto sm:ml-0"
+                    className="flex items-center gap-2 px-4 py-2 border border-black hover:bg-black hover:text-white transition-colors text-xs font-mono uppercase tracking-widest disabled:opacity-50"
                 >
                     {isDisconnecting ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -93,27 +93,21 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
             <button
                 onClick={handleConnect}
                 disabled={isLoading}
-                className="group relative w-full flex items-center justify-center gap-3 px-6 py-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-100 font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex items-center justify-center gap-3 px-6 py-6 bg-black text-white hover:bg-[#FF4F00] transition-colors duration-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
                     <>
-                        <Github className="w-5 h-5 text-zinc-100 group-hover:text-white transition-colors" />
-                        <span>Connect GitHub Repository</span>
+                        <Github className="w-5 h-5" />
+                        <span className="font-mono font-bold tracking-widest uppercase text-sm">Connect GitHub Source</span>
                     </>
                 )}
-
-                {/* Sharp corner accent */}
-                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-zinc-700 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
 
-            <div className="mt-3 flex items-start gap-2 text-xs text-zinc-500 font-mono">
-                <div className="mt-0.5 min-w-[12px]">
-                    <span className="text-emerald-500">✓</span>
-                </div>
-                <p>Read-only access to repository metadata. Source code is processed in volatile memory only.</p>
+            <div className="mt-4 flex items-start gap-2 text-[10px] text-[#555] font-mono border-l-2 border-[#E5E5E5] pl-3 py-1">
+                <span className="text-[#FF4F00] font-bold">WARNING:</span>
+                <p>READ-ONLY TOKEN REQUIRED. SOURCE CODE IS PROCESSED IN VOLATILE MEMORY.</p>
             </div>
         </div>
     );

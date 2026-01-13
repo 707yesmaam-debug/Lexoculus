@@ -1,271 +1,175 @@
 'use client';
 
+import OpticalTypeScanner from '@/components/OpticalTypeScanner';
+import OpticalLogo from '@/components/OpticalLogo';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowRight, Github, Brain, Scale, ClipboardCheck, FileText, Shield, Lock } from 'lucide-react';
-import StarBackground from '@/components/StarBackground';
-
-const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: (i: number) => ({
-        opacity: 1,
-        y: 0,
-        transition: { delay: i * 0.1, duration: 1, ease: [0.22, 1, 0.36, 1] as const }
-    })
-};
-
-const pipelineSteps = [
-    {
-        icon: Github,
-        step: "01",
-        title: "Ingest",
-        description: "Read-only extraction of README, package.json, and dependency graphs. Cloned to volatile memory.",
-        terminal: [
-            "SCANNING: github.com/org/ml-model",
-            "EXTRACTED: readme.md, requirements.txt",
-            "FILES: 847 | LANGUAGE: Python"
-        ]
-    },
-    {
-        icon: Brain,
-        step: "02",
-        title: "Analyze",
-        description: "LLM-driven inspection of architectures and inference patterns. Detects high-risk libraries instantly.",
-        terminal: [
-            "DETECTED: PyTorch, Transformers",
-            "MODEL_TYPE: Neural Network",
-            "CAPABILITIES: NLP, Classification"
-        ]
-    },
-    {
-        icon: Scale,
-        step: "03",
-        title: "Classify",
-        description: "Automated mapping against Annex III. Determines risk tier (UNACCEPTABLE to MINIMAL) with regulatory precision.",
-        terminal: [
-            "ANNEX_III: Article 6.1(a) matched",
-            "RISK_TIER: HIGH_RISK",
-            "SCORE: 72/100"
-        ]
-    },
-    {
-        icon: ClipboardCheck,
-        step: "04",
-        title: "Verify",
-        description: "Dynamic verification layer. We generate tailored questions to validate human oversight and context.",
-        terminal: [
-            "CONTEXT: EU Healthcare Deployment",
-            "OVERSIGHT: Human-in-the-loop confirmed",
-            "STATUS: VERIFIED"
-        ]
-    },
-    {
-        icon: FileText,
-        step: "05",
-        title: "Report",
-        description: "Generate the Enterprise Trust Pack. Signed, audit-ready PDF artifacts for your data room.",
-        terminal: [
-            "GENERATING: Vendor_Risk_Profile.pdf",
-            "STATUS: ACCESS_GRANTED",
-            "ARTIFACT: SIGNED"
-        ]
-    }
-];
 
 export default function LandingPage() {
     return (
-        <div className="min-h-screen flex flex-col selection:bg-white selection:text-black text-white relative">
-            <StarBackground />
+        <main className="flex flex-col md:flex-row min-h-screen bg-white text-black">
 
-            {/* Header */}
-            <header className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center backdrop-blur-sm bg-black/5 border-b border-white/5">
-                <div className="font-heading font-bold tracking-tighter text-xl flex items-center gap-2">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    ComplianceAI
+            {/* LEFT CHASSIS: Fixed Context / Control Panel */}
+            <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col justify-between p-6 bg-white z-20">
+                <div>
+                    <div className="mb-8">
+                        <OpticalLogo />
+                    </div>
+
+                    <div className="mb-12">
+                        <h1 className="font-serif text-3xl md:text-4xl font-bold mb-4 leading-none tracking-tight">
+                            The Compliance<br />Engine for AI.
+                        </h1>
+                        <p className="font-mono text-xs text-[#555] leading-relaxed max-w-[280px]">
+                            Turn your code into legal defense.
+                            Automated EU AI Act audits for engineering teams.
+                        </p>
+                    </div>
+
+                    <nav className="flex flex-col gap-2 font-mono text-sm">
+                        <a href="#scan" className="group flex items-center justify-between p-2 border border-transparent hover:border-black hover:bg-[#F5F5F5] transition-none cursor-pointer">
+                            <span>01_INSPECT</span>
+                            <span className="opacity-0 group-hover:opacity-100 text-[#FF4F00]">[RUN]</span>
+                        </a>
+                        <a href="#audit" className="group flex items-center justify-between p-2 border border-transparent hover:border-black hover:bg-[#F5F5F5] transition-none cursor-pointer">
+                            <span>02_ANALYZE</span>
+                            <span className="opacity-0 group-hover:opacity-100 text-[#FF4F00]">[VIEW]</span>
+                        </a>
+                        <a href="#certify" className="group flex items-center justify-between p-2 border border-transparent hover:border-black hover:bg-[#F5F5F5] transition-none cursor-pointer">
+                            <span>03_CERTIFY</span>
+                            <span className="opacity-0 group-hover:opacity-100 text-[#FF4F00]">[PRINT]</span>
+                        </a>
+                    </nav>
                 </div>
-                <nav className="hidden md:flex gap-8 text-sm font-medium tracking-wide opacity-70">
-                    <a href="#pipeline" className="hover:opacity-100 transition-opacity">Pipeline</a>
-                    <a href="#security" className="hover:opacity-100 transition-opacity">Security</a>
-                    <Link href="/pricing" className="hover:opacity-100 transition-opacity">Pricing</Link>
-                </nav>
-                <div className="flex gap-4 items-center">
-                    <Link href="/auth/login" className="text-sm font-medium hover:text-white/80 transition-colors">Log In</Link>
-                    <Link href="/auth/signup" className="text-sm font-medium bg-white text-black px-5 py-2 rounded-full hover:bg-zinc-200 transition-all">
-                        Start Free
+
+                <div className="mt-8 md:mt-0">
+                    <Link
+                        href="/auth/signup"
+                        className="block w-full text-center bg-[#FF4F00] text-white font-mono text-sm py-4 hover:bg-black transition-colors uppercase tracking-widest border border-transparent"
+                    >
+                        Start_Assessment
                     </Link>
+
+                    <div className="mt-4 flex justify-between font-mono text-[10px] text-[#999]">
+                        <span>ART_5 [BANNED]</span>
+                        <span>ART_6 [HIGH_RISK]</span>
+                    </div>
                 </div>
-            </header>
+            </aside>
 
-            {/* HERO */}
-            <section className="h-screen flex items-center justify-center px-6 relative overflow-hidden">
-                <div className="max-w-5xl mx-auto text-center z-10">
-                    <motion.div
-                        custom={0}
-                        initial="hidden"
-                        animate="visible"
-                        variants={fadeUp}
-                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-mono text-zinc-400 mb-8"
-                    >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        REGULATORY ENGINE: ACTIVE
-                    </motion.div>
+            {/* RIGHT CHASSIS: Scrolling Audit Stream */}
+            <div className="flex-1 flex flex-col">
 
-                    <motion.h1
-                        custom={1}
-                        initial="hidden"
-                        animate="visible"
-                        variants={fadeUp}
-                        className="font-heading text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-8 text-white"
-                    >
-                        Compliance <br />
-                        <span className="text-zinc-500">as Code.</span>
-                    </motion.h1>
+                {/* HERO BLOCK */}
+                <section id="scan" className="h-[60vh] md:h-screen border-b-2 border-black relative">
+                    <OpticalTypeScanner />
+                </section>
 
-                    <motion.p
-                        custom={2}
-                        initial="hidden"
-                        animate="visible"
-                        variants={fadeUp}
-                        className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed"
-                    >
-                        Turn your repository into a regulatory fortress.
-                        The first automated compliance engine for the EU AI Act.
-                    </motion.p>
+                {/* AUDIT STREAM */}
+                <section id="audit" className="min-h-screen border-b-2 border-black flex flex-col">
+                    {/* Section 1: INSPECT (formerly File Scan) */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 border-b border-black">
+                        <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-black flex flex-col justify-center bg-[#F5F5F5]">
+                            <div className="font-mono text-xs mb-8 text-[#FF4F00] tracking-widest">PHASE_01 // INSPECT</div>
+                            <h3 className="font-serif text-4xl font-bold mb-6">Deep Dependency Scan.</h3>
+                            <p className="font-mono text-sm text-[#555] max-w-sm leading-relaxed">
+                                We parse your entire repository (Python, JS, Go, Rust).
+                                Identifying neural architectures, training pipelines, and data ingress points.
+                                No code leaves your environment.
+                            </p>
+                        </div>
+                        <div className="p-8 md:p-12 font-mono text-xs overflow-hidden relative group cursor-crosshair">
+                            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none" />
+                            {/* Simulated File Manifest Visual */}
+                            <div className="space-y-2 opacity-60">
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1"><span>src/model/transformer.py</span><span>[DETECTED]</span></div>
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1"><span>requirements.txt</span><span>[PARSED]</span></div>
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1"><span>data/processors/pii_scrub.ts</span><span>[FLAGGED]</span></div>
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1"><span>config/hyperparams.yaml</span><span>[READ]</span></div>
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1"><span>deploy/docker/Dockerfile</span><span>[CHECKED]</span></div>
+                                <div className="flex justify-between border-b border-[#E5E5E5] pb-1 text-[#FF4F00]"><span>... 842 files scanned</span><span>[COMPLETE]</span></div>
+                            </div>
+                        </div>
+                    </div>
 
-                    <motion.div
-                        custom={3}
-                        initial="hidden"
-                        animate="visible"
-                        variants={fadeUp}
-                        className="flex flex-col sm:flex-row justify-center gap-4"
-                    >
-                        <Link href="/auth/signup" className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 rounded-full font-semibold text-lg hover:bg-zinc-200 transition-all">
-                            <Github className="w-5 h-5" />
-                            Connect GitHub
-                        </Link>
-                        <Link href="/pricing" className="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-8 py-4 rounded-full font-medium text-lg hover:bg-white/5 transition-all">
-                            View Pricing
-                            <ArrowRight className="w-4 h-4" />
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
+                    {/* Section 2: ANALYZE (formerly Risk Class) */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2">
+                        <div className="p-8 md:p-12 border-b md:border-b-0 md:border-r border-black font-mono text-xs relative group cursor-crosshair">
+                            <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none" />
+                            {/* Simulated Risk Matrix Visual */}
+                            <div className="grid grid-cols-2 gap-4 h-full content-center">
+                                <div className="border border-black p-4 flex flex-col justify-between aspect-square hover:bg-black hover:text-white transition-colors">
+                                    <span>ANNEX_III</span>
+                                    <span className="text-[#FF4F00] text-xl">MATCH</span>
+                                </div>
+                                <div className="border border-[#E5E5E5] p-4 flex flex-col justify-between aspect-square text-[#999]">
+                                    <span>ART_5</span>
+                                    <span>PASS</span>
+                                </div>
+                                <div className="border border-[#E5E5E5] p-4 flex flex-col justify-between aspect-square text-[#999]">
+                                    <span>ART_52</span>
+                                    <span>PASS</span>
+                                </div>
+                                <div className="border border-black p-4 flex flex-col justify-between aspect-square hover:bg-black hover:text-white transition-colors">
+                                    <span>GPAI_RISK</span>
+                                    <span className="text-[#FF4F00] text-xl">HIGH</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 md:p-12 flex flex-col justify-center bg-[#F5F5F5]">
+                            <div className="font-mono text-xs mb-8 text-[#FF4F00] tracking-widest">PHASE_02 // ANALYZE</div>
+                            <h3 className="font-serif text-4xl font-bold mb-6">Automated Classification.</h3>
+                            <p className="font-mono text-sm text-[#555] max-w-sm leading-relaxed">
+                                Our engine maps your system against EU AI Act categories.
+                                It identifies Biometric Identification, Critical Infrastructure, and Employment AI triggers instantly.
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-            {/* 5-STAGE PIPELINE */}
-            <section id="pipeline" className="py-32 px-6 max-w-7xl mx-auto">
-                <div className="mb-16 text-center">
-                    <h2 className="font-heading text-4xl md:text-5xl font-bold mb-4">From Code to Contract</h2>
-                    <p className="text-zinc-500 max-w-2xl mx-auto">Automated "Guerrilla Compliance" checks generate the artifacts your customers need.</p>
-                </div>
+                {/* CERTIFICATION BLOCK */}
+                <section id="certify" className="min-h-screen p-8 md:p-16 flex flex-col md:flex-row justify-between items-end gap-12 bg-[#F5F5F5]">
+                    <div className="max-w-lg">
+                        <div className="inline-block px-2 py-1 bg-black text-white font-mono text-xs mb-6">
+                            FINAL_OUTPUT
+                        </div>
+                        <h2 className="font-serif text-4xl md:text-5xl font-bold mb-6">
+                            Signed. Sealed.<br />Delivered.
+                        </h2>
+                        <p className="font-mono text-sm text-[#555] leading-relaxed">
+                            A SHA-256 hashed PDF report. Immutable proof of your compliance status.
+                            Ready for the boardroom, the courtroom, and the data room.
+                        </p>
+                    </div>
 
-                <div className="space-y-6">
-                    {pipelineSteps.map((step, index) => (
-                        <motion.div
-                            key={step.step}
-                            initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.8, delay: index * 0.1 }}
-                            className="grid md:grid-cols-2 gap-8 p-8 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                    <div className="w-full md:w-auto flex flex-col gap-4">
+                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-widest text-right">
+                            Secure_Hash_Algorithm
+                        </div>
+                        <div className="font-mono text-xs border border-black p-4 bg-white truncate max-w-[300px] md:max-w-xs">
+                            e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+                        </div>
+                        <Link
+                            href="/auth/signup"
+                            className="text-center font-bold font-serif text-xl border-2 border-black py-4 hover:bg-black hover:text-white transition-none"
                         >
-                            <div className="flex flex-col justify-center">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-lg border border-white/10">
-                                        <step.icon className="w-6 h-6 text-zinc-400" />
-                                    </div>
-                                    <span className="font-mono text-zinc-600 text-sm">{step.step}</span>
-                                </div>
-                                <h3 className="font-heading text-2xl font-bold mb-3">{step.title}</h3>
-                                <p className="text-zinc-400 leading-relaxed">{step.description}</p>
-                            </div>
-                            <div className="font-mono text-sm text-zinc-500 bg-black/50 p-6 rounded-xl border border-white/5 flex flex-col justify-center">
-                                {step.terminal.map((line, i) => (
-                                    <div key={i} className="py-1">
-                                        <span className="text-zinc-600 mr-2">$</span>
-                                        {line}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    ))}
-                </div>
-            </section>
-
-            {/* SECURITY & TRUST */}
-            <section id="security" className="py-32 border-t border-white/5">
-                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-                    <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-mono mb-6">
-                            <Lock className="w-3 h-3" /> ZERO DATA RETENTION
-                        </div>
-                        <h2 className="font-heading text-4xl md:text-5xl font-bold mb-6">We analyze code. <br />We don't store it.</h2>
-                        <div className="space-y-6 text-lg text-zinc-400">
-                            <p>
-                                ComplianceAI operates on a <strong className="text-white">Volatile Execution</strong> architecture.
-                                Repositories are cloned into ephemeral memory, analyzed, and wiped instantly.
-                            </p>
-                            <p>
-                                We only persist <strong className="text-white">compliance metadata</strong>: risk scores,
-                                capability graphs, and signed artifacts. Source code is never written to disk.
-                            </p>
-                        </div>
+                            Generate Artifact {'->'}
+                        </Link>
                     </div>
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full"></div>
-                        <div className="relative glass-panel rounded-2xl p-8 border border-white/10 bg-black/40">
-                            <div className="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
-                                <div className="text-sm font-mono text-zinc-500">DATA_LIFECYCLE</div>
-                                <div className="text-xs font-bold text-green-500">ENFORCED</div>
-                            </div>
-                            <div className="space-y-4 font-mono text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-zinc-500">git clone repo</span>
-                                    <span className="text-white">VOLATILE_MEMORY</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-zinc-500">llm_analysis</span>
-                                    <span className="text-white">EPHEMERAL_PROCESS</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-zinc-500">risk_assessment</span>
-                                    <span className="text-white">METADATA_ONLY</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-zinc-500">pdf_report</span>
-                                    <span className="text-emerald-400">SIGNED_STORED</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-zinc-500">source_code</span>
-                                    <span className="text-red-500">WIPED_IMMEDIATE</span>
-                                </div>
-                            </div>
-                        </div>
+                </section>
+
+                {/* FOOTER */}
+                <footer className="border-t-2 border-black p-6 md:p-8 flex flex-col md:flex-row justify-between items-center bg-white">
+                    <div className="text-[10px] font-mono text-[#555] tracking-widest mb-8">
+                        LAW_V1.0 // EU_COMPLIANCE
                     </div>
-                </div>
-            </section>
+                    <div className="flex gap-8 font-mono text-xs underline decoration-1 underline-offset-4">
+                        <a href="#" className="hover:text-[#FF4F00]">LEGAL</a>
+                        <a href="#" className="hover:text-[#FF4F00]">PRIVACY</a>
+                        <a href="#" className="hover:text-[#FF4F00]">SECURITY</a>
+                    </div>
+                </footer>
 
-            {/* CTA */}
-            <section id="pricing" className="py-32 text-center">
-                <h2 className="font-heading text-5xl md:text-7xl font-bold tracking-tighter mb-4 bg-gradient-to-b from-white to-white/30 bg-clip-text text-transparent">
-                    Ready to comply?
-                </h2>
-                <p className="text-zinc-500 text-lg mb-12 max-w-xl mx-auto">
-                    Get your first compliance assessment free. No credit card required.
-                </p>
-                <Link href="/auth/signup" className="inline-flex items-center gap-2 bg-white text-black px-10 py-5 rounded-full font-bold text-xl hover:scale-105 transition-transform">
-                    Start Free Assessment
-                    <ArrowRight className="w-5 h-5" />
-                </Link>
-            </section>
-
-            <footer className="py-12 text-center text-zinc-600 text-sm border-t border-white/5">
-                <div className="mb-4 flex justify-center gap-6">
-                    <a href="#" className="hover:text-zinc-400">Terms</a>
-                    <a href="#" className="hover:text-zinc-400">Privacy</a>
-                    <a href="#" className="hover:text-zinc-400">Security</a>
-                </div>
-                ComplianceAI © 2026. Built for the European Union.
-            </footer>
-        </div>
+            </div>
+        </main>
     );
 }

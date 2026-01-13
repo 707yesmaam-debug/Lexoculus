@@ -1,0 +1,15 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" fill="#FFFFFF"/>
+  
+  <!-- Outer Frame -->
+  <rect x="2" y="2" width="28" height="28" rx="0" stroke="#000000" stroke-width="2"/>
+  
+  <!-- Top Left Bracket -->
+  <path d="M7 12V7H12" stroke="#000000" stroke-width="2" stroke-linecap="square"/>
+  
+  <!-- Bottom Right Bracket -->
+  <path d="M25 20V25H20" stroke="#000000" stroke-width="2" stroke-linecap="square"/>
+  
+  <!-- Center Optical Sensor -->
+  <rect x="11" y="11" width="10" height="10" fill="#FF4F00"/>
+</svg>

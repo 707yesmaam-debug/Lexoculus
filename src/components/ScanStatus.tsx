@@ -13,7 +13,7 @@ interface ScanStatusProps {
         total_files: number;
         license: string | null;
         stars: number;
-        repo_scan_id?: string; // Added for Feature 2
+        repo_scan_id?: string;
     };
 }
 
@@ -22,16 +22,15 @@ export default function ScanStatus({ status, error, data }: ScanStatusProps) {
 
     if (status === 'scanning') {
         return (
-            <div className="w-full mt-6 bg-zinc-900 border border-zinc-800 p-6 flex flex-col items-center justify-center text-center">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full"></div>
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin relative z-10" />
-                </div>
-                <h3 className="mt-4 text-zinc-100 font-medium font-mono text-sm tracking-wider uppercase">Ingesting Repository</h3>
-                <p className="mt-1 text-zinc-500 text-sm">Cloning file tree, extracting metadata, and verifying structure...</p>
+            <div className="w-full mt-8 border border-black p-8 bg-white">
+                <div className="flex flex-col items-center justify-center text-center">
+                    <Loader2 className="w-8 h-8 text-[#FF4F00] animate-spin mb-6" />
+                    <h3 className="font-mono text-sm uppercase tracking-widest text-[#FF4F00] mb-2">System_Ingestion_Active</h3>
+                    <p className="font-mono text-xs text-[#555]">Cloning file tree... Verifying signatures... Extracting metadata...</p>
 
-                <div className="w-full max-w-xs h-1 bg-zinc-800 mt-6 overflow-hidden rounded-full">
-                    <div className="h-full bg-blue-600 w-1/3 animate-pulse rounded-full" />
+                    <div className="w-full max-w-md h-2 bg-[#E5E5E5] mt-8 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 bottom-0 bg-[#FF4F00] w-1/3 animate-[shimmer_2s_infinite_linear]" />
+                    </div>
                 </div>
             </div>
         );
@@ -39,11 +38,11 @@ export default function ScanStatus({ status, error, data }: ScanStatusProps) {
 
     if (status === 'error') {
         return (
-            <div className="w-full mt-6 bg-red-950/10 border border-red-900/20 p-4 flex items-start gap-4">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="w-full mt-8 border border-[#FF4F00] bg-[#FF4F00]/5 p-6 flex items-start gap-4">
+                <AlertCircle className="w-5 h-5 text-[#FF4F00] flex-shrink-0 mt-0.5" />
                 <div>
-                    <h3 className="text-red-400 font-medium text-sm">Scan Failed</h3>
-                    <p className="text-red-500/80 text-sm mt-1">{error || 'An unknown error occurred during the repository scan.'}</p>
+                    <h3 className="font-mono font-bold text-[#FF4F00] uppercase text-sm mb-1">Fatal_Error</h3>
+                    <p className="font-mono text-xs text-[#FF4F00]">{error || 'INGESTION_FAILED: UNKNOWN_EXCEPTION'}</p>
                 </div>
             </div>
         );
@@ -51,78 +50,57 @@ export default function ScanStatus({ status, error, data }: ScanStatusProps) {
 
     if (status === 'complete' && data) {
         return (
-            <div className="w-full mt-6 fade-in animate-in slide-in-from-bottom-2 duration-500">
-                <div className="bg-zinc-900 border border-zinc-800 p-0 overflow-hidden">
-                    {/* Header - Success Banner */}
-                    <div className="bg-emerald-950/10 border-b border-emerald-900/20 p-4 flex items-center gap-3">
-                        <div className="bg-emerald-500/10 p-1.5 rounded-full border border-emerald-500/20">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-emerald-500 font-medium text-sm tracking-wide">INGESTION COMPLETE</h3>
-                        </div>
-                    </div>
+            <div className="w-full mt-8 border-t border-black animate-in fade-in duration-500 pt-8">
 
-                    {/* Content - Data Grid */}
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-baseline justify-between mb-8 gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="w-2 h-2 bg-[#FF4F00]"></span>
+                            <span className="font-mono text-xs text-[#FF4F00] uppercase tracking-widest">Ingestion Complete</span>
+                        </div>
+                        <h2 className="font-serif text-4xl font-bold">{data.name}</h2>
+                    </div>
+                    <div className="font-mono text-xs text-[#555] border border-black px-2 py-1">
+                        ID: {data.repo_scan_id?.slice(-8) || 'NULL'}
+                    </div>
+                </div>
+
+                {/* Data Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 border-2 border-black">
+                    <div className="p-6 border-r border-[#E5E5E5] last:border-0 border-b md:border-b-0">
+                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-wider mb-2">Total_Files</div>
+                        <div className="font-mono text-xl">{data.total_files}</div>
+                    </div>
+                    <div className="p-6 border-r md:border-r border-[#E5E5E5] border-b md:border-b-0 border-r-0">
+                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-wider mb-2">Language</div>
+                        <div className="font-mono text-xl">{data.language || 'UNKNOWN'}</div>
+                    </div>
+                    <div className="p-6 border-r border-[#E5E5E5]">
+                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-wider mb-2">License</div>
+                        <div className="font-mono text-xl">{data.license || 'NONE'}</div>
+                    </div>
                     <div className="p-6">
-                        <div className="flex items-baseline justify-between mb-6">
-                            <h2 className="text-2xl font-semibold text-zinc-100 tracking-tight">{data.name}</h2>
-                            <span className="text-xs font-mono text-zinc-500 uppercase tracking-wider">
-                                ID: {data.repo_scan_id?.slice(-8) || 'N/A'}
-                            </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-zinc-950 border border-zinc-800/50">
-                                <div className="flex items-center gap-2 text-zinc-500 mb-2">
-                                    <FileCode2 className="w-4 h-4" />
-                                    <span className="text-xs uppercase tracking-wider font-semibold">Files</span>
-                                </div>
-                                <span className="text-2xl font-mono text-zinc-200">{data.total_files}</span>
-                            </div>
-
-                            <div className="p-4 bg-zinc-950 border border-zinc-800/50">
-                                <div className="flex items-center gap-2 text-zinc-500 mb-2">
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span className="text-xs uppercase tracking-wider font-semibold">Primary Lang</span>
-                                </div>
-                                <span className="text-lg font-mono text-zinc-200 truncate">{data.language || 'Unknown'}</span>
-                            </div>
-
-                            <div className="p-4 bg-zinc-950 border border-zinc-800/50">
-                                <div className="flex items-center gap-2 text-zinc-500 mb-2">
-                                    <Scale className="w-4 h-4" />
-                                    <span className="text-xs uppercase tracking-wider font-semibold">License</span>
-                                </div>
-                                <span className="text-sm font-mono text-zinc-300 truncate">{data.license || 'None detected'}</span>
-                            </div>
-
-                            <div className="p-4 bg-zinc-950 border border-zinc-800/50 flex items-center justify-center">
-                                <span className="text-xs text-zinc-600 text-center leading-relaxed">
-                                    Metadata extracted & stored. Ready for compliance analysis.
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 pt-6 border-t border-zinc-800 flex justify-end">
-                            {data.repo_scan_id ? (
-                                <Link
-                                    href={`/dashboard/analyzer/${data.repo_scan_id}`}
-                                    className="group flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors inline-flex justify-center rounded-md"
-                                >
-                                    <Brain className="w-4 h-4" />
-                                    <span>Analyze Capabilities</span>
-                                    <span className="text-blue-200 group-hover:translate-x-0.5 transition-transform">→</span>
-                                </Link>
-                            ) : (
-                                <Button disabled className="bg-blue-600 text-white opacity-50 cursor-not-allowed w-auto h-auto py-2.5 px-5">
-                                    <Brain className="w-4 h-4 mr-2" />
-                                    <span>Analyze Capabilities</span>
-                                    <span className="text-blue-200 ml-2">→</span>
-                                </Button>
-                            )}
-                        </div>
+                        <div className="font-mono text-[10px] text-[#999] uppercase tracking-wider mb-2">Stars</div>
+                        <div className="font-mono text-xl">{data.stars}</div>
                     </div>
+                </div>
+
+                {/* Action Area */}
+                <div className="mt-8 flex justify-end">
+                    {data.repo_scan_id ? (
+                        <Link
+                            href={`/dashboard/analyzer/${data.repo_scan_id}`}
+                            className="bg-black text-white hover:bg-[#FF4F00] px-8 py-4 font-mono font-bold uppercase tracking-widest text-sm transition-colors flex items-center gap-2"
+                        >
+                            <Brain className="w-4 h-4" />
+                            Proceed to Analysis -&gt;
+                        </Link>
+                    ) : (
+                        <Button disabled className="bg-[#E5E5E5] text-[#999] px-8 py-4 font-mono font-bold uppercase tracking-widest text-sm rounded-none">
+                            Analysis Unavailable
+                        </Button>
+                    )}
                 </div>
             </div>
         );

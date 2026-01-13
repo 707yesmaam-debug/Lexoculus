@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { Loader2, AlertCircle } from 'lucide-react';
-import StarBackground from '@/components/StarBackground';
+import OpticalLogo from '@/components/OpticalLogo';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
@@ -35,33 +35,51 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4 relative">
-            <StarBackground />
+        <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
 
-            <div className="w-full max-w-md z-10">
-                <div className="mb-8 text-center">
-                    <div className="w-8 h-8 bg-zinc-100 mx-auto rotate-45 mb-6"></div>
-                    <h1 className="text-2xl font-heading font-bold tracking-tight text-white">ComplianceAI</h1>
-                    <p className="text-zinc-500 mt-2 text-sm">Sign in to your console</p>
+            {/* LEFT CHASSIS: Context */}
+            <aside className="w-full md:w-[400px] border-b-2 md:border-b-0 md:border-r-2 border-black p-8 md:p-12 flex flex-col justify-between bg-[#F5F5F5]">
+                <div>
+                    <div className="mb-12">
+                        <OpticalLogo />
+                    </div>
+                    <div className="font-serif text-3xl font-bold mb-4">
+                        Authorized<br />Personnel<br />Only.
+                    </div>
+                    <p className="font-mono text-xs text-[#555] max-w-[200px] leading-relaxed">
+                        Access the LexOculus System.
+                        Secure session initiation required.
+                    </p>
                 </div>
+                <div className="hidden md:block font-mono text-[10px] text-[#999]">
+                    <div>SECURE_GATEWAY_V1</div>
+                    <div>ENCRYPTION: AES-256</div>
+                </div>
+            </aside>
 
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-4 glass-panel p-8 shadow-2xl">
+            {/* RIGHT CHASSIS: Form */}
+            <main className="flex-1 flex items-center justify-center p-8">
+                <div className="w-full max-w-md">
+                    <div className="font-mono text-xs text-[#FF4F00] mb-8 tracking-widest uppercase">
+                        // Initiate_Session
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
                         {error && (
-                            <div className="bg-red-950/30 border border-red-900/50 p-3 flex gap-3 text-red-400 text-sm">
+                            <div className="bg-[#FF4F00]/10 border border-[#FF4F00] p-4 flex gap-3 text-[#FF4F00] text-sm font-mono">
                                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                 <p>{error}</p>
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-xs font-medium uppercase tracking-wider text-zinc-500" htmlFor="email">Email Address</label>
+                            <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="email">Email_Identity</label>
                             <input
                                 id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-zinc-950/80 border border-white/10 p-3 text-zinc-100 text-sm focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all placeholder:text-zinc-700"
+                                className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none placeholder:text-gray-300"
                                 placeholder="name@organization.com"
                                 required
                             />
@@ -69,15 +87,15 @@ function LoginForm() {
 
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <label className="text-xs font-medium uppercase tracking-wider text-zinc-500" htmlFor="password">Password</label>
-                                <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300">Forgot?</a>
+                                <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="password">Passkey</label>
+                                <a href="#" className="text-xs font-mono text-[#999] hover:text-[#FF4F00]">RESET_CREDENTIALS</a>
                             </div>
                             <input
                                 id="password"
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-zinc-950/80 border border-white/10 p-3 text-zinc-100 text-sm focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                                className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
                                 required
                             />
                         </div>
@@ -85,20 +103,19 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-zinc-100 hover:bg-white text-zinc-950 font-semibold py-3 text-sm transition-colors disabled:opacity-50 mt-2"
+                            className="w-full bg-black hover:bg-[#FF4F00] text-white font-mono font-bold py-4 text-sm transition-colors disabled:opacity-50 tracking-widest uppercase rounded-none"
                         >
-                            {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Authenticate'}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'AUTHENTICATE ->'}
                         </button>
-                    </div>
-                </form>
+                    </form>
 
-                <p className="text-center mt-8 text-sm text-zinc-600">
-                    Don't have an account?{' '}
-                    <Link href="/auth/signup" className="text-zinc-400 hover:text-white transition-colors underline decoration-zinc-800 underline-offset-4">
-                        Request Access
-                    </Link>
-                </p>
-            </div>
+                    <div className="mt-12 pt-8 border-t border-[#E5E5E5] text-center">
+                        <Link href="/auth/signup" className="font-mono text-xs text-[#555] hover:text-black border-b border-transparent hover:border-black pb-1 transition-all">
+                            REQUEST_ACCESS_TOKEN [SIGN_UP]
+                        </Link>
+                    </div>
+                </div>
+            </main>
         </div>
     );
 }

@@ -1,10 +1,10 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import StarBackground from '@/components/StarBackground';
+import OpticalLogo from '@/components/OpticalLogo';
 
 export default function DashboardLayout({
     children,
@@ -12,6 +12,7 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [email, setEmail] = useState<string | null>(null);
 
     useEffect(() => {
@@ -46,42 +47,71 @@ export default function DashboardLayout({
         router.push('/auth/login');
     };
 
+    const navItems = [
+        { name: '01_SCANNER', href: '/dashboard/scanner', status: '[ACTIVE]' },
+        { name: '02_INTEGRATIONS', href: '/dashboard/integrations', status: '[LINKED]' },
+        { name: '03_ANALYSIS', href: '#', status: '[LOCKED]', disabled: true },
+        { name: '04_REPORTS', href: '#', status: '[LOCKED]', disabled: true },
+    ];
+
     return (
-        <div className="min-h-screen text-foreground selection:bg-blue-500/30 star-overlay">
-            <StarBackground />
+        <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
 
-            {/* Top Navigation Bar - Glass style */}
-            <header className="fixed top-0 left-0 right-0 h-14 glass-panel-light z-50 flex items-center justify-between px-6">
-                <div className="flex items-center gap-6">
-                    <Link href="/dashboard/scanner" className="flex items-center gap-2 group">
-                        <div className="w-5 h-5 bg-zinc-100 rounded-none transform rotate-45 group-hover:rotate-0 transition-transform duration-300"></div>
-                        <span className="font-heading font-bold text-zinc-100 tracking-tight">ComplianceAI</span>
-                    </Link>
+            {/* LEFT SIDEBAR: Navigation */}
+            <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col justify-between p-6 bg-[#F5F5F5] z-50">
+                <div>
+                    <div className="mb-12">
+                        <Link href="/dashboard/scanner">
+                            <OpticalLogo />
+                        </Link>
+                    </div>
 
-                    <nav className="hidden md:flex items-center gap-1 ml-4">
-                        <Link href="/dashboard/scanner" className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Scanner</Link>
-                        <span className="text-zinc-700 text-xs px-2">/</span>
-                        <Link href="/dashboard/integrations" className="px-3 py-1.5 text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors">Integrations</Link>
-                        <span className="text-zinc-700 text-xs px-2">/</span>
-                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-600 cursor-not-allowed">Analysis</button>
-                        <span className="text-zinc-700 text-xs px-2">/</span>
-                        <button disabled className="px-3 py-1.5 text-xs font-medium text-zinc-600 cursor-not-allowed">Reports</button>
+                    <nav className="flex flex-col gap-2 font-mono text-sm">
+                        {navItems.map((item) => {
+                            const isActive = pathname.startsWith(item.href) && item.href !== '#';
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.disabled ? '#' : item.href}
+                                    className={`
+                                        group flex items-center justify-between p-3 border 
+                                        transition-none cursor-pointer select-none
+                                        ${isActive ? 'bg-black text-white border-black' : 'border-transparent hover:border-black hover:bg-white text-black'}
+                                        ${item.disabled ? 'opacity-50 cursor-not-allowed hover:border-transparent hover:bg-transparent' : ''}
+                                    `}
+                                >
+                                    <span>{item.name}</span>
+                                    <span className={`text-[10px] ${isActive ? 'text-[#FF4F00]' : 'text-[#999] group-hover:text-[#FF4F00]'}`}>
+                                        {item.status}
+                                    </span>
+                                </Link>
+                            );
+                        })}
                     </nav>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {email && <span className="text-xs text-zinc-500 font-mono hidden sm:block">{email}</span>}
+                <div>
+                    <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
+                        <div className="flex justify-between mb-2">
+                            <span>OPERATOR:</span>
+                            <span className="truncate max-w-[150px]">{email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>SESSION:</span>
+                            <span className="text-[#FF4F00]">SECURE</span>
+                        </div>
+                    </div>
                     <button
                         onClick={handleLogout}
-                        className="text-xs font-medium text-zinc-400 hover:text-zinc-100 transition-colors uppercase tracking-wider"
+                        className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
                     >
-                        Log Out
+                        Terminate_Session
                     </button>
                 </div>
-            </header>
+            </aside>
 
-            {/* Main Content Area */}
-            <main className="pt-24 pb-12 px-6 max-w-5xl mx-auto relative z-10">
+            {/* MAIN CONTENT AREA */}
+            <main className="flex-1 bg-white min-h-screen">
                 {children}
             </main>
         </div>

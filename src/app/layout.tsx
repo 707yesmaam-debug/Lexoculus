@@ -1,27 +1,25 @@
 import type { Metadata } from "next";
-import { Orbitron, Exo_2, JetBrains_Mono } from "next/font/google";
+import { Playfair_Display, Space_Mono } from "next/font/google";
 import "./globals.css";
 
-const orbitron = Orbitron({
+const playfair = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-orbitron"
+  variable: "--font-serif",
+  weight: ["400", "700", "900"],
 });
 
-const exo2 = Exo_2({
-  weight: ['300', '400', '500', '600', '700'],
+const spaceMono = Space_Mono({
   subsets: ["latin"],
-  variable: "--font-exo2"
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  weight: ['400', '500', '700'],
-  subsets: ["latin"],
-  variable: "--font-jetbrains"
+  variable: "--font-mono",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "ComplianceAI - Premium Regulatory Intelligence",
-  description: "Automated model governance for the modern enterprise.",
+  title: "LexOculus | AI Compliance",
+  description: "The optical engine for code compliance. Automated EU AI Act audit.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -30,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${orbitron.variable} ${exo2.variable} ${exo2.className} ${jetbrainsMono.variable} antialiased bg-[#030303] text-white selection:bg-white selection:text-black`}>
+    <html lang="en">
+      <body className={`${playfair.variable} ${spaceMono.variable} antialiased selection:bg-[#FF4F00] selection:text-white`}>
         {children}
       </body>
     </html>

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import GitHubConnectButton from '@/components/GitHubConnectButton';
 import RepoSelector from '@/components/RepoSelector';
 import ScanStatus from '@/components/ScanStatus';
-import { AlertCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 function ScannerPageContent() {
     const searchParams = useSearchParams();
@@ -18,14 +18,11 @@ function ScannerPageContent() {
     const [scanData, setScanData] = useState<any>(null);
 
     useEffect(() => {
-        // Check connection status based on URL param from OAuth callback
         if (searchParams.get('connected') === 'true') {
             setIsConnected(true);
             setStep(2);
-            // Clean URL
             router.replace('/dashboard/scanner');
         }
-        // Handle errors
         const errorParam = searchParams.get('error');
         if (errorParam) {
             setScanError(getErrorMessage(errorParam));
@@ -54,7 +51,6 @@ function ScannerPageContent() {
                 throw new Error(data.message || 'Scan failed');
             }
 
-            // Include repo_scan_id for Feature 2 navigation
             setScanData({
                 ...data.metadata,
                 repo_scan_id: data.repo_scan_id,
@@ -77,39 +73,32 @@ function ScannerPageContent() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <div className="mb-12">
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight mb-2">Repository Ingestion</h1>
-                <p className="text-zinc-500">Connect a repository to begin the compliance analysis pipeline.</p>
+        <div className="max-w-4xl mx-auto p-12">
+            <div className="mb-16 border-b border-black pb-8">
+                <div className="font-mono text-xs text-[#FF4F00] mb-4 tracking-widest uppercase">
+                    PHASE_01 // INGESTION
+                </div>
+                <h1 className="font-serif text-5xl font-bold mb-4 tracking-tight">Repository Scan.</h1>
+                <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                    Connect your version control system.
+                    The engine will clone, parse, and map your codebase against regulatory frameworks.
+                </p>
             </div>
 
-            {/* Steps Indicator - Sharp numerical design */}
-            <div className="flex items-center gap-4 mb-12 border-b border-zinc-900 pb-6">
-                {[1, 2, 3].map((s) => (
-                    <div key={s} className="flex items-center gap-3">
-                        <div className={`w-8 h-8 flex items-center justify-center font-mono text-xs font-bold border transition-colors ${step === s
-                            ? 'bg-zinc-100 text-zinc-950 border-zinc-100'
-                            : step > s
-                                ? 'bg-zinc-900 text-zinc-500 border-zinc-800'
-                                : 'bg-transparent text-zinc-700 border-zinc-800'
-                            }`}>
-                            {step > s ? '✓' : `0${s}`}
-                        </div>
-                        {s < 3 && <div className="w-8 h-[1px] bg-zinc-800" />}
-                    </div>
-                ))}
-            </div>
-
-            <div className="space-y-8">
+            <div className="space-y-16">
                 {/* Step 1: Connect */}
-                <div className={`transition-opacity duration-500 ${step === 1 ? 'opacity-100' : (isConnected ? 'opacity-60' : 'opacity-40 pointer-events-none grayscale')}`}>
-                    <h2 className="text-lg font-semibold text-zinc-200 mb-4 flex items-center gap-2">
-                        01. Connection Source
-                        {step > 1 && <span className="text-xs text-blue-500 border border-blue-900/50 bg-blue-900/10 px-2 py-0.5 rounded-sm font-mono uppercase">Connected</span>}
-                    </h2>
+                <div className={`transition-opacity duration-500 ${step === 1 ? 'opacity-100' : (isConnected ? 'opacity-60' : 'opacity-30 pointer-events-none grayscale')}`}>
+                    <div className="flex items-baseline justify-between border-b border-black mb-6 pb-2">
+                        <h2 className="font-serif text-2xl font-bold">01. Connection Source</h2>
+                        {isConnected && <span className="font-mono text-xs text-[#FF4F00]">[CONNECTED]</span>}
+                    </div>
+
                     {!isConnected ? (
-                        <div className="border border-zinc-800 p-6 bg-zinc-950/50">
-                            <p className="text-sm text-zinc-400 mb-6 max-w-md">Authorize read-only access to your private GitHub repositories. We use a secure, encrypted token exchange.</p>
+                        <div className="border border-black p-8 bg-[#F5F5F5]">
+                            <p className="font-mono text-xs text-[#555] mb-8 max-w-md">
+                                AUTHORIZATION REQUIRED.
+                                GRANT READ-ONLY PERMISSIONS TO TARGET REPOSITORIES.
+                            </p>
                             <GitHubConnectButton />
                         </div>
                     ) : (
@@ -118,16 +107,20 @@ function ScannerPageContent() {
                 </div>
 
                 {/* Step 2: Select */}
-                <div className={`transition-opacity duration-500 ${step === 2 ? 'opacity-100' : 'opacity-40 pointer-events-none grayscale'}`}>
-                    <h2 className="text-lg font-semibold text-zinc-200 mb-4">02. Target Repository</h2>
-                    <div className="border border-zinc-800 bg-zinc-950/50">
+                <div className={`transition-opacity duration-500 ${step === 2 ? 'opacity-100' : 'opacity-30 pointer-events-none grayscale'}`}>
+                    <div className="flex items-baseline justify-between border-b border-black mb-6 pb-2">
+                        <h2 className="font-serif text-2xl font-bold">02. Target System</h2>
+                    </div>
+                    <div className="border border-black bg-white">
                         <RepoSelector onSelect={handleRepoSelect} />
                     </div>
                 </div>
 
                 {/* Step 3: Status */}
-                <div className={`transition-opacity duration-500 ${step === 3 ? 'opacity-100' : 'opacity-40 pointer-events-none grayscale'}`}>
-                    <h2 className="text-lg font-semibold text-zinc-200 mb-4">03. Ingestion Status</h2>
+                <div className={`transition-opacity duration-500 ${step === 3 ? 'opacity-100' : 'opacity-30 pointer-events-none grayscale'}`}>
+                    <div className="flex items-baseline justify-between border-b border-black mb-6 pb-2">
+                        <h2 className="font-serif text-2xl font-bold">03. Ingestion Status</h2>
+                    </div>
                     <ScanStatus status={scanStatus} error={scanError} data={scanData} />
                 </div>
             </div>
@@ -138,9 +131,8 @@ function ScannerPageContent() {
 export default function ScannerPage() {
     return (
         <Suspense fallback={
-            <div className="max-w-2xl mx-auto py-16 flex flex-col items-center">
-                <Loader2 className="w-8 h-8 text-zinc-400 animate-spin mb-4" />
-                <p className="text-zinc-500">Loading scanner...</p>
+            <div className="h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-black animate-spin" />
             </div>
         }>
             <ScannerPageContent />
