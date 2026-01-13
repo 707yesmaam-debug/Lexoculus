@@ -1,188 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { RepoScan, LlmCapabilityAnalysis } from '@prisma/client';
 
-export interface TrustPackData {
-    repoScan: RepoScan;
-    analysis: LlmCapabilityAnalysis | null;
-    riskClassification: string;
-    generatedAt: Date;
-}
-
-/**
- * Generate "Enterprise Trust Pack" (Vendor Risk Profile) PDF
- * Returns a Buffer containing the PDF data.
- */
-export async function generateTrustPackPDF(data: TrustPackData): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({
-            margin: 50,
-            size: 'A4',
-            info: {
-                Title: `Vendor Risk Profile - ${data.repoScan.repo_name}`,
-                Author: 'ComplianceAI',
-                Subject: 'EU AI Act Compliance Assessment',
-                Keywords: 'compliance, ai-act, risk-assessment, gdpr'
-            }
-        });
-
-        const buffers: Buffer[] = [];
-        doc.on('data', (buffer) => buffers.push(buffer));
-        doc.on('end', () => resolve(Buffer.concat(buffers)));
-        doc.on('error', (err) => reject(err));
-
-        // =====================================================================
-        // HEADER
-        // =====================================================================
-
-        // Brand / Logo area (Text for now)
-        doc.fontSize(20).font('Helvetica-Bold').text('ComplianceAI', { align: 'left' });
-        doc.moveDown(0.2);
-        doc.fontSize(10).font('Helvetica').fillColor('#666666').text('VENDOR RISK PROFILE', { align: 'left', characterSpacing: 2 });
-
-        // Add a line
-        doc.moveDown(1);
-        doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor('#E5E7EB').stroke();
-        doc.moveDown(1.5);
-
-        // =====================================================================
-        // EXECUTIVE SUMMARY
-        // =====================================================================
-
-        doc.fillColor('#000000');
-        doc.fontSize(16).font('Helvetica-Bold').text('Executive Summary');
-        doc.moveDown(0.5);
-
-        // Risk Badge Logic
-        let riskColor = '#10B981'; // Green
-        let riskLabel = 'MINIMAL RISK';
-
-        if (data.riskClassification === 'UNACCEPTABLE') {
-            riskColor = '#EF4444'; // Red
-            riskLabel = 'PROHIBITED';
-        } else if (data.riskClassification === 'HIGH_RISK') {
-            riskColor = '#F59E0B'; // Amber
-            riskLabel = 'HIGH RISK';
-        } else if (data.riskClassification === 'LIMITED_RISK') {
-            riskColor = '#3B82F6'; // Blue
-            riskLabel = 'LIMITED RISK';
-        }
-
-        // Draw Risk Badge
-        const badgeY = doc.y;
-        doc.roundedRect(50, badgeY, 120, 30, 4).fill(riskColor);
-        doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text(riskLabel, 50, badgeY + 10, { width: 120, align: 'center' });
-
-        doc.moveDown(2);
-        doc.fillColor('#000000');
-
-        doc.fontSize(10).font('Helvetica').text(`This document serves as a preliminary automated compliance assessment for the software repository "${data.repoScan.repo_name}". It is intended to assist Enterprise Procurement teams in evaluating AI safety and regulatory exposure under the EU AI Act (Regulation (EU) 2024/1689).`, { align: 'justify' });
-        doc.moveDown(1);
-
-        // Metadata Grid
-        const startY = doc.y;
-        doc.fontSize(10).font('Helvetica-Bold').text('Repository:', 50, startY);
-        doc.font('Helvetica').text(data.repoScan.github_repo_url, 150, startY);
-
-        doc.font('Helvetica-Bold').text('Assessment Date:', 50, startY + 15);
-        doc.font('Helvetica').text(data.generatedAt.toLocaleDateString(), 150, startY + 15);
-
-        doc.font('Helvetica-Bold').text('Assessment ID:', 50, startY + 30);
-        doc.font('Helvetica').text(data.repoScan.id.substring(0, 8).toUpperCase(), 150, startY + 30);
-
-        doc.moveDown(3);
-
-        // =====================================================================
-        // COMPLIANCE STATUS
-        // =====================================================================
-
-        doc.fontSize(14).font('Helvetica-Bold').text('Regulatory Status');
-        doc.moveDown(0.5);
-
-        // Article 5 (Prohibited Practices)
-        const isProhibited = data.riskClassification === 'UNACCEPTABLE';
-        drawStatusRow(doc, 'EU AI Act Article 5 (Prohibited Practices)', !isProhibited);
-
-        // Article 6 (High Risk)
-        const isHighRisk = data.riskClassification === 'HIGH_RISK' || data.riskClassification === 'UNACCEPTABLE';
-        // Note: For High Risk, "Pass" means "Not Detected" (which is good for speed) OR "Conformity Assessment Ready"
-        // Here we frame it as "High Risk Indicators Detected?" -> No = Pass
-        drawStatusRow(doc, 'EU AI Act Annex III (High Risk Systems)', !isHighRisk);
-
-        // Article 50 (Transparency)
-        const isLimited = data.riskClassification === 'LIMITED_RISK';
-        drawStatusRow(doc, 'EU AI Act Article 50 (Transparency Obligations)', true); // Generally assume capable of compliance
-
-        doc.moveDown(2);
-
-        // =====================================================================
-        // DATA SAFETY & PRIVACY
-        // =====================================================================
-
-        doc.fontSize(14).font('Helvetica-Bold').text('Data Safety & Privacy Checks');
-        doc.moveDown(0.5);
-
-        const hasTrainingCode = data.analysis?.has_training_code || false;
-        const hasPiiRisk = false; // Would need tripwire/analysis data for this specifically
-
-        const riskIndicators = (data.analysis?.estimated_risk_indicators as unknown as Record<string, boolean>) || {};
-        drawCheckRow(doc, 'Model Training Code Detected', hasTrainingCode ? 'YES (Review Required)' : 'NO', hasTrainingCode ? '#F59E0B' : '#10B981');
-        drawCheckRow(doc, 'Biometric Data Processing', riskIndicators['uses_biometric_processing'] ? 'DETECTED' : 'NOT DETECTED', riskIndicators['uses_biometric_processing'] ? '#EF4444' : '#10B981');
-
-
-        // =====================================================================
-        // DISCLAIMER / FOOTER
-        // =====================================================================
-
-        const bottomY = 750; // Near bottom of A4
-        doc.moveTo(50, bottomY).lineTo(545, bottomY).strokeColor('#E5E7EB').stroke();
-
-        doc.fontSize(8).fillColor('#9CA3AF').text(
-            'DISCLAIMER: This automated report is generated by ComplianceAI based on static code analysis. It does not constitute legal advice or a formal conformity assessment certificate. Organizations should consult with qualified legal counsel for definitive regulatory guidance.',
-            50,
-            bottomY + 10,
-            { align: 'center', width: 495 }
-        );
-
-        doc.end();
-    });
-}
-
-/**
- * Helper: Draw a Status Row (Regulation Name | Status Badge)
- */
-function drawStatusRow(doc: PDFKit.PDFDocument, label: string, passed: boolean) {
-    const y = doc.y;
-    doc.fillColor('#000000').fontSize(10).font('Helvetica').text(label, 50, y + 5);
-
-    // Status Badge
-    const badgeColor = passed ? '#ECFDF5' : '#FEF2F2'; // Light Green / Light Red
-    const textColor = passed ? '#059669' : '#DC2626'; // Dark Green / Dark Red
-    const text = passed ? 'COMPLIANT / NONE' : 'ATTENTION REQUIRED';
-
-    const textWidth = doc.widthOfString(text);
-    const badgeWidth = textWidth + 20;
-
-    doc.roundedRect(545 - badgeWidth, y, badgeWidth, 20, 2).fill(badgeColor);
-    doc.fillColor(textColor).fontSize(8).font('Helvetica-Bold').text(text, 545 - badgeWidth, y + 6, { width: badgeWidth, align: 'center' });
-
-    doc.moveDown(1.5);
-}
-
-/**
- * Helper: Draw a Check Row (Label | Value)
- */
-function drawCheckRow(doc: PDFKit.PDFDocument, label: string, value: string, color: string) {
-    const y = doc.y;
-    doc.fillColor('#000000').fontSize(10).font('Helvetica').text(label, 50, y);
-
-    doc.fillColor(color).font('Helvetica-Bold').text(value, 300, y, { align: 'right', width: 245 });
-    doc.moveDown(1);
-}
-
-// =============================================================================
-// LEGACY REPORT GENERATOR (Restored for Build Compatibility)
-// =============================================================================
-
 export interface ReportData {
     assessment: any;
     repo: RepoScan;
@@ -191,29 +9,188 @@ export interface ReportData {
 }
 
 /**
- * Generate standard Compliance Report PDF
+ * Generate System 3.0 "Optical Legality" Compliance Report
+ * font: Times-Roman (Serif) for headings, Courier (Mono) for data
+ * colors: Black (#000000), Safety Orange (#FF4F00), Grey (#999999)
  */
 export async function generateComplianceReport(data: ReportData): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const doc = new PDFDocument({
+            margin: 40,
+            size: 'A4',
+            info: {
+                Title: `Compliance Report - ${data.repo.repo_name}`,
+                Author: 'LexOculus System',
+                Subject: 'EU AI Act Compliance Assessment',
+                Keywords: 'compliance, ai-act, risk-assessment, lex-oculus'
+            }
+        });
+
         const buffers: Buffer[] = [];
-
-        doc.on('data', buffers.push.bind(buffers));
+        doc.on('data', (buffer) => buffers.push(buffer));
         doc.on('end', () => resolve(Buffer.concat(buffers)));
-        doc.on('error', reject);
+        doc.on('error', (err) => reject(err));
 
-        // Header
-        doc.fontSize(20).text('ComplianceAI Report', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(12).text(`Repository: ${data.repo.repo_name}`);
-        doc.text(`Date: ${new Date().toISOString().split('T')[0]}`);
-        doc.moveDown();
+        // Colors
+        const C_BLACK = '#000000';
+        const C_ORANGE = '#FF4F00';
+        const C_GREY = '#999999';
 
-        // Status
-        doc.fontSize(14).text('Compliance Status');
-        doc.fontSize(12).text(`Risk Level: ${data.assessment.final_risk_classification}`);
-        doc.text(`Score: ${data.assessment.final_risk_score}`);
+        // =====================================================================
+        // HEADER
+        // =====================================================================
+
+        // "LEX|OCULUS" Wordmark
+        doc.font('Times-Bold').fontSize(24).fillColor(C_BLACK).text('LEX', 40, 40, { continued: true });
+        doc.font('Times-Roman').fillColor(C_ORANGE).text('|', { continued: true });
+        doc.font('Times-Bold').fillColor(C_BLACK).text('OCULUS');
+
+        doc.font('Courier').fontSize(8).fillColor(C_GREY).text('THE MICROSCOPE FOR CODE LAW', 40, 65);
+
+        // Divider
+        doc.moveTo(40, 80).lineTo(555, 80).lineWidth(2).strokeColor(C_BLACK).stroke();
+
+        // Report Metadata (Right Aligned)
+        const dateStr = new Date().toISOString().split('T')[0];
+        doc.font('Courier').fontSize(8).fillColor(C_BLACK);
+        doc.text(`REPORT_ID: ${data.assessment.id.substring(0, 8).toUpperCase()}`, 350, 45, { align: 'right', width: 200 });
+        doc.text(`DATE: ${dateStr}`, 350, 55, { align: 'right', width: 200 });
+        doc.text(`REF: ${data.repo.repo_name.toUpperCase()}`, 350, 65, { align: 'right', width: 200 });
+
+        doc.moveDown(4);
+
+        // =====================================================================
+        // 01 EXECUTIVE SUMMARY
+        // =====================================================================
+
+        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('01_EXECUTIVE_SUMMARY');
+        doc.font('Times-Bold').fontSize(18).fillColor(C_BLACK).text('Compliance Status Assessment');
+        doc.moveDown(1);
+
+        // Main Risk Badge
+        const riskClass = data.assessment.final_risk_classification;
+        const score = data.assessment.final_risk_score;
+        let riskLabel = 'MINIMAL RISK';
+        let riskColor = C_BLACK;
+
+        if (riskClass === 'UNACCEPTABLE') {
+            riskLabel = 'UNACCEPTABLE RISK';
+            riskColor = C_ORANGE;
+        } else if (riskClass === 'HIGH_RISK') {
+            riskLabel = 'HIGH RISK';
+            riskColor = C_ORANGE;
+        } else if (riskClass === 'LIMITED_RISK') {
+            riskLabel = 'LIMITED RISK';
+            riskColor = C_BLACK;
+        }
+
+        // Draw Sharp Badge
+        doc.rect(40, doc.y, 515, 60).strokeColor(riskColor).lineWidth(1).stroke();
+
+        const badgeStartY = doc.y;
+        doc.font('Courier-Bold').fontSize(24).fillColor(riskColor).text(riskLabel, 50, badgeStartY + 15);
+        doc.font('Courier').fontSize(10).fillColor(C_BLACK).text(`COMPLIANCE SCORE: ${score}/100`, 50, badgeStartY + 40);
+
+        doc.moveDown(5);
+
+        // Narrative
+        doc.font('Times-Roman').fontSize(11).fillColor(C_BLACK).text(
+            `This automated assessment certifies that the software repository "${data.repo.repo_name}" has been analyzed for compliance with the EU AI Act (Regulation (EU) 2024/1689). The system has been classified as ${riskLabel} based on heuristic analysis of capability signatures and operational context.`,
+            { align: 'justify', width: 515 }
+        );
+
+        doc.moveDown(2);
+
+        // =====================================================================
+        // 02 SYSTEM IDENTIFICATION
+        // =====================================================================
+
+        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('02_SYSTEM_IDENTIFICATION');
+        doc.moveDown(0.5);
+
+        const rowY = doc.y;
+        const col1 = 40;
+        const col2 = 200;
+
+        // Helper for rows
+        const drawRow = (label: string, value: string) => {
+            doc.font('Courier').fontSize(9).fillColor(C_GREY).text(label, col1, doc.y);
+            doc.font('Courier-Bold').fontSize(9).fillColor(C_BLACK).text(value, col2, doc.y - 9); // Adjust for alignment
+            doc.moveDown(1);
+            doc.moveTo(col1, doc.y).lineTo(555, doc.y).lineWidth(0.5).strokeColor('#E5E5E5').stroke(); // Light grey line
+            doc.moveDown(1);
+        };
+
+        drawRow('REPOSITORY_URL', data.repo.github_repo_url);
+        drawRow('OWNER_HANDLE', data.repo.repo_owner);
+        drawRow('SCAN_TIMESTAMP', new Date(data.repo.scanned_at).toISOString());
+        drawRow('PRIMARY_LANGUAGE', data.capabilities.primary_language || 'UNKNOWN');
+
+        const context = data.assessment.context_summary || {};
+        drawRow('INTENDED_USE', context.intended_use || 'NOT_SPECIFIED');
+        drawRow('DEPLOYMENT_REGION', context.deployment_region || 'GLOBAL');
+
+        doc.moveDown(2);
+
+        // =====================================================================
+        // 03 REGULATORY MAPPING
+        // =====================================================================
+
+        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('03_REGULATORY_MAPPING');
+        doc.moveDown(0.5);
+
+        // Header for table
+        doc.rect(40, doc.y, 515, 20).fillColor(C_BLACK).fill();
+        doc.fillColor('#FFFFFF').font('Courier-Bold').fontSize(8);
+        doc.text('REGULATION', 50, doc.y - 14);
+        doc.text('STATUS', 400, doc.y - 14);
+        doc.moveDown(2);
+
+        const drawRegRow = (reg: string, status: string, isRisk: boolean) => {
+            const y = doc.y;
+            doc.fillColor(C_BLACK).font('Times-Bold').fontSize(10).text(reg, 50, y);
+
+            // Status Box
+            const statusColor = isRisk ? C_ORANGE : C_BLACK;
+            const statusText = status.toUpperCase();
+
+            doc.rect(400, y - 2, 140, 14).strokeColor(statusColor).lineWidth(1).stroke();
+            doc.fillColor(statusColor).font('Courier-Bold').fontSize(8).text(statusText, 405, y + 2);
+
+            doc.moveDown(1.5);
+            doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(0.5).strokeColor('#E5E5E5').stroke();
+            doc.moveDown(1);
+        };
+
+        // Article 5
+        const isProhibited = riskClass === 'UNACCEPTABLE';
+        drawRegRow('EU AI Act Art. 5 (Prohibited)', isProhibited ? 'DETECTED' : 'CLEAR', isProhibited);
+
+        // Article 6
+        const isHighRisk = riskClass === 'HIGH_RISK' || riskClass === 'UNACCEPTABLE';
+        drawRegRow('EU AI Act Art. 6 (High Risk)', isHighRisk ? 'APPLICABLE' : 'NOT_APPLICABLE', isHighRisk);
+
+        // Article 50
+        const isLimited = riskClass === 'LIMITED_RISK';
+        drawRegRow('EU AI Act Art. 50 (Transparency)', isLimited || isHighRisk ? 'REQUIRED' : 'VOLUNTARY', false);
+
+        // =====================================================================
+        // FOOTER
+        // =====================================================================
+
+        const bottomY = 780;
+        doc.moveTo(40, bottomY).lineTo(555, bottomY).lineWidth(2).strokeColor(C_BLACK).stroke();
+
+        doc.font('Times-Bold').fontSize(8).fillColor(C_BLACK).text('LEX|OCULUS', 40, bottomY + 10);
+        doc.font('Courier').fontSize(8).fillColor(C_GREY).text(`PAGE 1 OF 1 // SIGNED: ${data.assessment.digital_signature || 'PENDING'}`, 40, bottomY + 10, { align: 'right', width: 515 });
 
         doc.end();
     });
+}
+
+// Deprecating separate TrustPack function to unify on System 3.0
+export async function generateTrustPackPDF(data: any): Promise<Buffer> {
+    // Mapping legacy call to new system if necessary, but ideally unused.
+    // For now, keeping signature to avoid breaking imports but throwing error or redirecting logic.
+    return Buffer.from('');
 }
