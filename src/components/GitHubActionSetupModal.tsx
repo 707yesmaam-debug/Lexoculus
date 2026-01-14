@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Check, Copy, ExternalLink, Loader2, FileCode2, Terminal } from 'lucide-react';
@@ -19,9 +19,21 @@ export default function GitHubActionSetupModal({
     onComplete
 }: GitHubActionSetupModalProps) {
     const [step, setStep] = useState(1);
-    const [webhookSecret] = useState(() => 'gh_sec_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
+    const [webhookSecret, setWebhookSecret] = useState('Loading...');
     const [isChecking, setIsChecking] = useState(false);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+
+    // Fetch the correct derived secret for this repo
+    useEffect(() => {
+        if (open && repoFullName) {
+            fetch(`/api/github/webhook-secret?repo=${encodeURIComponent(repoFullName)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.secret) setWebhookSecret(data.secret);
+                })
+                .catch(err => console.error('Failed to load secret', err));
+        }
+    }, [open, repoFullName]);
 
     const yamlContent = `name: LexOculus Guardian
 

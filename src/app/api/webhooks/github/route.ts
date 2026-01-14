@@ -17,6 +17,7 @@ import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { scanDiffs, TripwireResult } from '@/lib/tripwire';
 import { decrypt } from '@/lib/encryption';
+import { deriveRepoSecret } from '@/lib/github-security';
 
 // Types for GitHub webhook payloads
 interface GitHubPRPayload {
@@ -255,19 +256,31 @@ export async function POST(request: NextRequest) {
         // Get raw body for signature verification
         const rawBody = await request.text();
 
-        // Verify webhook signature (REQUIRED - prevents spoofed webhooks)
-        const signature = request.headers.get('x-hub-signature-256');
-        if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-            console.error('❌ [WEBHOOK] Invalid signature');
-            return NextResponse.json(
-                { error: 'Invalid webhook signature' },
-                { status: 401 }
-            );
-        }
-
-        // Parse payload
+        // Parse payload FIRST to identify repository (needed for per-repo secret derivation)
         const payload = JSON.parse(rawBody);
         const event = request.headers.get('x-github-event');
+        const repoFullName = payload.repository?.full_name;
+
+        // SECURITY: Derive the correct secret for this specific repository
+        // This prevents one leaked repo secret from compromising the entire system
+        let secretToVerify = webhookSecret; // Default to global secret (legacy)
+
+        if (repoFullName) {
+            secretToVerify = deriveRepoSecret(repoFullName);
+        }
+
+        // Verify webhook signature (REQUIRED)
+        const signature = request.headers.get('x-hub-signature-256');
+        if (!verifyWebhookSignature(rawBody, signature, secretToVerify)) {
+            // Also try global secret just in case user set it up manually with the master key
+            if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+                console.error('❌ [WEBHOOK] Invalid signature - Secret mismatch');
+                return NextResponse.json(
+                    { error: 'Invalid webhook signature' },
+                    { status: 401 }
+                );
+            }
+        }
 
         // Handle 'ping' events (sent when creating a webhook)
         if (event === 'ping') {

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
 import { getUsageStatus } from '@/lib/subscription';
+import { deriveRepoSecret } from '@/lib/github-security';
 
 /**
  * GET /api/github/action-install
@@ -152,6 +153,8 @@ export async function POST(request: NextRequest) {
                     step3: 'Add COMPLIANCEAI_WEBHOOK_SECRET as a repository secret',
                     template_url: '/github-action-template.yml',
                     webhook_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/github`,
+                    // SECURITY: Provide the correct derived secret for this repo
+                    webhook_secret: deriveRepoSecret(repo_full_name),
                 }
             },
         });
