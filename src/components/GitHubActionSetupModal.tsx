@@ -89,7 +89,7 @@ jobs:
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-white border-2 border-black text-black max-w-2xl p-0 gap-0 shadow-none sm:rounded-none">
+            <DialogContent className="bg-white border-2 border-black text-black max-w-2xl p-0 gap-0 shadow-none sm:rounded-none overflow-hidden outline-none">
                 <DialogHeader className="p-8 border-b border-black bg-[#F5F5F5]">
                     <DialogTitle className="font-serif text-3xl font-bold mb-2">Enable Guardian Protocol</DialogTitle>
                     <DialogDescription className="font-mono text-xs text-[#555]">
@@ -97,15 +97,15 @@ jobs:
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="p-8 space-y-8">
+                <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto">
                     {/* Step 1: Secret */}
-                    <div className={`space-y-4 ${step !== 1 ? 'opacity-50' : ''}`}>
+                    <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-mono text-xs font-bold">01</div>
-                            <h3 className="font-bold text-sm uppercase tracking-widest">Install Repository Secret</h3>
+                            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-mono text-xs font-bold shrink-0">01</div>
+                            <h3 className="font-bold text-sm uppercase tracking-widest font-mono">Install Repository Secret</h3>
                         </div>
 
-                        <div className="ml-9 p-4 border border-black space-y-4">
+                        <div className="ml-9 p-4 border border-black space-y-4 bg-white">
                             <p className="font-mono text-xs text-[#555]">
                                 Navigate to <a href={`https://github.com/${repoFullName}/settings/secrets/actions`} target="_blank" rel="noopener noreferrer" className="text-[#FF4F00] hover:underline font-bold inline-flex items-center gap-1">
                                     Settings &gt; Secrets <ExternalLink className="w-3 h-3" />
@@ -115,8 +115,8 @@ jobs:
                             <div className="grid gap-2">
                                 <div className="text-[10px] font-mono uppercase tracking-wider text-[#999]">Identifier</div>
                                 <div className="flex gap-2">
-                                    <code className="flex-1 bg-[#F5F5F5] p-2 border border-black font-mono text-xs">LEXOCULUS_WEBHOOK_SECRET</code>
-                                    <Button variant="outline" size="icon" className="h-9 w-9 border-black hover:bg-black hover:text-white rounded-none shrink-0" onClick={() => copyToClipboard('LEXOCULUS_WEBHOOK_SECRET', 'secret_name')}>
+                                    <code className="flex-1 bg-[#F5F5F5] p-2 border border-black font-mono text-xs flex items-center">LEXOCULUS_WEBHOOK_SECRET</code>
+                                    <Button variant="outline" size="icon" className="h-9 w-9 border-black hover:bg-black hover:text-white rounded-none shrink-0 transition-colors" onClick={() => copyToClipboard('LEXOCULUS_WEBHOOK_SECRET', 'secret_name')}>
                                         {copiedField === 'secret_name' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                     </Button>
                                 </div>
@@ -124,9 +124,9 @@ jobs:
 
                             <div className="grid gap-2">
                                 <div className="text-[10px] font-mono uppercase tracking-wider text-[#999]">Value</div>
-                                <div className="flex gap-2">
-                                    <code className="flex-1 bg-[#F5F5F5] p-2 border border-black font-mono text-xs overflow-hidden text-ellipsis">{webhookSecret}</code>
-                                    <Button variant="outline" size="icon" className="h-9 w-9 border-black hover:bg-black hover:text-white rounded-none shrink-0" onClick={() => copyToClipboard(webhookSecret, 'secret_value')}>
+                                <div className="flex gap-2 w-full overflow-hidden">
+                                    <code className="flex-1 bg-[#F5F5F5] p-2 border border-black font-mono text-xs truncate leading-5">{webhookSecret}</code>
+                                    <Button variant="outline" size="icon" className="h-9 w-9 border-black hover:bg-black hover:text-white rounded-none shrink-0 transition-colors" onClick={() => copyToClipboard(webhookSecret, 'secret_value')}>
                                         {copiedField === 'secret_value' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                     </Button>
                                 </div>
@@ -135,19 +135,19 @@ jobs:
                     </div>
 
                     {/* Step 2: Workflow File */}
-                    <div className={`space-y-4 ${step !== 1 ? 'opacity-50' : ''}`}>
+                    <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-mono text-xs font-bold">02</div>
-                            <h3 className="font-bold text-sm uppercase tracking-widest">Deploy Workflow Manifest</h3>
+                            <div className="w-6 h-6 bg-black text-white flex items-center justify-center font-mono text-xs font-bold shrink-0">02</div>
+                            <h3 className="font-bold text-sm uppercase tracking-widest font-mono">Deploy Workflow Manifest</h3>
                         </div>
 
                         <div className="ml-9 border border-black">
                             <div className="flex items-center justify-between px-3 py-2 border-b border-black bg-[#F5F5F5]">
-                                <span className="text-[10px] font-mono uppercase tracking-wider">.github/workflows/lexoculus.yml</span>
+                                <span className="text-[10px] font-mono uppercase tracking-wider text-[#555]">.github/workflows/lexoculus.yml</span>
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-6 text-[10px] text-black hover:bg-black hover:text-white px-2 rounded-none uppercase font-mono tracking-widest"
+                                    className="h-6 text-[10px] text-black hover:bg-black hover:text-white px-2 rounded-none uppercase font-mono tracking-widest transition-colors"
                                     onClick={() => copyToClipboard(yamlContent, 'yaml')}
                                 >
                                     {copiedField === 'yaml' ? (
@@ -164,18 +164,20 @@ jobs:
                                 </Button>
                             </div>
 
-                            <pre className="bg-white p-3 text-[10px] font-mono text-[#555] overflow-x-auto max-h-[150px] block">
-                                <code>{yamlContent}</code>
-                            </pre>
+                            <div className="relative">
+                                <pre className="bg-white p-4 text-[10px] font-mono text-[#555] overflow-auto h-[200px] border-none custom-scrollbar">
+                                    <code>{yamlContent}</code>
+                                </pre>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <DialogFooter className="border-t border-black p-4 flex justify-between items-center bg-[#F5F5F5]">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="border-black text-black hover:bg-black hover:text-white rounded-none font-mono text-xs uppercase tracking-widest">
+                <DialogFooter className="border-t-2 border-black p-4 flex justify-between items-center bg-[#F5F5F5] sm:justify-between">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="border-black text-black hover:bg-black hover:text-white rounded-none font-mono text-xs uppercase tracking-widest h-10 px-6 transition-colors">
                         Abort_Setup
                     </Button>
-                    <Button onClick={handlePingCheck} disabled={isChecking} className="bg-[#FF4F00] hover:bg-black text-white rounded-none font-mono text-xs uppercase tracking-widest px-6">
+                    <Button onClick={handlePingCheck} disabled={isChecking} className="bg-[#FF4F00] hover:bg-black text-white rounded-none font-mono text-xs uppercase tracking-widest px-6 h-10 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]">
                         {isChecking ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Terminal className="w-4 h-4 mr-2" />}
                         Verify_Deployment
                     </Button>
