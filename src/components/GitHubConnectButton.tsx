@@ -96,7 +96,10 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
                 className="group relative w-full flex items-center justify-center gap-3 px-6 py-6 bg-black text-white hover:bg-[#FF4F00] transition-colors duration-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    <>
+                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                        <span className="font-mono font-bold tracking-widest uppercase text-sm">Initializing_Secure_Link...</span>
+                    </>
                 ) : (
                     <>
                         <Github className="w-5 h-5" />

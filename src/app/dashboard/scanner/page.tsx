@@ -18,16 +18,37 @@ function ScannerPageContent() {
     const [scanData, setScanData] = useState<any>(null);
 
     useEffect(() => {
-        if (searchParams.get('connected') === 'true') {
-            setIsConnected(true);
-            setStep(2);
-            router.replace('/dashboard/scanner');
-        }
-        const errorParam = searchParams.get('error');
-        if (errorParam) {
-            setScanError(getErrorMessage(errorParam));
-            setScanStatus('error');
-        }
+        const checkConnection = async () => {
+            try {
+                // Priority: Check URL params first
+                if (searchParams.get('connected') === 'true') {
+                    setIsConnected(true);
+                    setStep(2);
+                    router.replace('/dashboard/scanner');
+                    return;
+                }
+
+                if (searchParams.get('error')) {
+                    setScanError(getErrorMessage(searchParams.get('error')!));
+                    setScanStatus('error');
+                    return;
+                }
+
+                // Fallback: Check server status
+                const res = await fetch('/api/github/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.isConnected) {
+                        setIsConnected(true);
+                        setStep(2);
+                    }
+                }
+            } catch (error) {
+                console.error('Connection check failed:', error);
+            }
+        };
+
+        checkConnection();
     }, [searchParams, router]);
 
     const handleRepoSelect = async (repoUrl: string) => {
