@@ -1,6 +1,6 @@
 'use client';
 
-import { Brain, Code2, Database, Cpu, AlertTriangle, CheckCircle, XCircle, Square } from 'lucide-react';
+import { Brain, Code2, Database, Cpu, AlertTriangle, CheckCircle, XCircle, Square, Info } from 'lucide-react';
 
 interface RiskIndicators {
     uses_computer_vision?: boolean;
@@ -119,6 +119,12 @@ export default function CapabilityCard({
                     <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
                         <Code2 className="w-5 h-5 text-black" />
                         <h3 className="text-black font-serif font-bold text-lg">Core Frameworks</h3>
+                        <div className="group relative ml-2">
+                            <Info className="w-4 h-4 text-[#999] cursor-help" />
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-black text-white text-[10px] font-mono leading-tight z-10 invisible group-hover:visible shadow-xl">
+                                A framework is a pre-built, structured foundation with reusable code and tools that provides a template for developing applications.
+                            </div>
+                        </div>
                     </div>
                     <div className="p-6">
                         {frameworks.length > 0 ? (

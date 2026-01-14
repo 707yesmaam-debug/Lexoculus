@@ -88,7 +88,7 @@ function LoginForm() {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="password">Passkey</label>
-                                <a href="#" className="text-xs font-mono text-[#999] hover:text-[#FF4F00]">RESET_CREDENTIALS</a>
+                                <Link href="/auth/reset-password" className="text-xs font-mono text-[#999] hover:text-[#FF4F00]">RESET_CREDENTIALS</Link>
                             </div>
                             <input
                                 id="password"
