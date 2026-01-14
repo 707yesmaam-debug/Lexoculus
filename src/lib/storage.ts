@@ -73,8 +73,12 @@ export async function uploadEvidenceToSupabase(
     fileName: string,
     contentType: string
 ): Promise<{ url: string; path: string }> {
-    // Sanitize filename
-    const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    // SECURITY: Comprehensive filename sanitization
+    const safeName = fileName
+        .replace(/\.\./g, '')           // Remove path traversal sequences
+        .replace(/[^a-zA-Z0-9.-]/g, '_') // Only allow safe characters
+        .replace(/^\.+/, '')            // Remove leading dots
+        .substring(0, 200);              // Limit filename length
     const filePath = `${userId}/evidence/${assessmentId}/${safeName}`;
 
     console.log(`[Storage] Uploading Evidence: ${filePath}`);

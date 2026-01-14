@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
 import { scanDiffs, TripwireResult } from '@/lib/tripwire';
+import { decrypt } from '@/lib/encryption';
 
 // Types for GitHub webhook payloads
 interface GitHubPRPayload {
@@ -241,21 +242,27 @@ async function postPRComment(
  */
 export async function POST(request: NextRequest) {
     try {
+        // SECURITY: Webhook signature verification is MANDATORY
         const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            console.error('❌ [WEBHOOK] GITHUB_WEBHOOK_SECRET not configured - rejecting request');
+            return NextResponse.json(
+                { error: 'Webhook endpoint not properly configured' },
+                { status: 500 }
+            );
+        }
 
         // Get raw body for signature verification
         const rawBody = await request.text();
 
-        // Verify webhook signature (if secret is configured)
-        if (webhookSecret) {
-            const signature = request.headers.get('x-hub-signature-256');
-            if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-                console.error('❌ [WEBHOOK] Invalid signature');
-                return NextResponse.json(
-                    { error: 'Invalid webhook signature' },
-                    { status: 401 }
-                );
-            }
+        // Verify webhook signature (REQUIRED - prevents spoofed webhooks)
+        const signature = request.headers.get('x-hub-signature-256');
+        if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+            console.error('❌ [WEBHOOK] Invalid signature');
+            return NextResponse.json(
+                { error: 'Invalid webhook signature' },
+                { status: 401 }
+            );
         }
 
         // Parse payload
@@ -311,10 +318,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // SECURITY: Decrypt the stored GitHub token before use
+        let decryptedToken: string;
+        try {
+            decryptedToken = decrypt(githubConnection.github_oauth_token);
+        } catch (decryptError) {
+            console.error(`❌ [TRIPWIRE] Failed to decrypt GitHub token for user ${installation.user_id}`);
+            return NextResponse.json(
+                { error: 'Failed to access GitHub credentials' },
+                { status: 500 }
+            );
+        }
+
         // 1. Fetch PR diff
         const diffText = await fetchPRDiff(
             prPayload.pull_request.diff_url,
-            githubConnection.github_oauth_token
+            decryptedToken
         );
 
         // 2. Parse Diff into files
@@ -351,7 +370,7 @@ export async function POST(request: NextRequest) {
                 prPayload.repository.full_name,
                 prPayload.number,
                 commentBody,
-                githubConnection.github_oauth_token
+                decryptedToken
             );
             console.log(`💬 [TRIPWIRE] Posted comment on PR #${prPayload.number}`);
         } else {

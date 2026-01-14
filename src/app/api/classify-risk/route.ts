@@ -248,9 +248,13 @@ export async function POST(request: NextRequest) {
         if (error instanceof Error) {
             console.error('Stack:', error.stack);
         }
-        return NextResponse.json(
-            { error: 'Failed to classify risk', details: error instanceof Error ? error.message : String(error) },
-            { status: 500 }
-        );
+        // SECURITY: Only expose error details in development
+        const errorResponse: { error: string; details?: string } = {
+            error: 'Failed to classify risk',
+        };
+        if (process.env.NODE_ENV === 'development') {
+            errorResponse.details = error instanceof Error ? error.message : String(error);
+        }
+        return NextResponse.json(errorResponse, { status: 500 });
     }
 }

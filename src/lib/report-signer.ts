@@ -80,7 +80,13 @@ export function verifySignature(
             .update(payload)
             .digest('hex');
 
-        const valid = sig === expectedSig;
+        // SECURITY: Use timing-safe comparison to prevent timing attacks
+        const sigBuffer = Buffer.from(sig, 'hex');
+        const expectedBuffer = Buffer.from(expectedSig, 'hex');
+
+        // Ensure buffers are same length before comparison
+        const valid = sigBuffer.length === expectedBuffer.length &&
+            crypto.timingSafeEqual(sigBuffer, expectedBuffer);
 
         return { valid, timestamp: valid ? timestamp : undefined };
     } catch (error) {

@@ -118,9 +118,16 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Generate Report] PDF generated: ${pdfBuffer.length} bytes`);
 
-        // 6. Sign PDF
+        // 6. Sign PDF (SECURITY: Signing key is REQUIRED)
         console.log(`[Generate Report] Signing PDF...`);
-        const signingKey = process.env.PDF_SIGNING_KEY || 'default-signing-key';
+        const signingKey = process.env.PDF_SIGNING_KEY;
+        if (!signingKey) {
+            console.error('[Generate Report] PDF_SIGNING_KEY not configured');
+            return NextResponse.json(
+                { error: 'Report signing not properly configured. Please contact support.' },
+                { status: 500 }
+            );
+        }
         const { signedPdf, signature, timestamp } = await signReport(pdfBuffer, signingKey);
 
         // 7. Generate file name and ID
@@ -172,12 +179,13 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('[Generate Report] Error:', error);
-        return NextResponse.json(
-            {
-                error: 'Failed to generate report',
-                details: error instanceof Error ? error.message : 'Unknown error',
-            },
-            { status: 500 }
-        );
+        // SECURITY: Only expose error details in development
+        const errorResponse: { error: string; details?: string } = {
+            error: 'Failed to generate report',
+        };
+        if (process.env.NODE_ENV === 'development') {
+            errorResponse.details = error instanceof Error ? error.message : 'Unknown error';
+        }
+        return NextResponse.json(errorResponse, { status: 500 });
     }
 }

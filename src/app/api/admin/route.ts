@@ -212,6 +212,10 @@ export async function POST(request: NextRequest) {
         // Grant Pro
         if (action === 'grant_pro') {
             const { isAdmin: adminCheck, user: adminUser } = await checkAdminAccess();
+
+            // AUDIT: Log subscription changes
+            console.log(`🟢 [ADMIN AUDIT] Pro granted by ${adminUser?.email} to ${user_email || targetUserId} for ${duration_days || 30} days. Reason: ${reason || 'None provided'}`);
+
             await grantProSubscription(
                 targetUserId,
                 reason || 'Granted by admin',
@@ -227,6 +231,11 @@ export async function POST(request: NextRequest) {
 
         // Revoke Pro
         if (action === 'revoke_pro') {
+            const { user: adminUser } = await checkAdminAccess();
+
+            // AUDIT: Log subscription changes
+            console.log(`🟠 [ADMIN AUDIT] Pro revoked by ${adminUser?.email} from ${user_email || targetUserId}`);
+
             await revokeProSubscription(targetUserId);
 
             return NextResponse.json({
@@ -235,15 +244,33 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Delete user (careful!)
+        // Delete user (DANGEROUS - requires confirmation token)
         if (action === 'delete_user') {
+            const { confirm_deletion } = body;
+
+            // SECURITY: Require explicit confirmation to prevent accidental deletions
+            if (confirm_deletion !== 'DELETE_USER_PERMANENTLY') {
+                return NextResponse.json(
+                    {
+                        error: 'Confirmation required',
+                        message: 'To delete a user, include confirm_deletion: "DELETE_USER_PERMANENTLY" in your request'
+                    },
+                    { status: 400 }
+                );
+            }
+
+            // AUDIT: Log destructive action before execution
+            console.warn(`🔴 [ADMIN AUDIT] User deletion initiated by admin for user: ${user_email || targetUserId}`);
+
             await prisma.user.delete({
                 where: { id: targetUserId },
             });
 
+            console.warn(`🔴 [ADMIN AUDIT] User ${user_email || targetUserId} permanently deleted`);
+
             return NextResponse.json({
                 success: true,
-                message: `User ${user_email || targetUserId} deleted`,
+                message: `User ${user_email || targetUserId} permanently deleted`,
             });
         }
 
