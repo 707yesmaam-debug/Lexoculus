@@ -97,7 +97,8 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
                         e.preventDefault();
                         return;
                     }
-                    setIsLoading(true);
+                    // Defer state update to allow navigation to start
+                    setTimeout(() => setIsLoading(true), 50);
                 }}
                 className={`group relative w-full flex items-center justify-center gap-3 px-6 py-6 bg-black text-white hover:bg-[#FF4F00] transition-colors duration-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
