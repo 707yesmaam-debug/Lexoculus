@@ -15,7 +15,6 @@ interface ReportDownloadCardProps {
     hasSiganture: boolean;
     onDelete?: () => void;
     onRefresh?: () => void;
-    repoScanId?: string;
 }
 
 const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -43,19 +42,12 @@ export default function ReportDownloadCard({
     hasSiganture,
     onDelete,
     onRefresh,
-    repoScanId,
 }: ReportDownloadCardProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const colors = RISK_COLORS[riskClassification] || RISK_COLORS.LIMITED_RISK;
 
     const handleDownload = () => {
         window.open(`/api/reports/${reportId}/download`, '_blank');
-    };
-
-    const handleDownloadAnnexIV = () => {
-        if (repoScanId) {
-            window.open(`/api/reports/${repoScanId}/download-annex-iv`, '_blank');
-        }
     };
 
     const handleDelete = async () => {
@@ -123,24 +115,15 @@ export default function ReportDownloadCard({
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between pt-4 border-t border-[#E5E5E5] gap-4">
-                <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]">
+                <div className="flex items-center gap-2">
                     <button
                         onClick={handleDownload}
                         className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white transition-colors font-mono text-xs uppercase tracking-widest"
                     >
                         <Download className="w-4 h-4" />
-                        Download_Report
+                        Download_PDF
                     </button>
-                    {repoScanId && (
-                        <button
-                            onClick={handleDownloadAnnexIV}
-                            className="flex items-center gap-2 px-6 py-3 border border-black text-black hover:bg-[#FF4F00] hover:text-white hover:border-[#FF4F00] transition-colors font-mono text-xs uppercase tracking-widest"
-                        >
-                            <FileText className="w-4 h-4" />
-                            Annex_IV_Technical_File
-                        </button>
-                    )}
                     {onRefresh && (
                         <button
                             onClick={onRefresh}

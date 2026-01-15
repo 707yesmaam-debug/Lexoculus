@@ -241,7 +241,6 @@ export default function ReportGeneratorPage() {
                         generatedAt={report.generated_at}
                         hasSiganture={report.has_signature}
                         onDelete={handleReportDeleted}
-                        repoScanId={repo_scan_id}
                     />
                 </div>
             )}
