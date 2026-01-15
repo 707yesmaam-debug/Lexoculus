@@ -90,10 +90,16 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
 
     return (
         <div className="w-full">
-            <button
-                onClick={handleConnect}
-                disabled={isLoading}
-                className="group relative w-full flex items-center justify-center gap-3 px-6 py-6 bg-black text-white hover:bg-[#FF4F00] transition-colors duration-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            <a
+                href="/api/auth/github/login"
+                onClick={(e) => {
+                    if (isLoading) {
+                        e.preventDefault();
+                        return;
+                    }
+                    setIsLoading(true);
+                }}
+                className={`group relative w-full flex items-center justify-center gap-3 px-6 py-6 bg-black text-white hover:bg-[#FF4F00] transition-colors duration-0 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
                 {isLoading ? (
                     <>
@@ -106,7 +112,7 @@ export default function GitHubConnectButton({ onConnected, initialConnected = fa
                         <span className="font-mono font-bold tracking-widest uppercase text-sm">Connect GitHub Source</span>
                     </>
                 )}
-            </button>
+            </a>
 
             <div className="mt-4 flex items-start gap-2 text-[10px] text-[#555] font-mono border-l-2 border-[#E5E5E5] pl-3 py-1">
                 <span className="text-[#FF4F00] font-bold">WARNING:</span>
