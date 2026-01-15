@@ -5,18 +5,30 @@ import { getUserRepos, isTokenExpired } from '@/lib/github';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         // Get current authenticated user using server client
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
 
+        // Prevent caching at all costs
+        const headers: Record<string, string> = {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+        };
+
         if (!user) {
             return NextResponse.json(
                 { error: 'Unauthorized', message: 'Please log in to continue' },
-                { status: 401 }
+                { status: 401, headers }
             );
         }
+
+        // DEBUG: Add User ID to header
+        headers['Debug-User-Id'] = user.id;
 
         // Check rate limit
         const rateLimit = checkRateLimit(user.id, 'REPO_LIST');
@@ -36,7 +48,7 @@ export async function GET() {
                     error: 'Not connected',
                     message: 'Please connect your GitHub account first'
                 },
-                { status: 400 }
+                { status: 400, headers }
             );
         }
 
@@ -48,7 +60,7 @@ export async function GET() {
                     message: 'Your GitHub connection has expired. Please reconnect.',
                     needsReconnect: true,
                 },
-                { status: 401 }
+                { status: 401, headers }
             );
         }
 
@@ -91,10 +103,15 @@ export async function GET() {
             })),
             github_username: connection.github_username,
             remaining_requests: rateLimit.remaining,
-        });
+            userId: user.id // Proof of identity
+        }, { headers });
 
     } catch (error) {
         console.error('Error fetching repos:', error);
+
+        const errorHeaders: Record<string, string> = {
+            'Cache-Control': 'no-store'
+        };
 
         if (error instanceof Error) {
             if (error.message.includes('expired') || error.message.includes('invalid')) {
@@ -104,20 +121,20 @@ export async function GET() {
                         message: 'Please reconnect your GitHub account',
                         needsReconnect: true,
                     },
-                    { status: 401 }
+                    { status: 401, headers: errorHeaders }
                 );
             }
             if (error.message.includes('rate limit')) {
                 return NextResponse.json(
                     { error: 'Rate limited', message: 'GitHub API rate limit exceeded. Try again later.' },
-                    { status: 429 }
+                    { status: 429, headers: errorHeaders }
                 );
             }
         }
 
         return NextResponse.json(
             { error: 'Server error', message: 'Failed to fetch repositories' },
-            { status: 500 }
+            { status: 500, headers: errorHeaders }
         );
     }
 }
