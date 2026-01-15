@@ -47,14 +47,36 @@ export default function DashboardLayout({
     const handleLogout = async () => {
         try {
             // Call server-side logout to clear HttpOnly cookies
-            await fetch('/api/auth/logout', { method: 'POST' });
-            // Redirect to login
-            router.push('/auth/login');
-            router.refresh(); // Ensure server components re-run
+            const response = await fetch('/api/auth/logout', { method: 'POST' });
+            const data = await response.json();
+
+            // Clear ALL client-side storage to prevent any session leakage
+            if (data.clearStorage || true) {
+                // Clear all Supabase auth keys from localStorage
+                const keysToRemove: string[] = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                // Clear sessionStorage as well
+                sessionStorage.clear();
+
+                // Clear any app-specific state
+                localStorage.removeItem('github_connected');
+                localStorage.removeItem('last_repo');
+            }
+
+            // Force hard navigation to completely reset React state
+            // Using window.location instead of router.push to ensure full page reload
+            window.location.href = '/auth/login';
         } catch (error) {
             console.error('Logout failed:', error);
-            // Fallback
-            router.push('/auth/login');
+            // Even on error, try to redirect
+            window.location.href = '/auth/login';
         }
     };
 

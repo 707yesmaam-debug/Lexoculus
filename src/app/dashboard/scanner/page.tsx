@@ -13,11 +13,21 @@ function ScannerPageContent() {
 
     const [step, setStep] = useState(1);
     const [isConnected, setIsConnected] = useState(false);
+    const [connectedUsername, setConnectedUsername] = useState<string | null>(null);
     const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'complete' | 'error'>('idle');
     const [scanError, setScanError] = useState<string | undefined>();
     const [scanData, setScanData] = useState<any>(null);
 
     useEffect(() => {
+        // SECURITY: Reset all state on mount to prevent stale data from previous sessions
+        // This is critical for session isolation
+        setIsConnected(false);
+        setConnectedUsername(null);
+        setStep(1);
+        setScanStatus('idle');
+        setScanError(undefined);
+        setScanData(null);
+
         const checkConnection = async () => {
             try {
                 // Priority: Check URL params first
@@ -34,12 +44,22 @@ function ScannerPageContent() {
                     return;
                 }
 
-                // Fallback: Check server status
-                const res = await fetch('/api/github/status');
+                // Fallback: Check server status with cache-busting
+                const res = await fetch('/api/github/status', {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 if (res.ok) {
                     const data = await res.json();
+                    // DEBUG: Log the user ID to help verify session isolation
+                    console.log('[Scanner] GitHub status check - User ID:', data.userId, 'Connected:', data.isConnected);
+
                     if (data.isConnected) {
                         setIsConnected(true);
+                        setConnectedUsername(data.username || null);
                         setStep(2);
                     }
                 }

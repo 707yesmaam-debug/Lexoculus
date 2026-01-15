@@ -62,6 +62,13 @@ export interface RepoScanData {
 
 /**
  * Generate the GitHub OAuth authorization URL
+ * 
+ * SECURITY: We use 'prompt=consent' to force GitHub to show the authorization screen
+ * even if the user previously authorized the app. This prevents silent re-authorization
+ * when different LexOculus users share the same browser/GitHub session.
+ * 
+ * The 'login' parameter hints to GitHub to show the login page, encouraging users
+ * to verify they're using the correct GitHub account.
  */
 export function getGitHubAuthUrl(state: string): string {
     const params = new URLSearchParams({
@@ -69,6 +76,11 @@ export function getGitHubAuthUrl(state: string): string {
         redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/github/callback`,
         scope: 'repo read:user',
         state,
+        // SECURITY: Force GitHub to show authorization screen every time
+        // This prevents silent re-authorization of a previous user's GitHub account
+        prompt: 'consent',
+        // Hint to show login screen - helps users verify they're using correct account
+        login: '',
     });
 
     return `${GITHUB_OAUTH_URL}/authorize?${params.toString()}`;
