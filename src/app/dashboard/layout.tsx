@@ -45,9 +45,17 @@ export default function DashboardLayout({
     }, [router]);
 
     const handleLogout = async () => {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        router.push('/auth/login');
+        try {
+            // Call server-side logout to clear HttpOnly cookies
+            await fetch('/api/auth/logout', { method: 'POST' });
+            // Redirect to login
+            router.push('/auth/login');
+            router.refresh(); // Ensure server components re-run
+        } catch (error) {
+            console.error('Logout failed:', error);
+            // Fallback
+            router.push('/auth/login');
+        }
     };
 
     // Dynamic Navigation items

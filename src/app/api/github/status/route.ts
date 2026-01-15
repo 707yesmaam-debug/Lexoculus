@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser();
 
         // Prevent caching at all costs
-        const headers = {
+        const headers: Record<string, string> = {
             'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0',
@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ isConnected: false, user: null }, { status: 401, headers });
         }
 
+        // DEBUG: Add User ID to header for identity verification
+        headers['Debug-User-Id'] = user.id;
+
         const connection = await prisma.githubConnection.findFirst({
             where: { user_id: user.id }
         });
@@ -28,11 +31,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({
                 isConnected: true,
                 username: connection.github_username,
-                connectedAt: connection.connected_at
+                connectedAt: connection.connected_at,
+                userId: user.id // DEBUG: Proof of identity in body
             }, { headers });
         }
 
-        return NextResponse.json({ isConnected: false }, { headers });
+        return NextResponse.json({ isConnected: false, userId: user.id }, { headers });
 
     } catch (error) {
         console.error('GitHub status check failed:', error);
