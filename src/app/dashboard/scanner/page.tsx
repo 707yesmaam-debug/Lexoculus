@@ -11,12 +11,7 @@ function ScannerPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const [step, setStep] = useState(1);
-    const [isConnected, setIsConnected] = useState(false);
-    const [connectedUsername, setConnectedUsername] = useState<string | null>(null);
-    const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'complete' | 'error'>('idle');
-    const [scanError, setScanError] = useState<string | undefined>();
-    const [scanData, setScanData] = useState<any>(null);
+    const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
 
     useEffect(() => {
         // SECURITY: Reset all state on mount to prevent stale data from previous sessions
@@ -27,18 +22,29 @@ function ScannerPageContent() {
         setScanStatus('idle');
         setScanError(undefined);
         setScanData(null);
+        setIsCheckingSubscription(true);
 
         // FEATURE GATING: Check subscription status
-        fetch('/api/subscription/usage')
-            .then(res => res.json())
-            .then(data => {
+        const checkSubscription = async () => {
+            try {
+                const res = await fetch('/api/subscription/usage');
+                const data = await res.json();
+
                 // If user is on free tier, redirect to the free scanner
-                // Pro users stay here (OAuth scanner)
                 if (data.tier === 'free') {
                     router.replace('/dashboard/free-scanner');
+                    return; // Don't stop loading, redirecting...
                 }
-            })
-            .catch(console.error);
+
+                setIsCheckingSubscription(false);
+
+                // Only check connection if we stay on this page
+                checkConnection();
+            } catch (error) {
+                console.error('Subscription check failed:', error);
+                setIsCheckingSubscription(false); // Fallback to allowing access or error state
+            }
+        };
 
         const checkConnection = async () => {
             try {
@@ -80,7 +86,7 @@ function ScannerPageContent() {
             }
         };
 
-        checkConnection();
+        checkSubscription();
     }, [searchParams, router]);
 
     const handleRepoSelect = async (repoUrl: string) => {
@@ -124,6 +130,14 @@ function ScannerPageContent() {
             default: return 'An error occurred. Please try again.';
         }
     };
+
+    if (isCheckingSubscription) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-black animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto p-12">
