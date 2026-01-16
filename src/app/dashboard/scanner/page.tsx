@@ -11,6 +11,12 @@ function ScannerPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
+    const [step, setStep] = useState(1);
+    const [isConnected, setIsConnected] = useState(false);
+    const [connectedUsername, setConnectedUsername] = useState<string | null>(null);
+    const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'complete' | 'error'>('idle');
+    const [scanError, setScanError] = useState<string | undefined>();
+    const [scanData, setScanData] = useState<any>(null);
     const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
 
     useEffect(() => {
