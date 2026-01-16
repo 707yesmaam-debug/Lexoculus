@@ -129,15 +129,15 @@ export default function QuestionSet({
                                                 />
                                                 <label
                                                     htmlFor={`${question.id}-${option.value}`}
-                                                    className="flex items-center p-4 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-checked:border-black peer-checked:bg-black peer-checked:text-white transition-all peer-focus:ring-1 peer-focus:ring-black"
+                                                    className="flex items-center p-4 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white transition-all peer-focus:ring-1 peer-focus:ring-black"
                                                 >
                                                     <div className="w-4 h-4 border border-current mr-3 flex items-center justify-center">
-                                                        <div className="w-2 h-2 bg-current opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                                        <div className="w-2 h-2 bg-current opacity-0 peer-data-[state=checked]:opacity-100 transition-opacity" />
                                                     </div>
                                                     <span className="font-mono text-sm flex-1">{option.label}</span>
 
                                                     {option.riskImpact === 'escalates' && (
-                                                        <span className="font-mono text-[10px] uppercase text-[#FF4F00] border border-[#FF4F00] px-2 py-0.5 ml-2 bg-white">
+                                                        <span className="font-mono text-[10px] uppercase text-[#FF4F00] border border-[#FF4F00] px-2 py-0.5 ml-2 bg-white peer-data-[state=checked]:text-black peer-data-[state=checked]:border-transparent">
                                                             Risk
                                                         </span>
                                                     )}
@@ -162,7 +162,7 @@ export default function QuestionSet({
                                                 />
                                                 <label
                                                     htmlFor={`${question.id}-${val}`}
-                                                    className="flex items-center px-6 py-3 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-checked:border-black peer-checked:bg-black peer-checked:text-white transition-all min-w-[100px] justify-center"
+                                                    className="flex items-center px-6 py-3 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white transition-all min-w-[100px] justify-center"
                                                 >
                                                     <span className="font-mono text-sm font-bold uppercase">{val === 'true' ? 'YES' : 'NO'}</span>
                                                 </label>

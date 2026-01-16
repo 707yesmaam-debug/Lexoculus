@@ -334,7 +334,8 @@ export default function ContextVerifierPage() {
                     )}
 
                     {/* Submit Button */}
-                    <div className="flex justify-end sticky bottom-8">
+                    {/* Submit Button - Fixed Footer */}
+                    <div className="fixed bottom-0 left-0 md:left-[350px] right-0 p-6 bg-white border-t-2 border-black flex justify-end z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                         <button
                             onClick={handleSubmit}
                             disabled={!isComplete || isSubmitting}
@@ -356,6 +357,14 @@ export default function ContextVerifierPage() {
                     </div>
                 </>
             )}
+
+            {/* Spacer for fixed footer */}
+            {!finalAssessment && questionsData && <div className="h-24" />}
         </div>
+    );
+                </>
+            )
+}
+        </div >
     );
 }
