@@ -129,7 +129,7 @@ export default function QuestionSet({
                                                 />
                                                 <label
                                                     htmlFor={`${question.id}-${option.value}`}
-                                                    className="flex items-center p-4 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white transition-all peer-focus:ring-1 peer-focus:ring-black peer-data-[state=checked]:[&_.check-indicator]:opacity-100"
+                                                    className="flex items-center p-4 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white peer-data-[state=checked]:hover:bg-black peer-data-[state=checked]:hover:text-white transition-all peer-focus:ring-1 peer-focus:ring-black peer-data-[state=checked]:[&_.check-indicator]:opacity-100"
                                                 >
                                                     <div className="w-4 h-4 border border-current mr-3 flex items-center justify-center">
                                                         <div className="check-indicator w-2 h-2 bg-current opacity-0 transition-opacity" />
@@ -162,7 +162,7 @@ export default function QuestionSet({
                                                 />
                                                 <label
                                                     htmlFor={`${question.id}-${val}`}
-                                                    className="flex items-center px-6 py-3 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white transition-all min-w-[100px] justify-center"
+                                                    className="flex items-center px-6 py-3 border border-[#E5E5E5] cursor-pointer hover:bg-[#FAFAFA] peer-data-[state=checked]:border-black peer-data-[state=checked]:bg-black peer-data-[state=checked]:text-white peer-data-[state=checked]:hover:bg-black peer-data-[state=checked]:hover:text-white transition-all min-w-[100px] justify-center"
                                                 >
                                                     <span className="font-mono text-sm font-bold uppercase">{val === 'true' ? 'YES' : 'NO'}</span>
                                                 </label>
