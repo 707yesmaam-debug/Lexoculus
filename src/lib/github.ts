@@ -34,10 +34,10 @@ interface GitHubTreeItem {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
-type JsonObject = { [key: string]: JsonValue };
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+export type JsonObject = { [key: string]: JsonValue };
 
-interface FileTreeNode {
+export interface FileTreeNode {
     name: string;
     type: 'file' | 'dir';
     children?: FileTreeNode[];
