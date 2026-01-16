@@ -119,6 +119,16 @@ async function fetchPublicRepoTree(owner: string, repo: string, defaultBranch: s
         const root: FileTreeNode = { name: 'root', type: 'dir', children: [] };
 
         for (const item of items) {
+            // FILTER: Skip junk directories to save size and noise
+            if (item.path.includes('node_modules') ||
+                item.path.includes('.git/') ||
+                item.path.includes('__pycache__') ||
+                item.path.includes('.next') ||
+                item.path.includes('dist') ||
+                item.path.includes('build')) {
+                continue;
+            }
+
             const parts = item.path.split('/');
             let current = root;
 

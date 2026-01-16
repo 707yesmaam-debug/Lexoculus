@@ -121,17 +121,23 @@ function parseAndValidateResponse(responseText: string): AnalysisResult {
     // Try to extract JSON from response (handle markdown code blocks)
     let jsonStr = responseText.trim();
 
-    // Remove markdown code blocks if present
-    if (jsonStr.startsWith('```')) {
-        jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    // Extract JSON from code block if present
+    const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1];
+    } else {
+        // Fallback: cleanup potential markdown without code blocks
+        jsonStr = jsonStr.replace(/^```(?:json)?/, '').replace(/```$/, '');
     }
 
     // Parse JSON
     let parsed: AnalysisResult;
     try {
         parsed = JSON.parse(jsonStr);
-    } catch {
-        throw new Error(`Invalid JSON from LLM: ${jsonStr.slice(0, 200)}...`);
+    } catch (e) {
+        console.error('❌ [GROQ] JSON Parse Error. Raw content:', jsonStr.slice(0, 500) + '...');
+        // Attempt simple repair (remove newlines in strings? No, too risky)
+        throw new Error(`Invalid JSON from LLM: ${jsonStr.slice(0, 50)}...`);
     }
 
     // Validate required fields
