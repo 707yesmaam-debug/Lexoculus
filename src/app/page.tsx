@@ -38,6 +38,10 @@ export default function LandingPage() {
                             <span>03_CERTIFY</span>
                             <span className="opacity-0 group-hover:opacity-100 text-[#FF4F00]">[PRINT]</span>
                         </a>
+                        <Link href="/pricing" className="group flex items-center justify-between p-2 border border-transparent hover:border-black hover:bg-[#F5F5F5] transition-none cursor-pointer">
+                            <span>04_PRICING</span>
+                            <span className="opacity-0 group-hover:opacity-100 text-[#FF4F00]">[VIEW]</span>
+                        </Link>
                     </nav>
                 </div>
 
@@ -47,6 +51,13 @@ export default function LandingPage() {
                         className="block w-full text-center bg-[#FF4F00] text-white font-mono text-sm py-4 hover:bg-black transition-colors uppercase tracking-widest border border-transparent"
                     >
                         Start_Assessment
+                    </Link>
+
+                    <Link
+                        href="/pricing"
+                        className="block w-full text-center border border-black text-black font-mono text-sm py-4 mt-2 hover:bg-black hover:text-white transition-colors uppercase tracking-widest"
+                    >
+                        View_Plans
                     </Link>
 
                     <div className="mt-4 flex justify-between font-mono text-[10px] text-[#999]">

@@ -11,6 +11,7 @@ import prisma from '@/lib/prisma';
 import { generateComplianceReport } from '@/lib/pdf-generator';
 import { signReport } from '@/lib/report-signer';
 import { uploadReportToSupabase, checkStorageUsage } from '@/lib/storage';
+import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,6 +23,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
+            );
+        }
+
+        // FEATURE GATING: Check if user is allowed to generate reports (Pro+ only)
+        // We use 'report' action which is gated in TIER_LIMITS
+        const usageCheck = await checkUsageLimit(user.id, 'report');
+        if (!usageCheck.allowed) {
+            return NextResponse.json(
+                {
+                    error: 'Upgrade Required',
+                    message: usageCheck.reason || 'PDF Report generation is a Pro feature.',
+                    upgrade: true
+                },
+                { status: 403 }
             );
         }
 
@@ -166,6 +181,9 @@ export async function POST(req: NextRequest) {
         });
 
         console.log(`[Generate Report] Report saved: ${report.id}`);
+
+        // Increment usage
+        await incrementUsage(user.id, 'report');
 
         return NextResponse.json({
             status: 'complete',

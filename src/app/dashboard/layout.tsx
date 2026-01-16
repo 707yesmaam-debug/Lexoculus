@@ -5,6 +5,7 @@ import { useRouter, usePathname, useParams } from 'next/navigation'; // Added us
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import OpticalLogo from '@/components/OpticalLogo';
+import UpgradePrompt from '@/components/UpgradePrompt';
 
 export default function DashboardLayout({
     children,
@@ -129,17 +130,27 @@ export default function DashboardLayout({
                             return (
                                 <Link
                                     key={item.name}
-                                    href={item.disabled ? '#' : item.href}
+                                    href={item.disabled ? '#' : item.href} {/* Retained original disabled href logic */}
                                     className={`
-                                        group flex items-center justify-between p-3 border 
-                                        transition-none cursor-pointer select-none
-                                        ${item.isActive ? 'bg-black text-white border-black' : 'border-transparent hover:border-black hover:bg-white text-black'}
-                                        ${item.disabled ? 'opacity-50 cursor-not-allowed hover:border-transparent hover:bg-transparent' : ''}
+                                        group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
+                                        ${item.isActive
+                                            ? 'bg-black text-white'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-black'
+                                        }
+                                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''} {/* Added disabled styling */}
                                     `}
                                 >
-                                    <span>{item.name}</span>
-                                    <span className={`text-[10px] ${item.isActive ? 'text-[#FF4F00]' : 'text-[#999] group-hover:text-[#FF4F00]'}`}>
-                                        {item.status}
+                                    <span className="flex items-center gap-3">
+                                        {item.name}
+                                    </span>
+                                    <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
+                                        {['04_REPORTS', '05_SETTINGS'].includes(item.name) ? (
+                                            <span className="inline-flex items-center gap-1">
+                                                [PRO]
+                                            </span>
+                                        ) : (
+                                            item.status
+                                        )}
                                     </span>
                                 </Link>
                             );
@@ -148,6 +159,10 @@ export default function DashboardLayout({
                 </div>
 
                 <div>
+                    {/* Upgrade Prompt Footer */}
+                    <div className="p-4 border-t border-[#E5E5E5]">
+                        <UpgradePrompt variant="sidebar" />
+                    </div>
                     <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
                         <div className="flex justify-between mb-2">
                             <span>OPERATOR:</span>

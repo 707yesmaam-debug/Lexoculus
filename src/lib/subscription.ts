@@ -26,8 +26,12 @@ export interface TierLimits {
         api_access: boolean;
         priority_support: boolean;
         custom_constraints: boolean;
+        public_only: boolean;
+        team_size: number;
     };
 }
+
+// ... (UsageStatus interface restore) ...
 
 export interface UsageStatus {
     tier: SubscriptionTier;
@@ -53,37 +57,24 @@ export interface UsageStatus {
 // =============================================================================
 // TIER LIMITS CONFIGURATION
 // =============================================================================
-
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     free: {
-        repos_limit: 1,
-        scans_limit: 5,
+        repos_limit: 2, // Matches scans limit
+        scans_limit: 2,
         pr_scans_limit: 0,
-        reports_limit: 1,
+        reports_limit: 0, // No PDF reports
         features: {
             github_action: false,
             slack_notifications: false,
-            pdf_reports: false, // Up-sell to Pro
+            pdf_reports: false,
             api_access: false,
             priority_support: false,
             custom_constraints: false,
+            public_only: true, // Only public repos
+            team_size: 1,
         },
     },
     pro: {
-        repos_limit: 10,
-        scans_limit: 100,
-        pr_scans_limit: 999999, // Unlimited
-        reports_limit: 20,
-        features: {
-            github_action: true,
-            slack_notifications: true,
-            pdf_reports: true,
-            api_access: false,
-            priority_support: false,
-            custom_constraints: false,
-        },
-    },
-    enterprise: {
         repos_limit: 999999, // Unlimited
         scans_limit: 999999, // Unlimited
         pr_scans_limit: 999999, // Unlimited
@@ -95,12 +86,30 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
             api_access: true,
             priority_support: true,
             custom_constraints: true,
+            public_only: false, // Private & Public
+            team_size: 10,
+        },
+    },
+    enterprise: {
+        repos_limit: 999999,
+        scans_limit: 999999,
+        pr_scans_limit: 999999,
+        reports_limit: 999999,
+        features: {
+            github_action: true,
+            slack_notifications: true,
+            pdf_reports: true,
+            api_access: true,
+            priority_support: true,
+            custom_constraints: true,
+            public_only: false,
+            team_size: 999,
         },
     },
 };
 
 // =============================================================================
-// PRICING CONFIGURATION (for UI display)
+// PRICING CONFIGURATION (Base - see specific components for regional overrides)
 // =============================================================================
 
 export const PRICING = {
@@ -115,8 +124,11 @@ export const PRICING = {
     },
     pro: {
         name: 'Pro',
-        price: 49,
-        currency: 'EUR',
+        price: 99,        // Base reference (USD)
+        price_eur: 91,    // EU Price
+        yearly_price: 999,// USD Yearly
+        yearly_price_eur: 920, // EU Yearly
+        currency: 'USD',  // Default display
         period: 'month',
         description: 'For teams building AI products',
         cta: 'Upgrade to Pro',
@@ -125,7 +137,7 @@ export const PRICING = {
     },
     enterprise: {
         name: 'Enterprise',
-        price: 199,
+        price: 0, // Custom
         currency: 'EUR',
         period: 'month',
         description: 'For organizations with custom needs',

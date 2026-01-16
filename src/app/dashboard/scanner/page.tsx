@@ -28,6 +28,18 @@ function ScannerPageContent() {
         setScanError(undefined);
         setScanData(null);
 
+        // FEATURE GATING: Check subscription status
+        fetch('/api/subscription/usage')
+            .then(res => res.json())
+            .then(data => {
+                // If user is on free tier, redirect to the free scanner
+                // Pro users stay here (OAuth scanner)
+                if (data.tier === 'free') {
+                    router.replace('/dashboard/free-scanner');
+                }
+            })
+            .catch(console.error);
+
         const checkConnection = async () => {
             try {
                 // Priority: Check URL params first

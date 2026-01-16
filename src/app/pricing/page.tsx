@@ -1,183 +1,195 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Check, ArrowRight, Shield, Rocket, Globe } from 'lucide-react';
-import StarBackground from '@/components/StarBackground';
+import { Check, X, ArrowRight, Globe } from 'lucide-react';
+import { REGIONAL_PRICING, Region, PricingTier, DEFAULT_REGION } from '@/lib/pricing-config';
+import OpticalLogo from '@/components/OpticalLogo';
 
-const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: (i: number) => ({
-        opacity: 1,
-        y: 0,
-        transition: { delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }
-    })
-};
-
-const tiers = [
-    {
-        name: 'Orbital',
-        description: 'For individuals and small open-source projects.',
-        price: 'Free',
-        icon: Rocket,
-        features: [
-            '1 Repository Scan / Month',
-            'Basic Risk Classification',
-            'Community Support',
-            'Public Badge'
-        ],
-        cta: 'Start Orbital',
-        href: '/auth/signup',
-        popular: false
-    },
-    {
-        name: 'Interstellar',
-        description: 'For growing teams needing regular compliance checks.',
-        price: '€49',
-        period: '/month',
-        icon: Shield,
-        features: [
-            '10 Repository Scans / Month',
-            'Full Annex III Analysis',
-            'PDF Compliance Reports',
-            'Priority Support',
-            'Email Notifications'
-        ],
-        cta: 'Go Interstellar',
-        href: '/auth/signup?plan=pro',
-        popular: true
-    },
-    {
-        name: 'Universal',
-        description: 'For enterprises requiring automated governance at scale.',
-        price: 'Custom',
-        icon: Globe,
-        features: [
-            'Unlimited Scans',
-            'Custom Regulatory Rule Sets',
-            'API Access',
-            'Dedicated Success Manager',
-            'SSO & Audit Logs'
-        ],
-        cta: 'Contact Sales',
-        href: 'mailto:sales@complianceai.com',
-        popular: false
-    }
-];
+// Helper to get cookie by name
+function getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+}
 
 export default function PricingPage() {
-    return (
-        <div className="min-h-screen flex flex-col selection:bg-white selection:text-black text-white relative">
-            <StarBackground />
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+    const [pricing, setPricing] = useState<PricingTier>(REGIONAL_PRICING[DEFAULT_REGION]);
 
+    useEffect(() => {
+        // Hydrate region from cookie or default
+        const regionCookie = getCookie('pricing_region') as Region;
+        if (regionCookie && REGIONAL_PRICING[regionCookie]) {
+            setRegion(regionCookie);
+            setPricing(REGIONAL_PRICING[regionCookie]);
+        }
+    }, []);
+
+    const handleRegionChange = (newRegion: Region) => {
+        setRegion(newRegion);
+        setPricing(REGIONAL_PRICING[newRegion]);
+        document.cookie = `pricing_region=${newRegion}; path=/; max-age=604800`; // 1 week
+    };
+
+    const price = billingCycle === 'monthly' ? pricing.monthly : Math.round(pricing.yearly / 12);
+    const annualSavings = (pricing.monthly * 12) - pricing.yearly;
+
+    return (
+        <div className="min-h-screen bg-[#F5F5F5] font-sans text-black">
             {/* Header */}
-            <header className="fixed top-0 w-full z-50 px-8 py-6 flex justify-between items-center backdrop-blur-sm bg-black/5 border-b border-white/5">
-                <Link href="/" className="font-heading font-bold tracking-tighter text-xl flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                    ComplianceAI
-                </Link>
-                <nav className="flex gap-4 items-center">
-                    <Link href="/auth/login" className="text-sm font-medium hover:text-white/80 transition-colors">Log In</Link>
-                    <Link href="/auth/signup" className="text-sm font-medium bg-white text-black px-5 py-2 rounded-full hover:bg-zinc-200 transition-all">
-                        Get Started
+            <header className="fixed top-0 left-0 right-0 z-50 bg-[#F5F5F5]/80 backdrop-blur-md border-b border-black">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <Link href="/" className="flex items-center gap-2">
+                        <OpticalLogo />
                     </Link>
-                </nav>
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-2 text-xs font-mono text-[#555]">
+                            <Globe className="w-3 h-3" />
+                            <select
+                                value={region}
+                                onChange={(e) => handleRegionChange(e.target.value as Region)}
+                                className="bg-transparent border-none focus:ring-0 cursor-pointer uppercase"
+                            >
+                                {Object.keys(REGIONAL_PRICING).map(r => (
+                                    <option key={r} value={r}>{r} Region</option>
+                                ))}
+                            </select>
+                        </div>
+                        <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors">
+                            Login
+                        </Link>
+                        <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">
+                            Get Started
+                        </Link>
+                    </div>
+                </div>
             </header>
 
-            <main className="flex-grow pt-32 pb-20 px-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20 max-w-3xl mx-auto">
-                        <motion.h1
-                            custom={0}
-                            initial="hidden"
-                            animate="visible"
-                            variants={fadeUp}
-                            className="font-heading text-5xl md:text-6xl font-bold tracking-tighter mb-6"
+            <main className="pt-32 pb-24 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="text-center mb-16">
+                    <h1 className="font-serif text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+                        Predictable pricing for <br /> <span className="text-[#FF4F00]">compliance at scale.</span>
+                    </h1>
+                    <p className="font-mono text-[#555] max-w-xl mx-auto mb-10">
+                        Start for free. Upgrade for unlimited analysis and context verification.
+                    </p>
+
+                    {/* Billing Toggle */}
+                    <div className="inline-flex items-center justify-center p-1 border border-black bg-white">
+                        <button
+                            onClick={() => setBillingCycle('monthly')}
+                            className={`px-6 py-2 text-sm font-mono transition-colors ${billingCycle === 'monthly' ? 'bg-black text-white' : 'text-[#999] hover:text-black'}`}
                         >
-                            Compliance at <br /> <span className="text-zinc-500">Light Speed.</span>
-                        </motion.h1>
-                        <motion.p
-                            custom={1}
-                            initial="hidden"
-                            animate="visible"
-                            variants={fadeUp}
-                            className="text-xl text-zinc-400"
+                            MONTHLY
+                        </button>
+                        <button
+                            onClick={() => setBillingCycle('yearly')}
+                            className={`px-6 py-2 text-sm font-mono transition-colors flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-black text-white' : 'text-[#999] hover:text-black'}`}
                         >
-                            Choose the trajectory that fits your mission. <br className="hidden md:block" />
-                            From single repositories to galactic-scale operations.
-                        </motion.p>
+                            YEARLY
+                            <span className="text-[10px] text-[#FF4F00] font-bold tracking-wider">
+                                (SAVE {pricing.symbol}{annualSavings})
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 items-start">
+                    {/* Free Tier */}
+                    <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
+                        <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">STARTER</div>
+                        <h3 className="font-serif text-3xl font-bold mb-2">Free</h3>
+                        <div className="text-4xl font-mono font-bold mb-6">
+                            {pricing.symbol}0 <span className="text-base font-normal text-[#999]">/mo</span>
+                        </div>
+                        <p className="text-sm text-[#555] mb-8 min-h-[40px]">
+                            Perfect for individuals auditing public repositories.
+                        </p>
+                        <Link href="/dashboard/free-scanner" className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors">
+                            START_AUDIT
+                        </Link>
+
+                        <div className="mt-8 space-y-4">
+                            <FeatureItem included>2 Public Scans / Month</FeatureItem>
+                            <FeatureItem included>Full Scan Pipeline</FeatureItem>
+                            <FeatureItem included>Risk Classification</FeatureItem>
+                            <FeatureItem included={false}>Private Repositories</FeatureItem>
+                            <FeatureItem included={false}>PDF Reports</FeatureItem>
+                            <FeatureItem included={false}>Verification Engine</FeatureItem>
+                        </div>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 items-start">
-                        {tiers.map((tier, index) => (
-                            <motion.div
-                                key={tier.name}
-                                custom={2 + index}
-                                initial="hidden"
-                                animate="visible"
-                                variants={fadeUp}
-                                className={`relative rounded-2xl p-8 border backdrop-blur-sm transition-all duration-300 hover:-translate-y-2
-                                    ${tier.popular
-                                        ? 'bg-white/[0.05] border-white/20 shadow-2xl shadow-blue-500/10'
-                                        : 'bg-black/20 border-white/10 hover:bg-black/40'
-                                    }`}
-                            >
-                                {tier.popular && (
-                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-black text-xs font-bold px-3 py-1 rounded-full border border-white/20 uppercase tracking-wider">
-                                        Most Popular
-                                    </div>
-                                )}
+                    {/* Pro Tier */}
+                    <div className="border border-black bg-black text-white p-8 relative transform md:-translate-y-4 shadow-2xl">
+                        <div className="absolute top-0 right-0 bg-[#FF4F00] text-white text-[10px] font-mono px-3 py-1 font-bold">
+                            RECOMMENDED
+                        </div>
+                        <div className="font-mono text-xs text-[#FF4F00] mb-4 uppercase tracking-widest">PROFESSIONAL</div>
+                        <h3 className="font-serif text-3xl font-bold mb-2">Pro</h3>
+                        <div className="text-4xl font-mono font-bold mb-6">
+                            {pricing.symbol}{price} <span className="text-base font-normal text-[#999]">/mo</span>
+                        </div>
+                        <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
+                            For teams building compliant AI products at scale.
+                        </p>
+                        <Link href="/auth/signup?plan=pro" className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-white hover:text-black transition-colors">
+                            UPGRADE_NOW
+                        </Link>
 
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center border border-white/10
-                                        ${tier.popular ? 'bg-white/10 text-white' : 'bg-black/40 text-zinc-400'}`}>
-                                        <tier.icon className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="font-heading text-2xl font-bold">{tier.name}</h3>
-                                </div>
+                        <div className="mt-8 space-y-4">
+                            <FeatureItem included dark>Unlimited Scans</FeatureItem>
+                            <FeatureItem included dark>Private Repositories</FeatureItem>
+                            <FeatureItem included dark>PDF Compliance Reports</FeatureItem>
+                            <FeatureItem included dark>Context Verification</FeatureItem>
+                            <FeatureItem included dark>GitHub Action Integration</FeatureItem>
+                            <FeatureItem included dark>Priority Support</FeatureItem>
+                        </div>
+                    </div>
 
-                                <div className="mb-6">
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-4xl font-bold tracking-tight">{tier.price}</span>
-                                        {tier.period && <span className="text-zinc-500">{tier.period}</span>}
-                                    </div>
-                                    <p className="text-sm text-zinc-500 mt-2">{tier.description}</p>
-                                </div>
+                    {/* Enterprise Tier */}
+                    <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
+                        <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">ENTERPRISE</div>
+                        <h3 className="font-serif text-3xl font-bold mb-2">Custom</h3>
+                        <div className="text-4xl font-mono font-bold mb-6">
+                            Talk to us
+                        </div>
+                        <p className="text-sm text-[#555] mb-8 min-h-[40px]">
+                            For organizations with advanced security needs.
+                        </p>
+                        <a href="mailto:sales@lexoculus.com" className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors">
+                            CONTACT_SALES
+                        </a>
 
-                                <ul className="space-y-4 mb-8">
-                                    {tier.features.map((feature) => (
-                                        <li key={feature} className="flex items-start gap-3 text-sm text-zinc-300">
-                                            <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <Link
-                                    href={tier.href}
-                                    className={`w-full inline-flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-all
-                                        ${tier.popular
-                                            ? 'bg-white text-black hover:bg-zinc-200'
-                                            : 'border border-white/20 hover:bg-white/10'
-                                        }`}
-                                >
-                                    {tier.cta}
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </motion.div>
-                        ))}
+                        <div className="mt-8 space-y-4">
+                            <FeatureItem included>Everything in Pro</FeatureItem>
+                            <FeatureItem included>Custom SSO / SAML</FeatureItem>
+                            <FeatureItem included>Audit Logs</FeatureItem>
+                            <FeatureItem included>Dedicated Success Manager</FeatureItem>
+                            <FeatureItem included>Custom SLAs</FeatureItem>
+                            <FeatureItem included>On-premise Deployment</FeatureItem>
+                        </div>
                     </div>
                 </div>
             </main>
+        </div>
+    );
+}
 
-            <footer className="py-12 text-center text-zinc-600 text-sm border-t border-white/5">
-                <div className="mb-4 flex justify-center gap-6">
-                    <Link href="/" className="hover:text-zinc-400">Home</Link>
-                    <Link href="#" className="hover:text-zinc-400">Terms</Link>
-                    <Link href="#" className="hover:text-zinc-400">Privacy</Link>
-                </div>
-                ComplianceAI © 2026. Built for the European Union.
-            </footer>
+function FeatureItem({ children, included = true, dark = false }: { children: React.ReactNode, included?: boolean, dark?: boolean }) {
+    return (
+        <div className={`flex items-start gap-3 text-sm ${!included ? 'opacity-50' : ''}`}>
+            {included ? (
+                <Check className={`w-4 h-4 mt-0.5 ${dark ? 'text-[#FF4F00]' : 'text-black'}`} />
+            ) : (
+                <X className="w-4 h-4 mt-0.5" />
+            )}
+            <span className={`font-mono ${dark ? 'text-gray-300' : 'text-gray-600'}`}>
+                {children}
+            </span>
         </div>
     );
 }
