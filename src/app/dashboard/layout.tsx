@@ -130,14 +130,14 @@ export default function DashboardLayout({
                             return (
                                 <Link
                                     key={item.name}
-                                    href={item.disabled ? '#' : item.href} {/* Retained original disabled href logic */}
+                                    href={item.disabled ? '#' : item.href}
                                     className={`
                                         group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
                                         ${item.isActive
                                             ? 'bg-black text-white'
                                             : 'text-gray-600 hover:bg-gray-50 hover:text-black'
                                         }
-                                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''} {/* Added disabled styling */}
+                                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
                                     `}
                                 >
                                     <span className="flex items-center gap-3">
