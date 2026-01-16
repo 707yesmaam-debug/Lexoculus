@@ -90,13 +90,7 @@ export default function DashboardLayout({
             isActive: pathname === '/dashboard/scanner'
         },
         {
-            name: '02_INTEGRATIONS',
-            href: '/dashboard/integrations',
-            status: '[LINKED]',
-            isActive: pathname === '/dashboard/integrations'
-        },
-        {
-            name: '03_ANALYSIS',
+            name: '02_ANALYSIS',
             // Link to the current analysis if ID exists, otherwise blocked
             href: repo_scan_id ? `/dashboard/analyzer/${repo_scan_id}` : '#',
             status: repo_scan_id ? '[IN_PROGRESS]' : '[LOCKED]',
@@ -105,11 +99,17 @@ export default function DashboardLayout({
             isActive: pathname.includes('/analyzer/') || pathname.includes('/risk-classifier/') || pathname.includes('/context-verifier/')
         },
         {
-            name: '04_REPORTS',
+            name: '03_REPORTS',
             href: repo_scan_id ? `/dashboard/report/${repo_scan_id}` : '#',
             status: repo_scan_id ? '[AVAILABLE]' : '[LOCKED]',
             disabled: !repo_scan_id,
             isActive: pathname.includes('/report/')
+        },
+        {
+            name: '04_INTEGRATIONS',
+            href: '/dashboard/integrations',
+            status: '[PRO]',
+            isActive: pathname === '/dashboard/integrations'
         },
     ];
 
@@ -144,7 +144,7 @@ export default function DashboardLayout({
                                         {item.name}
                                     </span>
                                     <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
-                                        {['04_REPORTS', '05_SETTINGS'].includes(item.name) ? (
+                                        {['03_REPORTS', '05_SETTINGS', '04_INTEGRATIONS'].includes(item.name) ? (
                                             <span className="inline-flex items-center gap-1">
                                                 [PRO]
                                             </span>
