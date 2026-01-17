@@ -136,9 +136,9 @@ export default function PricingPage() {
                         <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
                             For teams building compliant AI products at scale.
                         </p>
-                        <Link href="/auth/signup?plan=pro" className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-white hover:text-black transition-colors">
-                            UPGRADE_NOW
-                        </Link>
+                        <button disabled className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs opacity-75 cursor-not-allowed">
+                            COMING_SOON
+                        </button>
 
                         <div className="mt-8 space-y-4">
                             <FeatureItem included dark>Unlimited Scans</FeatureItem>

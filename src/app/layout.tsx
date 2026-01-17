@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Space_Mono } from "next/font/google";
 import "./globals.css";
+import FeedbackWidget from "@/components/FeedbackWidget";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfair.variable} ${spaceMono.variable} antialiased selection:bg-[#FF4F00] selection:text-white`}>
         {children}
+        <FeedbackWidget />
       </body>
     </html>
   );

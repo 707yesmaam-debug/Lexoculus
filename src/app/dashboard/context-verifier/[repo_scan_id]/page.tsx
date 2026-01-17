@@ -208,7 +208,7 @@ export default function ContextVerifierPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto p-8 md:p-12">
+        <div className="max-w-6xl mx-auto p-6 md:p-12">
             {/* Header */}
             <div className="mb-12 border-b-2 border-black pb-8">
                 <button
@@ -220,7 +220,7 @@ export default function ContextVerifierPage() {
                 </button>
 
                 <div className="font-mono text-xs text-[#FF4F00] mb-2 tracking-widest uppercase">PHASE_04a // CONTEXTUAL_ANALYSIS</div>
-                <h1 className="text-5xl font-serif font-bold text-black tracking-tight mb-4">
+                <h1 className="text-3xl md:text-5xl font-serif font-bold text-black tracking-tight mb-4">
                     Context Verification.
                 </h1>
                 <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">

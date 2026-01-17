@@ -59,7 +59,7 @@ export default function QuestionSet({
             {/* Header */}
             <div
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-[#F5F5F5] transition-colors cursor-pointer border-b border-black md:border-b-0"
+                className="w-full px-4 md:px-6 py-4 flex items-center justify-between hover:bg-[#F5F5F5] transition-colors cursor-pointer border-b border-black md:border-b-0"
                 style={{ borderBottomWidth: isExpanded ? '1px' : '0px' }}
             >
                 <div className="flex items-center gap-4">
@@ -85,7 +85,7 @@ export default function QuestionSet({
 
             {/* Questions */}
             {isExpanded && (
-                <div className="p-6 space-y-12 animate-in slide-in-from-top-2 duration-300">
+                <div className="p-4 md:p-6 space-y-12 animate-in slide-in-from-top-2 duration-300">
                     {questionSet.description && (
                         <p className="font-mono text-sm text-[#555] border-l-2 border-[#E5E5E5] pl-4">{questionSet.description}</p>
                     )}

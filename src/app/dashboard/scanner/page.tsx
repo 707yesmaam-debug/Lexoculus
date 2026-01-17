@@ -145,7 +145,7 @@ function ScannerPageContent() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-12">
+        <div className="max-w-4xl mx-auto p-6 md:p-12">
             <div className="mb-16 border-b border-black pb-8">
                 <div className="font-mono text-xs text-[#FF4F00] mb-4 tracking-widest uppercase">
                     PHASE_01 // INGESTION

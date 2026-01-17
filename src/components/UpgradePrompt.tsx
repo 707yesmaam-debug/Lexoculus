@@ -19,9 +19,9 @@ export default function UpgradePrompt({ variant = 'banner', className = '' }: Up
                 <p className="font-serif text-sm font-bold mb-3 leading-tight">
                     Analyze private repos & generate reports.
                 </p>
-                <Link href="/pricing" className="block w-full text-center bg-black text-white py-2 font-mono text-[10px] hover:bg-[#FF4F00] transition-colors">
-                    UPGRADE_NOW
-                </Link>
+                <button disabled className="block w-full text-center bg-black text-white py-2 font-mono text-[10px] opacity-75 cursor-not-allowed">
+                    PRO_COMING_SOON
+                </button>
             </div>
         );
     }
@@ -41,7 +41,7 @@ export default function UpgradePrompt({ variant = 'banner', className = '' }: Up
                     href="/pricing"
                     className="inline-flex items-center gap-2 bg-[#FF4F00] text-white px-6 py-3 font-mono text-xs hover:bg-black transition-colors"
                 >
-                    UPGRADE_ACCOUNT <ArrowRight className="w-3 h-3" />
+                    JOIN_WAITLIST <ArrowRight className="w-3 h-3" />
                 </Link>
             </div>
         );
