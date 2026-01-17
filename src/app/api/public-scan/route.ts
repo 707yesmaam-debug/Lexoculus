@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import { scanPublicRepository, parseGitHubUrl, validatePublicRepo } from '@/lib/github-public';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
 import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
+import { ensureUserExists } from '@/lib/users';
 import prisma from '@/lib/prisma';
 
 interface ScanRequestBody {
@@ -21,6 +22,9 @@ export async function POST(request: NextRequest) {
                 { status: 401 }
             );
         }
+
+        // 1.5 Sync User to Prisma (Fix for FK Error)
+        await ensureUserExists(user);
 
         // 2. Input Validation
         const body: ScanRequestBody = await request.json();
