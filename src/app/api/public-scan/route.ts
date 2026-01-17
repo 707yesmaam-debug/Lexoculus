@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json(
-            { error: 'Server Error', message: 'Failed to scan repository' },
+            { error: 'Server Error', message: `Failed to scan repository: ${error instanceof Error ? error.message : 'Unknown error'}` },
             { status: 500 }
         );
     }

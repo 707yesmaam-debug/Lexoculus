@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase';
 import { useRouter, usePathname, useParams } from 'next/navigation'; // Added useParams
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
 import UpgradePrompt from '@/components/UpgradePrompt';
 
@@ -16,6 +17,7 @@ export default function DashboardLayout({
     const pathname = usePathname();
     const params = useParams(); // Get params
     const [email, setEmail] = useState<string | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const repo_scan_id = params?.repo_scan_id as string | undefined;
 
@@ -117,68 +119,77 @@ export default function DashboardLayout({
         <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
 
             {/* LEFT SIDEBAR: Navigation */}
-            <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col justify-between p-6 bg-[#F5F5F5] z-50">
-                <div>
-                    <div className="mb-12">
+            {/* LEFT SIDEBAR: Navigation */}
+            <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col bg-[#F5F5F5] z-50">
+                <div className="p-6 md:p-0 flex items-center justify-between md:block">
+                    <div className="md:p-6 md:pb-0">
                         <Link href="/dashboard/scanner">
                             <OpticalLogo />
                         </Link>
                     </div>
-
-                    <nav className="flex flex-col gap-2 font-mono text-sm">
-                        {navItems.map((item) => {
-                            return (
-                                <Link
-                                    key={item.name}
-                                    href={item.disabled ? '#' : item.href}
-                                    className={`
-                                        group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
-                                        ${item.isActive
-                                            ? 'bg-black text-white'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-black'
-                                        }
-                                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                                    `}
-                                >
-                                    <span className="flex items-center gap-3">
-                                        {item.name}
-                                    </span>
-                                    <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
-                                        {['03_REPORTS', '05_SETTINGS', '04_INTEGRATIONS'].includes(item.name) ? (
-                                            <span className="inline-flex items-center gap-1">
-                                                [PRO]
-                                            </span>
-                                        ) : (
-                                            item.status
-                                        )}
-                                    </span>
-                                </Link>
-                            );
-                        })}
-                    </nav>
+                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 border border-black hover:bg-black hover:text-white transition-colors">
+                        {isMobileMenuOpen ? 'CLOSE' : 'MENU'}
+                    </button>
                 </div>
 
-                <div>
-                    {/* Upgrade Prompt Footer */}
-                    <div className="p-4 border-t border-[#E5E5E5]">
-                        <UpgradePrompt variant="sidebar" />
+                <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col justify-between flex-1 p-6 pt-0`}>
+                    <div className="mt-6 md:mt-12">
+                        <nav className="flex flex-col gap-2 font-mono text-sm">
+                            {navItems.map((item) => {
+                                return (
+                                    <Link
+                                        key={item.name}
+                                        href={item.disabled ? '#' : item.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`
+                                            group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
+                                            ${item.isActive
+                                                ? 'bg-black text-white'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-black'
+                                            }
+                                            ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                                        `}
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            {item.name}
+                                        </span>
+                                        <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
+                                            {['03_REPORTS', '05_SETTINGS', '04_INTEGRATIONS'].includes(item.name) ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                    [PRO]
+                                                </span>
+                                            ) : (
+                                                item.status
+                                            )}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
+                        </nav>
                     </div>
-                    <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
-                        <div className="flex justify-between mb-2">
-                            <span>OPERATOR:</span>
-                            <span className="truncate max-w-[150px]">{email}</span>
+
+                    <div className="mt-8 md:mt-0">
+                        {/* Upgrade Prompt Footer */}
+                        <div className="p-4 border-t border-[#E5E5E5] -mx-6 md:mx-0">
+                            <UpgradePrompt variant="sidebar" />
                         </div>
-                        <div className="flex justify-between">
-                            <span>SESSION:</span>
-                            <span className="text-[#FF4F00]">SECURE</span>
+                        <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
+                            <div className="flex justify-between mb-2">
+                                <span>OPERATOR:</span>
+                                <span className="truncate max-w-[150px]">{email}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>SESSION:</span>
+                                <span className="text-[#FF4F00]">SECURE</span>
+                            </div>
                         </div>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
+                        >
+                            Terminate_Session
+                        </button>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
-                    >
-                        Terminate_Session
-                    </button>
                 </div>
             </aside>
 

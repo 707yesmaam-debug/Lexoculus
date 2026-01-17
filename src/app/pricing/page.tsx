@@ -46,7 +46,7 @@ export default function PricingPage() {
                     <Link href="/" className="flex items-center gap-2">
                         <OpticalLogo />
                     </Link>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 md:gap-6">
                         <div className="hidden md:flex items-center gap-2 text-xs font-mono text-[#555]">
                             <Globe className="w-3 h-3" />
                             <select
@@ -59,7 +59,7 @@ export default function PricingPage() {
                                 ))}
                             </select>
                         </div>
-                        <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors">
+                        <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors ml-2 md:ml-0">
                             Login
                         </Link>
                         <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">

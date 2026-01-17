@@ -49,7 +49,7 @@ export default function OpticalTypeScanner() {
             {/* Central Typography */}
             <div className="relative z-10 flex flex-col items-center">
                 <div className="relative">
-                    <h1 className="text-9xl font-black tracking-tighter text-black mix-blend-multiply" style={{ fontFamily: 'var(--font-serif)' }}>
+                    <h1 className="text-5xl md:text-9xl font-black tracking-tighter text-black mix-blend-multiply" style={{ fontFamily: 'var(--font-serif)' }}>
                         LEX<span className="text-[#FF4F00]">|</span>OCULUS
                     </h1>
 
