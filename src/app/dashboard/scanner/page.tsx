@@ -36,19 +36,18 @@ function ScannerPageContent() {
                 const res = await fetch('/api/subscription/usage');
                 const data = await res.json();
 
-                // If user is on free tier, redirect to the free scanner
-                if (data.tier === 'free') {
+                if (data.tier === 'pro' || data.tier === 'enterprise') {
+                    // Allowed: Pro/Enterprise users stay here
+                    setIsCheckingSubscription(false);
+                    checkConnection();
+                } else {
+                    // Default / Free / Error -> Redirect to Free Scanner
+                    console.log('Redirecting to Free Scanner (Tier:', data.tier, ')');
                     router.replace('/dashboard/free-scanner');
-                    return; // Don't stop loading, redirecting...
                 }
-
-                setIsCheckingSubscription(false);
-
-                // Only check connection if we stay on this page
-                checkConnection();
             } catch (error) {
-                console.error('Subscription check failed:', error);
-                setIsCheckingSubscription(false); // Fallback to allowing access or error state
+                console.error('Subscription check failed, defaulting to Free Scanner:', error);
+                router.replace('/dashboard/free-scanner');
             }
         };
 
