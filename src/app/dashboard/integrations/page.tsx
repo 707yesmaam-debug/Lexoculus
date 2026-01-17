@@ -116,7 +116,7 @@ export default function IntegrationsPage() {
             {/* Pro Banner if not subscribed */}
             {!loading && !isPro && (
                 <div className="border border-black bg-[#F5F5F5] p-6 mb-12 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-8 h-8 border-l border-b border-black md:block hidden"></div>
+
 
                     <div className="space-y-2 z-10">
                         <h3 className="font-serif text-xl font-bold flex items-center gap-2">
