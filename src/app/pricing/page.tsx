@@ -175,6 +175,18 @@ export default function PricingPage() {
                     </div>
                 </div>
             </main>
+
+            <footer className="border-t-2 border-black p-6 md:p-8 flex flex-col md:flex-row justify-between items-center bg-white">
+                <div className="text-[10px] font-mono text-[#555] tracking-widest mb-8 md:mb-0">
+                    LAW_V1.0 // EU_COMPLIANCE
+                </div>
+                <div className="flex gap-8 font-mono text-xs underline decoration-1 underline-offset-4">
+                    <Link href="/legal/terms" className="hover:text-[#FF4F00]">TERMS</Link>
+                    <Link href="/legal/privacy" className="hover:text-[#FF4F00]">PRIVACY</Link>
+                    <Link href="/legal/security" className="hover:text-[#FF4F00]">SECURITY</Link>
+                    <Link href="/legal/compliance" className="hover:text-[#FF4F00]">EU_DISCLAIMER</Link>
+                </div>
+            </footer>
         </div>
     );
 }

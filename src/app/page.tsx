@@ -174,9 +174,10 @@ export default function LandingPage() {
                         LAW_V1.0 // EU_COMPLIANCE
                     </div>
                     <div className="flex gap-8 font-mono text-xs underline decoration-1 underline-offset-4">
-                        <a href="#" className="hover:text-[#FF4F00]">LEGAL</a>
-                        <a href="#" className="hover:text-[#FF4F00]">PRIVACY</a>
-                        <a href="#" className="hover:text-[#FF4F00]">SECURITY</a>
+                        <Link href="/legal/terms" className="hover:text-[#FF4F00]">TERMS</Link>
+                        <Link href="/legal/privacy" className="hover:text-[#FF4F00]">PRIVACY</Link>
+                        <Link href="/legal/security" className="hover:text-[#FF4F00]">SECURITY</Link>
+                        <Link href="/legal/compliance" className="hover:text-[#FF4F00]">EU_DISCLAIMER</Link>
                     </div>
                 </footer>
 
