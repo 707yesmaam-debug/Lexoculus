@@ -271,7 +271,7 @@ export default function ReportGeneratorPage() {
                         Generate Official Documentation
                     </h3>
                     <p className="font-mono text-sm text-[#555] mb-8 max-w-md mx-auto leading-relaxed">
-                        Compile all verification data into a signed 20-page PDF report suitable for regulatory auditing.
+                        Compile all verification data into a comprehensive signed PDF report suitable for regulatory auditing.
                     </p>
 
                     {isFreeTier ? (

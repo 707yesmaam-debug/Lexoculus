@@ -233,9 +233,9 @@ export default function ContextVerifierPage() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Repo Info */}
                     <div className="border-2 border-black bg-white mb-12">
-                        <div className="px-6 py-4 flex items-center justify-between">
+                        <div className="px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                             <div>
-                                <h2 className="font-serif text-xl font-bold text-black">
+                                <h2 className="font-serif text-xl font-bold text-black break-all">
                                     {questionsData?.repo_owner || 'repo'}/{questionsData?.repo_name || 'name'}
                                 </h2>
                                 <p className="font-mono text-xs text-[#555] mt-1 uppercase tracking-widest">
@@ -245,7 +245,7 @@ export default function ContextVerifierPage() {
                             {finalAssessment.approved_for_report && (
                                 <button
                                     onClick={() => router.push(`/dashboard/report/${repo_scan_id}`)}
-                                    className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white font-mono text-xs uppercase tracking-widest transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
+                                    className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white font-mono text-xs uppercase tracking-widest transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                                 >
                                     <FileText className="w-4 h-4" />
                                     Generate_Report

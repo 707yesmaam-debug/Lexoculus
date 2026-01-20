@@ -245,7 +245,7 @@ export default function AnalyzerPage() {
                                         onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
                                         className="w-full md:w-auto bg-[#FF4F00] hover:bg-black text-white rounded-none h-12 px-8 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-0 hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-center"
                                     >
-                                        Proceed_To_Classification <ArrowRight className="w-4 h-4 ml-3" />
+                                        CLASSIFY_RISK <ArrowRight className="w-4 h-4 ml-3" />
                                     </Button>
                                 ) : (
                                     <div className="flex flex-col items-end">

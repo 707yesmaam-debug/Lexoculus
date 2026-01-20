@@ -209,8 +209,8 @@ export default function RiskClassifierPage() {
                                 }
                             }}
                             className={`rounded-none font-mono text-xs uppercase tracking-widest border border-black h-10 px-6 ${isPro
-                                    ? 'bg-black text-white hover:bg-[#FF4F00]'
-                                    : 'bg-white text-[#999] hover:text-black hover:border-black'
+                                ? 'bg-black text-white hover:bg-[#FF4F00]'
+                                : 'bg-white text-[#999] hover:text-black hover:border-black'
                                 }`}
                         >
                             {isPro ? (
@@ -226,15 +226,15 @@ export default function RiskClassifierPage() {
             {/* Repo Info */}
             {analysis && (
                 <div className="border-2 border-black bg-white mb-12">
-                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div>
-                            <h2 className="font-serif text-2xl font-bold text-black items-center flex gap-2">
+                            <h2 className="font-serif text-2xl font-bold text-black items-center flex gap-2 break-all">
                                 {analysis.repo_owner} <span className="text-[#999]">/</span> {analysis.repo_name}
                             </h2>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 self-start md:self-auto">
                             <Scale className="w-5 h-5 text-black" />
-                            <span className="font-mono text-xs text-black uppercase tracking-widest">Annex III Assessment</span>
+                            <span className="font-mono text-xs text-black uppercase tracking-widest whitespace-nowrap">Annex III Assessment</span>
                         </div>
                     </div>
 
