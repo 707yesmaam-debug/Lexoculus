@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, AlertCircle, FileText, CheckCircle2, ArrowRight } f
 import ReportDownloadCard from '@/components/ReportDownloadCard';
 import StorageStatus from '@/components/StorageStatus';
 import Link from 'next/link';
+import FeedbackWidget from '@/components/FeedbackWidget';
 
 interface ReportData {
     report_id: string;
@@ -365,6 +366,8 @@ export default function ReportGeneratorPage() {
                     Reports Are Digitally Signed & Stored For 30 Days
                 </div>
             </div>
+            {/* Feedback Widget for End of Journey */}
+            <FeedbackWidget />
         </div>
     );
 }

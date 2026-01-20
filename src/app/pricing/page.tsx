@@ -160,9 +160,9 @@ export default function PricingPage() {
                         <p className="text-sm text-[#555] mb-8 min-h-[40px]">
                             For organizations with advanced security needs.
                         </p>
-                        <a href="mailto:sales@lexoculus.com" className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors">
-                            CONTACT_SALES
-                        </a>
+                        <button disabled className="block w-full text-center border border-black py-3 font-mono text-xs opacity-75 cursor-not-allowed bg-neutral-100 text-neutral-500">
+                            COMING_SOON
+                        </button>
 
                         <div className="mt-8 space-y-4">
                             <FeatureItem included>Everything in Pro</FeatureItem>

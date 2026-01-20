@@ -13,6 +13,7 @@ export default function SignupPage() {
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [termsAccepted, setTermsAccepted] = useState(false);
     const router = useRouter();
 
     const handleSignup = async (e: React.FormEvent) => {
@@ -116,10 +117,23 @@ export default function SignupPage() {
                             />
                         </div>
 
+                        <div className="flex items-start gap-2 pt-2">
+                            <input
+                                id="terms"
+                                type="checkbox"
+                                checked={termsAccepted}
+                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                className="mt-1 border-black rounded-none focus:ring-[#FF4F00] text-[#FF4F00]"
+                            />
+                            <label htmlFor="terms" className="text-xs font-mono text-[#555] leading-snug">
+                                I agree to the <Link href="/legal/terms" className="underline hover:text-black">Terms of Service</Link>, <Link href="/legal/privacy" className="underline hover:text-black">Privacy Policy</Link>, and <Link href="/legal/compliance" className="underline hover:text-black">Compliance Disclaimer</Link>.
+                            </label>
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="w-full bg-black hover:bg-[#FF4F00] text-white font-mono font-bold py-4 text-sm transition-colors disabled:opacity-50 tracking-widest uppercase rounded-none"
+                            disabled={loading || !termsAccepted}
+                            className="w-full bg-black hover:bg-[#FF4F00] text-white font-mono font-bold py-4 text-sm transition-colors disabled:opacity-50 disabled:hover:bg-black tracking-widest uppercase rounded-none"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'INITIALIZE_ACCOUNT ->'}
                         </button>
