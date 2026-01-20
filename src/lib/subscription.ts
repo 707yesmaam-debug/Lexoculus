@@ -153,7 +153,25 @@ export const PRICING = {
 /**
  * Get or create subscription for a user
  */
-export async function getOrCreateSubscription(userId: string) {
+export async function getOrCreateSubscription(userId: string, email?: string, fullName?: string) {
+    // 1. Ensure User exists in public schema (fallback for missing trigger)
+    const userExists = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!userExists) {
+        if (!email) {
+            throw new Error('User record missing and no email provided for fallback creation');
+        }
+        console.log(`[SUBSCRIPTION] User ${userId} missing in public table. Creating fallback record.`);
+        await prisma.user.create({
+            data: {
+                id: userId,
+                email: email,
+                full_name: fullName,
+            }
+        });
+    }
+
+    // 2. Get or Create Subscription
     let subscription = await prisma.subscription.findUnique({
         where: { user_id: userId },
     });
@@ -179,8 +197,8 @@ export async function getOrCreateSubscription(userId: string) {
 /**
  * Get user's current usage status
  */
-export async function getUsageStatus(userId: string): Promise<UsageStatus> {
-    const subscription = await getOrCreateSubscription(userId);
+export async function getUsageStatus(userId: string, email?: string): Promise<UsageStatus> {
+    const subscription = await getOrCreateSubscription(userId, email);
     const tier = subscription.tier as SubscriptionTier;
     const limits = TIER_LIMITS[tier];
 

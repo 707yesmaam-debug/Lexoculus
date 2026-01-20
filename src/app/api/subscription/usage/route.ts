@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const usageStatus = await getUsageStatus(user.id);
+        const usageStatus = await getUsageStatus(user.id, user.email);
 
         return NextResponse.json(usageStatus);
     } catch (error) {
