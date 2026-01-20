@@ -243,7 +243,7 @@ export default function AnalyzerPage() {
                                 {analysis.is_ai_system ? (
                                     <Button
                                         onClick={() => router.push(`/dashboard/risk-classifier/${repo_scan_id}`)}
-                                        className="bg-[#FF4F00] hover:bg-black text-white rounded-none h-12 px-8 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-0 hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                                        className="w-full md:w-auto bg-[#FF4F00] hover:bg-black text-white rounded-none h-12 px-8 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-0 hover:translate-x-[2px] hover:translate-y-[2px] transition-all flex items-center justify-center"
                                     >
                                         Proceed_To_Classification <ArrowRight className="w-4 h-4 ml-3" />
                                     </Button>
@@ -339,7 +339,6 @@ export default function AnalyzerPage() {
 
                     {/* Metadata Footer */}
                     <div className="flex flex-wrap gap-6 text-[10px] font-mono uppercase tracking-wider text-[#999] border-t border-[#E5E5E5] pt-8">
-                        <span>MODEL_USED: {analysis.llm_model_used}</span>
                         <span>ANALYSIS_ID: {analysis.analysis_id}</span>
                         <span>TIMESTAMP: {new Date(analysis.analyzed_at).toISOString()}</span>
                     </div>

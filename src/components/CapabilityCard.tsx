@@ -49,7 +49,7 @@ function RiskIndicatorRow({ label, value }: { label: string; value: boolean }) {
 
 function CodeIndicator({ label, active }: { label: string; active: boolean }) {
     return (
-        <div className={`px-4 py-3 border border-black text-xs font-mono tracking-widest uppercase flex items-center justify-center gap-2 transition-all ${active
+        <div className={`px-2 md:px-4 py-3 border border-black text-[10px] md:text-xs font-mono tracking-wide md:tracking-widest uppercase flex items-center justify-center gap-2 transition-all ${active
             ? 'bg-black text-white'
             : 'bg-white text-[#999] border-[#E5E5E5]'
             }`}>
@@ -58,6 +58,10 @@ function CodeIndicator({ label, active }: { label: string; active: boolean }) {
         </div>
     );
 }
+
+// ... inside main component ...
+
+
 
 export default function CapabilityCard({
     capabilities,
@@ -169,13 +173,14 @@ export default function CapabilityCard({
                 </div>
             </div>
 
+
             {/* Code Structure Indicators */}
             <div className="border-2 border-black bg-white">
                 <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center gap-3">
                     <Cpu className="w-5 h-5 text-black" />
                     <h3 className="text-black font-serif font-bold text-lg">Architecture Patterns</h3>
                 </div>
-                <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="p-4 md:p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
                     <CodeIndicator label="Pipeline" active={hasMLPipeline} />
                     <CodeIndicator label="Training" active={hasTrainingCode} />
                     <CodeIndicator label="Inference" active={hasInferenceCode} />
