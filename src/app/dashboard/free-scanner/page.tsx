@@ -65,16 +65,16 @@ export default function FreeScannerPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-12">
-            <div className="mb-16 border-b border-black pb-8">
-                <div className="font-mono text-xs text-[#FF4F00] mb-4 tracking-widest uppercase flex justify-between">
+        <div className="max-w-4xl mx-auto p-4 md:p-12">
+            <div className="mb-12 md:mb-16 border-b border-black pb-8">
+                <div className="font-mono text-[10px] md:text-xs text-[#FF4F00] mb-4 tracking-widest uppercase flex flex-col md:flex-row md:justify-between gap-2">
                     <span>PHASE_01 // PUBLIC_INGESTION</span>
                     {usage && (
                         <span>USAGE: {usage.limit - usage.remaining}/{usage.limit} SCANS</span>
                     )}
                 </div>
-                <h1 className="font-serif text-5xl font-bold mb-4 tracking-tight">Public Audit.</h1>
-                <p className="font-mono text-sm text-[#555] max-w-xl leading-relaxed">
+                <h1 className="font-serif text-3xl md:text-5xl font-bold mb-4 tracking-tight">Public Audit.</h1>
+                <p className="font-mono text-xs md:text-sm text-[#555] max-w-xl leading-relaxed">
                     Enter any public repository to initiate compliance analysis.
                     Full regulatory deep-dive included.
                 </p>
@@ -86,20 +86,20 @@ export default function FreeScannerPage() {
                         <label className="font-mono text-xs uppercase block text-[#555]">
                             Repository URL (Public Only)
                         </label>
-                        <div className="flex gap-4">
+                        <div className="flex flex-col md:flex-row gap-4">
                             <input
                                 type="url"
                                 placeholder="https://github.com/owner/repo"
                                 value={url}
                                 onChange={(e) => setUrl(e.target.value)}
-                                className="flex-1 border border-black p-4 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] placeholder:text-[#999]"
+                                className="w-full md:flex-1 border border-black p-4 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] placeholder:text-[#999]"
                                 required
                                 disabled={isLoading}
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !url}
-                                className="bg-black text-white px-8 font-mono text-sm hover:bg-[#FF4F00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="w-full md:w-auto bg-black text-white px-8 py-4 md:py-0 font-mono text-sm hover:bg-[#FF4F00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isLoading ? <Loader2 className="animate-spin w-4 h-4" /> : 'INITIATE_SCAN'}
                             </button>
@@ -125,7 +125,7 @@ export default function FreeScannerPage() {
                     </div>
                 )}
 
-                <div className="mt-16 pt-8 border-t border-[#E5E5E5] grid grid-cols-2 gap-8">
+                <div className="mt-12 md:mt-16 pt-8 border-t border-[#E5E5E5] grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h4 className="font-serif font-bold text-lg mb-2">Capabilities</h4>
                         <ul className="space-y-1 font-mono text-xs text-[#555]">
