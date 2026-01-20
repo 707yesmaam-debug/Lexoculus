@@ -15,9 +15,10 @@ export default function LegalLayout({
                 </Link>
                 <Link
                     href="/dashboard"
-                    className="text-sm font-bold uppercase tracking-widest hover:text-[#FF4F00] transition-colors"
+                    className="text-xs md:text-sm font-bold uppercase tracking-widest hover:text-[#FF4F00] transition-colors"
                 >
-                    Return to Dashboard →
+                    <span className="md:hidden">EXIT &rarr;</span>
+                    <span className="hidden md:inline">RETURN TO DASHBOARD &rarr;</span>
                 </Link>
             </header>
 
