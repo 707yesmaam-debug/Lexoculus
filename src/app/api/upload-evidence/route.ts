@@ -41,6 +41,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // 2. Check Subscription Tier
+        const { getOrCreateSubscription } = await import('@/lib/subscription');
+        const subscription = await getOrCreateSubscription(user.id);
+        const isPro = subscription.tier === 'pro' || subscription.tier === 'enterprise';
+
+        if (!isPro) {
+            return NextResponse.json(
+                { error: 'Content upload is restricted to Pro users' },
+                { status: 403 }
+            );
+        }
+
         // 2. Convert to Buffer
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);

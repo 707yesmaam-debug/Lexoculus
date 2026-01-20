@@ -37,6 +37,7 @@ interface QuestionSetProps {
     onAnswerChange: (questionId: string, value: string | boolean) => void;
     isExpanded?: boolean;
     riskAssessmentId?: string;
+    isPro?: boolean;
 }
 
 export default function QuestionSet({
@@ -45,6 +46,7 @@ export default function QuestionSet({
     onAnswerChange,
     isExpanded: defaultExpanded = true,
     riskAssessmentId,
+    isPro = false,
 }: QuestionSetProps) {
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
@@ -181,13 +183,31 @@ export default function QuestionSet({
                                 )}
 
                                 {question.type === 'file_upload' && riskAssessmentId && (
-                                    <div className="border border-dashed border-[#999] p-6 bg-[#FAFAFA]">
-                                        <QuestionFileUpload
-                                            questionId={question.id}
-                                            riskAssessmentId={riskAssessmentId}
-                                            currentValue={answers[question.id] as string}
-                                            onUploadComplete={(url) => onAnswerChange(question.id, url)}
-                                        />
+                                    <div className={`border border-dashed ${isPro ? 'border-[#999] bg-[#FAFAFA]' : 'border-[#E5E5E5] bg-[#F5F5F5]'} p-6`}>
+                                        {isPro ? (
+                                            <QuestionFileUpload
+                                                questionId={question.id}
+                                                riskAssessmentId={riskAssessmentId}
+                                                currentValue={answers[question.id] as string}
+                                                onUploadComplete={(url) => onAnswerChange(question.id, url)}
+                                            />
+                                        ) : (
+                                            <div className="text-center">
+                                                <div className="flex justify-center mb-3">
+                                                    <div className="w-10 h-10 bg-[#E5E5E5] flex items-center justify-center rounded-full">
+                                                        <HelpCircle className="w-5 h-5 text-[#999]" />
+                                                        {/* Using HelpCircle as generic lock icon fallback since Lock might need import */}
+                                                    </div>
+                                                </div>
+                                                <p className="font-mono text-xs uppercase tracking-widest text-[#555] mb-2">Evidence Upload Locked</p>
+                                                <p className="font-mono text-[10px] text-[#999] mb-4 max-w-xs mx-auto">
+                                                    Secure evidence storage is available for Pro plans.
+                                                </p>
+                                                <a href="/pricing" className="inline-block bg-black text-white px-4 py-2 font-mono text-[10px] uppercase tracking-widest hover:bg-[#FF4F00] transition-colors">
+                                                    Upgrade_to_Upload
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

@@ -80,9 +80,22 @@ export default function ContextVerifierPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isPro, setIsPro] = useState(false);
 
     // Fetch questions or existing assessment
     useEffect(() => {
+        async function fetchSubscriptionStatus() {
+            try {
+                const res = await fetch('/api/subscription/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsPro(data.is_pro || data.limits?.features?.pdf_reports);
+                }
+            } catch (e) {
+                console.error('Failed to fetch subscription', e);
+            }
+        }
+
         async function fetchData() {
             try {
                 setIsLoading(true);
@@ -122,6 +135,7 @@ export default function ContextVerifierPage() {
 
         if (repo_scan_id) {
             fetchData();
+            fetchSubscriptionStatus();
         }
     }, [repo_scan_id]);
 
@@ -318,6 +332,7 @@ export default function ContextVerifierPage() {
                                 onAnswerChange={handleAnswerChange}
                                 isExpanded={idx === 0}
                                 riskAssessmentId={questionsData.risk_assessment_id}
+                                isPro={isPro}
                             />
                         ))}
                     </div>
