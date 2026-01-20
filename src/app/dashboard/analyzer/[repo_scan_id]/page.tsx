@@ -171,14 +171,14 @@ export default function AnalyzerPage() {
             {/* Repo Info Card */}
             {repoScan && (
                 <div className="border-2 border-black bg-white mb-12">
-                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h2 className="font-serif text-2xl font-bold text-black items-center flex gap-2">
+                            <h2 className="font-serif text-2xl font-bold text-black items-center flex flex-wrap gap-2 break-all">
                                 {repoScan.repo_owner} <span className="text-[#999]">/</span> {repoScan.repo_name}
                             </h2>
                         </div>
-                        <div className="text-right">
-                            <span className="bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-widest">
+                        <div className="self-start md:self-auto md:text-right">
+                            <span className="bg-black text-white px-3 py-1 text-xs font-mono uppercase tracking-widest inline-block whitespace-nowrap">
                                 {repoScan.primary_language || 'UNKNOWN'}
                             </span>
                         </div>
