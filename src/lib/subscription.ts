@@ -6,6 +6,7 @@
  */
 
 import prisma from './prisma';
+import logger from './logger';
 
 // =============================================================================
 // TYPES
@@ -161,7 +162,7 @@ export async function getOrCreateSubscription(userId: string, email?: string, fu
         if (!email) {
             throw new Error('User record missing and no email provided for fallback creation');
         }
-        console.log(`[SUBSCRIPTION] User ${userId} missing in public table. Creating fallback record.`);
+        logger.info({ userId }, `[SUBSCRIPTION] User ${userId} missing in public table. Creating fallback record.`);
         await prisma.user.create({
             data: {
                 id: userId,
@@ -340,7 +341,12 @@ export async function grantProSubscription(
         },
     });
 
-    console.log(`✅ [SUBSCRIPTION] Granted Pro to ${userId} for ${durationDays} days: ${reason}`);
+    logger.info({
+        event: 'pro_grant',
+        userId,
+        durationDays,
+        reason
+    }, `✅ [SUBSCRIPTION] Granted Pro to ${userId}`);
 }
 
 /**
@@ -365,7 +371,7 @@ export async function revokeProSubscription(userId: string): Promise<void> {
         },
     });
 
-    console.log(`🚫 [SUBSCRIPTION] Revoked Pro from ${userId}`);
+    logger.info({ event: 'pro_revoke', userId }, `🚫 [SUBSCRIPTION] Revoked Pro from ${userId}`);
 }
 
 // =============================================================================
@@ -385,7 +391,7 @@ export async function createCheckoutSession(
 
     if (!stripeKey) {
         // Return placeholder for demo
-        console.log(`⚠️ [STRIPE] No STRIPE_SECRET_KEY - returning placeholder`);
+        logger.warn(`⚠️ [STRIPE] No STRIPE_SECRET_KEY - returning placeholder`);
         return {
             url: null,
             error: 'Stripe is not configured yet. Please contact support for Pro access.',
@@ -413,7 +419,7 @@ export async function handleStripeWebhook(
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-        console.log(`⚠️ [STRIPE] No STRIPE_WEBHOOK_SECRET configured`);
+        logger.warn(`⚠️ [STRIPE] No STRIPE_WEBHOOK_SECRET configured`);
         return { success: false, error: 'Stripe webhooks not configured' };
     }
 

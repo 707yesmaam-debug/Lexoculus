@@ -5,6 +5,7 @@
  */
 
 import { createServerClient } from './supabase-server';
+import logger from './logger';
 
 // Admin email is set in environment variable for security
 // Add ADMIN_EMAIL=your@email.com to .env.local
@@ -24,7 +25,7 @@ export interface AdminCheckResult {
  */
 export async function checkAdminAccess(): Promise<AdminCheckResult> {
     if (!ADMIN_EMAIL) {
-        console.error('❌ [ADMIN] ADMIN_EMAIL not configured');
+        logger.error('❌ [ADMIN] ADMIN_EMAIL not configured');
         return {
             isAdmin: false,
             user: null,
@@ -47,8 +48,8 @@ export async function checkAdminAccess(): Promise<AdminCheckResult> {
         const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
         if (!isAdmin) {
-            console.warn(`⚠️ [ADMIN] Access denied for ${user.email}`);
-            console.warn(`⚠️ [ADMIN] Comparison: '${user.email?.toLowerCase()}' !== '${ADMIN_EMAIL.toLowerCase()}'`);
+            logger.warn({ email: user.email }, `⚠️ [ADMIN] Access denied`);
+            logger.debug(`⚠️ [ADMIN] Comparison: '${user.email?.toLowerCase()}' !== '${ADMIN_EMAIL.toLowerCase()}'`);
         }
 
         return {
@@ -60,7 +61,7 @@ export async function checkAdminAccess(): Promise<AdminCheckResult> {
             error: isAdmin ? undefined : `Access denied - signed in as ${user.email}, but this is not the admin email.`,
         };
     } catch (error) {
-        console.error('Admin check error:', error);
+        logger.error({ err: error }, 'Admin check error');
         return {
             isAdmin: false,
             user: null,

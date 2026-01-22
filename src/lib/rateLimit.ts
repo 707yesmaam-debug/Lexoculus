@@ -24,7 +24,10 @@ if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) 
     });
 } else {
     if (process.env.NODE_ENV === 'production') {
-        console.warn('⚠️ [RATE_LIMIT] Redis credentials missing in production! Falling back to in-memory store (not scalable).');
+        if (process.env.NODE_ENV === 'production') {
+            const logger = require('./logger').default;
+            logger.warn('⚠️ [RATE_LIMIT] Redis credentials missing in production! Falling back to in-memory store (not scalable).');
+        }
     }
 }
 
@@ -79,7 +82,12 @@ export async function checkRateLimit(
             };
 
         } catch (error) {
-            console.error('❌ [RATE_LIMIT] Redis error, falling back to memory:', error);
+            if (process.env.NODE_ENV === 'production') {
+                const logger = require('./logger').default;
+                logger.error({ err: error }, '❌ [RATE_LIMIT] Redis error, falling back to memory');
+            } else {
+                console.error('Redis error', error);
+            }
             // Fall through to memory store
         }
     }

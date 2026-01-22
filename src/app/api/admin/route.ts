@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAccess } from '@/lib/admin';
 import prisma from '@/lib/prisma';
 import { grantProSubscription, revokeProSubscription, TIER_LIMITS } from '@/lib/subscription';
+import logger from '@/lib/logger';
 
 /**
  * GET /api/admin
@@ -175,7 +176,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 
     } catch (error) {
-        console.error('Admin API error:', error);
+        logger.error({ err: error }, 'Admin API error');
         return NextResponse.json(
             { error: 'Failed to fetch admin data' },
             { status: 500 }
@@ -229,7 +230,13 @@ export async function POST(request: NextRequest) {
             const { isAdmin: adminCheck, user: adminUser } = await checkAdminAccess();
 
             // AUDIT: Log subscription changes
-            console.log(`🟢 [ADMIN AUDIT] Pro granted by ${adminUser?.email} to ${user_email || targetUserId} for ${duration_days || 30} days. Reason: ${reason || 'None provided'}`);
+            logger.info({
+                event: 'admin_grant_pro',
+                admin: adminUser?.email,
+                target: user_email || targetUserId,
+                duration: duration_days || 30,
+                reason: reason || 'None provided'
+            }, `🟢 [ADMIN AUDIT] Pro granted by ${adminUser?.email}`);
 
             await grantProSubscription(
                 targetUserId,
@@ -249,7 +256,11 @@ export async function POST(request: NextRequest) {
             const { user: adminUser } = await checkAdminAccess();
 
             // AUDIT: Log subscription changes
-            console.log(`🟠 [ADMIN AUDIT] Pro revoked by ${adminUser?.email} from ${user_email || targetUserId}`);
+            logger.info({
+                event: 'admin_revoke_pro',
+                admin: adminUser?.email,
+                target: user_email || targetUserId
+            }, `🟠 [ADMIN AUDIT] Pro revoked by ${adminUser?.email}`);
 
             await revokeProSubscription(targetUserId);
 
@@ -262,6 +273,8 @@ export async function POST(request: NextRequest) {
         // Delete user (DANGEROUS - requires confirmation token)
         if (action === 'delete_user') {
             const { confirm_deletion } = body;
+            // Get admin user for audit log
+            const { user: adminUser } = await checkAdminAccess();
 
             // SECURITY: Require explicit confirmation to prevent accidental deletions
             if (confirm_deletion !== 'DELETE_USER_PERMANENTLY') {
@@ -275,13 +288,20 @@ export async function POST(request: NextRequest) {
             }
 
             // AUDIT: Log destructive action before execution
-            console.warn(`🔴 [ADMIN AUDIT] User deletion initiated by admin for user: ${user_email || targetUserId}`);
+            logger.warn({
+                event: 'admin_delete_user_init',
+                admin: adminUser?.email,
+                target: user_email || targetUserId
+            }, `🔴 [ADMIN AUDIT] User deletion initiated by admin`);
 
             await prisma.user.delete({
                 where: { id: targetUserId },
             });
 
-            console.warn(`🔴 [ADMIN AUDIT] User ${user_email || targetUserId} permanently deleted`);
+            logger.warn({
+                event: 'admin_delete_user_complete',
+                target: user_email || targetUserId
+            }, `🔴 [ADMIN AUDIT] User permanently deleted`);
 
             return NextResponse.json({
                 success: true,
@@ -295,7 +315,7 @@ export async function POST(request: NextRequest) {
         );
 
     } catch (error) {
-        console.error('Admin action error:', error);
+        logger.error({ err: error }, 'Admin action error');
         return NextResponse.json(
             { error: 'Admin action failed' },
             { status: 500 }
