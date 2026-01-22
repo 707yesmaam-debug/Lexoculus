@@ -3,6 +3,7 @@ import { Playfair_Display, Space_Mono } from "next/font/google";
 import "./globals.css";
 import BetaBanner from "@/components/BetaBanner";
 import MobileDesktopSuggestion from "@/components/MobileDesktopSuggestion";
+import { Analytics } from "@vercel/analytics/react";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -35,6 +36,7 @@ export default function RootLayout({
         <BetaBanner />
         <MobileDesktopSuggestion />
         {children}
+        <Analytics />
       </body>
     </html>
   );
