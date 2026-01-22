@@ -1,65 +1,109 @@
-// In-memory rate limiter
-// In production, use Redis or a distributed cache
+import { Redis } from '@upstash/redis';
+
+// =============================================================================
+// CONFIGURATION
+// =============================================================================
+
+export const RATE_LIMITS = {
+    REPO_SCAN: { windowMs: 60 * 60 * 1000, maxRequests: 10, name: 'repo_scan' },
+    REPO_LIST: { windowMs: 60 * 60 * 1000, maxRequests: 30, name: 'repo_list' },
+    // Lower limits for expensive operations
+    LLM_ANALYSIS: { windowMs: 60 * 60 * 1000, maxRequests: 20, name: 'llm_analysis' },
+} as const;
+
+// =============================================================================
+// REDIS CLIENT (Lazy Init)
+// =============================================================================
+
+let redis: Redis | null = null;
+
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+} else {
+    if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ [RATE_LIMIT] Redis credentials missing in production! Falling back to in-memory store (not scalable).');
+    }
+}
+
+// =============================================================================
+// IN-MEMORY FALLBACK (For local/dev or Redis outage)
+// =============================================================================
 
 interface RateLimitEntry {
     count: number;
     resetAt: number;
 }
+const memoryStore = new Map<string, RateLimitEntry>();
 
-const rateLimitStore: Map<string, RateLimitEntry> = new Map();
-
-interface RateLimitConfig {
-    windowMs: number;  // Time window in milliseconds
-    maxRequests: number;
-}
-
-export const RATE_LIMITS = {
-    REPO_SCAN: { windowMs: 60 * 60 * 1000, maxRequests: 10 },      // 10 scans per hour
-    REPO_LIST: { windowMs: 60 * 60 * 1000, maxRequests: 30 },      // 30 list requests per hour
-} as const;
+// =============================================================================
+// RATE LIMITER LOGIC
+// =============================================================================
 
 /**
  * Check if a user has exceeded their rate limit
- * @returns { allowed: boolean, remaining: number, resetAt: number }
  */
-export function checkRateLimit(
+export async function checkRateLimit(
     userId: string,
     action: keyof typeof RATE_LIMITS
-): { allowed: boolean; remaining: number; resetAt: number } {
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
     const config = RATE_LIMITS[action];
-    const key = `${userId}:${action}`;
+    const key = `ratelimit:${config.name}:${userId}`;
     const now = Date.now();
+    const windowSeconds = Math.ceil(config.windowMs / 1000);
 
-    const entry = rateLimitStore.get(key);
+    // 1. Try REDIS
+    if (redis) {
+        try {
+            // Atomic increment
+            const count = await redis.incr(key);
 
-    // If no entry or window expired, create/reset
+            // If new key, set expiration
+            if (count === 1) {
+                await redis.expire(key, windowSeconds);
+            }
+
+            // Calculate remaining
+            const remaining = Math.max(0, config.maxRequests - count);
+
+            // Get TTL for accurate reset time
+            const ttl = await redis.ttl(key);
+            const resetAt = now + (ttl * 1000);
+
+            return {
+                allowed: count <= config.maxRequests,
+                remaining,
+                resetAt,
+            };
+
+        } catch (error) {
+            console.error('❌ [RATE_LIMIT] Redis error, falling back to memory:', error);
+            // Fall through to memory store
+        }
+    }
+
+    // 2. Fallback: IN-MEMORY
+    const entry = memoryStore.get(key);
+
+    // If new or expired
     if (!entry || now >= entry.resetAt) {
-        const newEntry: RateLimitEntry = {
+        const newEntry = {
             count: 1,
             resetAt: now + config.windowMs,
         };
-        rateLimitStore.set(key, newEntry);
-        return {
-            allowed: true,
-            remaining: config.maxRequests - 1,
-            resetAt: newEntry.resetAt,
-        };
+        memoryStore.set(key, newEntry);
+        return { allowed: true, remaining: config.maxRequests - 1, resetAt: newEntry.resetAt };
     }
 
-    // Check if within limit
-    if (entry.count < config.maxRequests) {
-        entry.count++;
-        return {
-            allowed: true,
-            remaining: config.maxRequests - entry.count,
-            resetAt: entry.resetAt,
-        };
-    }
+    // Increment existing
+    entry.count++;
+    const remaining = Math.max(0, config.maxRequests - entry.count);
 
-    // Rate limit exceeded
     return {
-        allowed: false,
-        remaining: 0,
+        allowed: entry.count <= config.maxRequests,
+        remaining,
         resetAt: entry.resetAt,
     };
 }
@@ -68,13 +112,13 @@ export function checkRateLimit(
  * Create a rate limit exceeded response
  */
 export function rateLimitResponse(resetAt: number): Response {
-    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
+    const retryAfter = Math.ceil((resetAt - Date.now()) / 1000); // Seconds
 
     return new Response(
         JSON.stringify({
             error: 'Rate limit exceeded',
-            message: `Too many requests. Try again in ${Math.ceil(retryAfter / 60)} minutes.`,
-            retryAfter,
+            message: `Too many requests. Please try again in ${Math.ceil(retryAfter / 60)} minutes.`,
+            retryAfter, // For client logic
         }),
         {
             status: 429,
