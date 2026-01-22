@@ -39,6 +39,9 @@ model User {
 
   // Subscription & Billing
   subscription Subscription?
+  
+  // Feedback
+  feedback     Feedback[]
 
   @@index([email])
   @@map("users")
@@ -425,3 +428,22 @@ model Subscription {
 }
 
 
+// Feedback System
+model Feedback {
+  id        String   @id @default(cuid())
+  user_id   String?  // Optional: can be anonymous
+  
+  rating    Int      // 1-5
+  comment   String?
+  page_url  String?
+  
+  // Metadata
+  created_at DateTime @default(now())
+  
+  // Relationships
+  user      User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([created_at])
+  @@map("feedback")
+}

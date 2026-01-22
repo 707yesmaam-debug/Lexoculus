@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase-server';
+import prisma from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
     try {
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
         const body = await req.json();
         const { rating, comment, url } = body;
 
-        // In a real app, save to DB. For now, we'll log it.
-        // We could also send an email or webhook.
-        console.log('[FEEDBACK_RECEIVED]', {
-            rating,
-            comment,
-            url,
-            timestamp: new Date().toISOString()
+        await prisma.feedback.create({
+            data: {
+                user_id: user?.id, // Can be null (anonymous)
+                rating,
+                comment,
+                page_url: url,
+            }
         });
-
-        // TODO: Save to 'feedbacks' table once created
 
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Feedback error:', error);
-        return NextResponse.json({ error: 'Failed to process feedback' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to save feedback' }, { status: 500 });
     }
 }
