@@ -112,7 +112,64 @@ export default function AdminPage() {
         }
     };
 
-    // ... (rest of actions: handleGrantPro, handleRevokePro)
+    const handleGrantPro = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setActionLoading(true);
+        setActionMessage(null);
+
+        try {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'grant_pro',
+                    user_email: grantEmail,
+                    duration_days: parseInt(grantDays),
+                    reason: grantReason || 'Granted by admin',
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setActionMessage({ type: 'success', text: data.message });
+                setGrantEmail('');
+                setGrantReason('');
+                fetchData();
+            } else {
+                setActionMessage({ type: 'error', text: data.error });
+            }
+        } catch (err) {
+            setActionMessage({ type: 'error', text: 'Failed to grant Pro' });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRevokePro = async (userId: string, email: string) => {
+        if (!confirm(`Revoke Pro from ${email}?`)) return;
+
+        setActionLoading(true);
+        try {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'revoke_pro',
+                    user_id: userId,
+                }),
+            });
+
+            if (res.ok) {
+                setActionMessage({ type: 'success', text: `Pro revoked from ${email}` });
+                fetchData();
+            }
+        } catch (err) {
+            setActionMessage({ type: 'error', text: 'Failed to revoke Pro' });
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     // ... (rest of loading/error states)
     if (loading) {
@@ -274,8 +331,8 @@ export default function AdminPage() {
                                         <tr key={fb.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
                                             <td className="py-4">
                                                 <span className={`px-2 py-1 rounded text-sm font-bold ${fb.rating >= 4 ? 'bg-green-500/20 text-green-400' :
-                                                        fb.rating <= 2 ? 'bg-red-500/20 text-red-400' :
-                                                            'bg-yellow-500/20 text-yellow-400'
+                                                    fb.rating <= 2 ? 'bg-red-500/20 text-red-400' :
+                                                        'bg-yellow-500/20 text-yellow-400'
                                                     }`}>
                                                     {fb.rating} / 5
                                                 </span>
