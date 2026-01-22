@@ -13,6 +13,7 @@ export default function SignupPage() {
     const [fullName, setFullName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const router = useRouter();
 
@@ -22,20 +23,26 @@ export default function SignupPage() {
         setError(null);
 
         const supabase = createClient();
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
                     full_name: fullName,
                 },
+                emailRedirectTo: `${window.location.origin}/auth/callback`,
             },
         });
 
         if (error) {
             setError(error.message);
             setLoading(false);
+        } else if (data.user && !data.session) {
+            // Email confirmation required
+            setSuccess(true);
+            setLoading(false);
         } else {
+            // Auto-confirmed (e.g. testing)
             router.push('/dashboard/scanner');
             router.refresh();
         }
@@ -138,6 +145,13 @@ export default function SignupPage() {
                             {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'INITIALIZE_ACCOUNT ->'}
                         </button>
                     </form>
+
+                    {success && (
+                        <div className="mt-6 bg-green-50 border border-green-200 p-4 text-green-800 font-mono text-sm">
+                            <p className="font-bold mb-1">CONFIRMATION_REQUIRED</p>
+                            <p>Verification link sent to {email}.<br />Check your inbox to activate access.</p>
+                        </div>
+                    )}
 
                     <div className="mt-12 pt-8 border-t border-[#E5E5E5] text-center">
                         <Link href="/auth/login" className="font-mono text-xs text-[#555] hover:text-black border-b border-transparent hover:border-black pb-1 transition-all">
