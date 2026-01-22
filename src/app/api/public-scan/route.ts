@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Rate Limiting (API Protection)
-        const rateLimit = checkRateLimit(user.id, 'REPO_SCAN');
+        const rateLimit = await checkRateLimit(user.id, 'REPO_SCAN');
         if (!rateLimit.allowed) {
             return rateLimitResponse(rateLimit.resetAt);
         }

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check rate limit
-        const rateLimit = checkRateLimit(user.id, 'REPO_SCAN');
+        const rateLimit = await checkRateLimit(user.id, 'REPO_SCAN');
         if (!rateLimit.allowed) {
             return rateLimitResponse(rateLimit.resetAt);
         }

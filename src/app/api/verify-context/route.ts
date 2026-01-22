@@ -3,28 +3,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
 import { refineWithContext, ContextAnswers } from '@/lib/context-refiner';
 
-// Rate limiting (5 verifications per hour)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 5;
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
-
-function checkRateLimit(userId: string): { allowed: boolean; remaining: number; resetAt: number } {
-    const now = Date.now();
-    const userLimit = rateLimitMap.get(userId);
-
-    if (!userLimit || now > userLimit.resetAt) {
-        const resetAt = now + RATE_LIMIT_WINDOW;
-        rateLimitMap.set(userId, { count: 1, resetAt });
-        return { allowed: true, remaining: RATE_LIMIT - 1, resetAt };
-    }
-
-    if (userLimit.count >= RATE_LIMIT) {
-        return { allowed: false, remaining: 0, resetAt: userLimit.resetAt };
-    }
-
-    userLimit.count++;
-    return { allowed: true, remaining: RATE_LIMIT - userLimit.count, resetAt: userLimit.resetAt };
-}
+import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
 
 /**
  * POST /api/verify-context
@@ -56,15 +35,9 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Check rate limit
-        const rateLimit = checkRateLimit(user.id);
+        const rateLimit = await checkRateLimit(user.id, 'LLM_ANALYSIS'); // Reuse LLM_ANALYSIS limit for now
         if (!rateLimit.allowed) {
-            return NextResponse.json(
-                {
-                    error: 'Rate limit exceeded. Maximum 5 verifications per hour.',
-                    resetAt: new Date(rateLimit.resetAt).toISOString(),
-                },
-                { status: 429 }
-            );
+            return rateLimitResponse(rateLimit.resetAt);
         }
 
         // 4. Check for existing final assessment

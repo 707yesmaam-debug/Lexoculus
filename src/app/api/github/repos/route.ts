@@ -31,7 +31,7 @@ export async function GET() {
         headers['Debug-User-Id'] = user.id;
 
         // Check rate limit
-        const rateLimit = checkRateLimit(user.id, 'REPO_LIST');
+        const rateLimit = await checkRateLimit(user.id, 'REPO_LIST');
         if (!rateLimit.allowed) {
             return rateLimitResponse(rateLimit.resetAt);
         }
