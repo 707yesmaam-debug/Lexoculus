@@ -85,23 +85,35 @@ export default function AdminPage() {
             if (activeTab === 'overview') {
                 const res = await fetch('/api/admin?section=overview');
                 if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
                     if (res.status === 403) {
+                        // If it's a specific auth error, we might want to show it instead of redirecting
+                        // But for now, let's allow seeing the error if admin is configured but denied
+                        if (data.error === 'Access denied - not an admin') {
+                            throw new Error(data.error);
+                        }
                         router.push('/dashboard/scanner');
                         return;
                     }
-                    throw new Error('Failed to fetch');
+                    throw new Error(data.error || 'Failed to fetch stats');
                 }
                 const data = await res.json();
                 setStats(data.stats);
                 setRecentScans(data.recent_scans || []);
             } else if (activeTab === 'users') {
                 const res = await fetch('/api/admin?section=users');
-                if (!res.ok) throw new Error('Failed to fetch');
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to fetch users');
+                }
                 const data = await res.json();
                 setUsers(data.users || []);
             } else if (activeTab === 'feedback') {
                 const res = await fetch('/api/admin?section=feedback');
-                if (!res.ok) throw new Error('Failed to fetch');
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to fetch feedback');
+                }
                 const data = await res.json();
                 setFeedbacks(data.feedbacks || []);
             }

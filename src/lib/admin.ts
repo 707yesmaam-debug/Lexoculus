@@ -48,6 +48,7 @@ export async function checkAdminAccess(): Promise<AdminCheckResult> {
 
         if (!isAdmin) {
             console.warn(`⚠️ [ADMIN] Access denied for ${user.email}`);
+            console.warn(`⚠️ [ADMIN] Comparison: '${user.email?.toLowerCase()}' !== '${ADMIN_EMAIL.toLowerCase()}'`);
         }
 
         return {
@@ -56,7 +57,7 @@ export async function checkAdminAccess(): Promise<AdminCheckResult> {
                 id: user.id,
                 email: user.email || '',
             },
-            error: isAdmin ? undefined : 'Access denied - not an admin',
+            error: isAdmin ? undefined : `Access denied - signed in as ${user.email}, but this is not the admin email.`,
         };
     } catch (error) {
         console.error('Admin check error:', error);
