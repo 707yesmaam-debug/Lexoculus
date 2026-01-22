@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
                 totalReports,
                 proUsers,
                 activeInstalls,
+                totalFeedback,
             ] = await Promise.all([
                 prisma.user.count(),
                 prisma.repoScan.count(),
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
                 prisma.complianceReport.count(),
                 prisma.subscription.count({ where: { tier: 'pro' } }),
                 prisma.gitHubActionInstall.count({ where: { status: 'active' } }),
+                prisma.feedback.count(),
             ]);
 
             // Recent activity
@@ -68,10 +70,23 @@ export async function GET(request: NextRequest) {
                     total_reports: totalReports,
                     pro_users: proUsers,
                     active_github_installs: activeInstalls,
+                    total_feedback: totalFeedback,
                     mrr: proUsers * 49, // €49/month per Pro user
                 },
                 recent_scans: recentScans,
             });
+        }
+
+        // Feedback
+        if (section === 'feedback') {
+            const feedbacks = await prisma.feedback.findMany({
+                orderBy: { created_at: 'desc' },
+                take: 50,
+                include: {
+                    user: { select: { email: true } },
+                },
+            });
+            return NextResponse.json({ feedbacks });
         }
 
         // Users list

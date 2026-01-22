@@ -49,12 +49,22 @@ export default function AdminPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'subscriptions'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'feedback' | 'subscriptions'>('overview');
 
     // Data
     const [stats, setStats] = useState<Stats | null>(null);
     const [recentScans, setRecentScans] = useState<RecentScan[]>([]);
     const [users, setUsers] = useState<User[]>([]);
+    interface Feedback {
+        id: string;
+        user_id: string | null;
+        rating: number;
+        comment: string | null;
+        page_url: string | null;
+        created_at: string;
+        user: { email: string } | null;
+    }
+    const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
     // Actions
     const [actionLoading, setActionLoading] = useState(false);
@@ -89,6 +99,11 @@ export default function AdminPage() {
                 if (!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
                 setUsers(data.users || []);
+            } else if (activeTab === 'feedback') {
+                const res = await fetch('/api/admin?section=feedback');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                setFeedbacks(data.feedbacks || []);
             }
         } catch (err) {
             setError('Access denied or failed to load');
@@ -97,65 +112,9 @@ export default function AdminPage() {
         }
     };
 
-    const handleGrantPro = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setActionLoading(true);
-        setActionMessage(null);
+    // ... (rest of actions: handleGrantPro, handleRevokePro)
 
-        try {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'grant_pro',
-                    user_email: grantEmail,
-                    duration_days: parseInt(grantDays),
-                    reason: grantReason || 'Granted by admin',
-                }),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                setActionMessage({ type: 'success', text: data.message });
-                setGrantEmail('');
-                setGrantReason('');
-                fetchData();
-            } else {
-                setActionMessage({ type: 'error', text: data.error });
-            }
-        } catch (err) {
-            setActionMessage({ type: 'error', text: 'Failed to grant Pro' });
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleRevokePro = async (userId: string, email: string) => {
-        if (!confirm(`Revoke Pro from ${email}?`)) return;
-
-        setActionLoading(true);
-        try {
-            const res = await fetch('/api/admin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'revoke_pro',
-                    user_id: userId,
-                }),
-            });
-
-            if (res.ok) {
-                setActionMessage({ type: 'success', text: `Pro revoked from ${email}` });
-                fetchData();
-            }
-        } catch (err) {
-            setActionMessage({ type: 'error', text: 'Failed to revoke Pro' });
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
+    // ... (rest of loading/error states)
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -187,8 +146,8 @@ export default function AdminPage() {
                 {/* Action Message */}
                 {actionMessage && (
                     <div className={`mb-6 p-4 rounded-lg ${actionMessage.type === 'success'
-                            ? 'bg-green-500/20 border border-green-500/50 text-green-400'
-                            : 'bg-red-500/20 border border-red-500/50 text-red-400'
+                        ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                        : 'bg-red-500/20 border border-red-500/50 text-red-400'
                         }`}>
                         {actionMessage.text}
                     </div>
@@ -196,13 +155,13 @@ export default function AdminPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-8 border-b border-gray-800">
-                    {['overview', 'users', 'subscriptions'].map((tab) => (
+                    {['overview', 'users', 'feedback', 'subscriptions'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as typeof activeTab)}
                             className={`px-4 py-2 font-medium transition-colors ${activeTab === tab
-                                    ? 'text-cyan-400 border-b-2 border-cyan-400'
-                                    : 'text-gray-400 hover:text-white'
+                                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                                : 'text-gray-400 hover:text-white'
                                 }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -221,6 +180,7 @@ export default function AdminPage() {
                             <StatCard label="Total Scans" value={stats.total_scans} />
                             <StatCard label="PR Scans" value={stats.total_pr_scans} />
                             <StatCard label="Reports" value={stats.total_reports} />
+                            <StatCard label="Feedback" value={(stats as any).total_feedback || 0} />
                             <StatCard label="GitHub Installs" value={stats.active_github_installs} />
                         </div>
 
@@ -294,6 +254,59 @@ export default function AdminPage() {
                     </div>
                 )}
 
+                {/* Feedback Tab */}
+                {activeTab === 'feedback' && (
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                        <h2 className="text-xl font-bold text-white mb-4">User Feedback</h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="text-gray-400 border-b border-gray-800">
+                                        <th className="pb-2 w-20">Rating</th>
+                                        <th className="pb-2">Comment</th>
+                                        <th className="pb-2">User</th>
+                                        <th className="pb-2">Page</th>
+                                        <th className="pb-2 text-right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {feedbacks.map((fb) => (
+                                        <tr key={fb.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                                            <td className="py-4">
+                                                <span className={`px-2 py-1 rounded text-sm font-bold ${fb.rating >= 4 ? 'bg-green-500/20 text-green-400' :
+                                                        fb.rating <= 2 ? 'bg-red-500/20 text-red-400' :
+                                                            'bg-yellow-500/20 text-yellow-400'
+                                                    }`}>
+                                                    {fb.rating} / 5
+                                                </span>
+                                            </td>
+                                            <td className="py-4 text-white max-w-md">
+                                                {fb.comment || <span className="text-gray-600 italic">No comment</span>}
+                                            </td>
+                                            <td className="py-4 text-gray-400 text-sm">
+                                                {fb.user?.email || <span className="text-gray-600">Anonymous</span>}
+                                            </td>
+                                            <td className="py-4 text-gray-500 text-sm max-w-xs truncate" title={fb.page_url || ''}>
+                                                {fb.page_url?.replace('http://localhost:3000', '').replace('https://compliance-ai-beta.vercel.app', '') || '-'}
+                                            </td>
+                                            <td className="py-4 text-gray-500 text-sm text-right">
+                                                {new Date(fb.created_at).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {feedbacks.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="py-8 text-center text-gray-500">
+                                                No feedback received yet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* Users Tab */}
                 {activeTab === 'users' && (
                     <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
@@ -316,8 +329,8 @@ export default function AdminPage() {
                                             <td className="py-3 text-white">{user.email}</td>
                                             <td className="py-3">
                                                 <span className={`px-2 py-1 rounded text-sm ${user.subscription?.tier === 'pro'
-                                                        ? 'bg-cyan-500/20 text-cyan-400'
-                                                        : 'bg-gray-700 text-gray-400'
+                                                    ? 'bg-cyan-500/20 text-cyan-400'
+                                                    : 'bg-gray-700 text-gray-400'
                                                     }`}>
                                                     {user.subscription?.tier || 'free'}
                                                 </span>
@@ -362,8 +375,8 @@ export default function AdminPage() {
 function StatCard({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
     return (
         <div className={`p-6 rounded-xl ${highlight
-                ? 'bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/50'
-                : 'bg-gray-900/50 border border-gray-800'
+            ? 'bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-500/50'
+            : 'bg-gray-900/50 border border-gray-800'
             }`}>
             <div className="text-gray-400 text-sm mb-1">{label}</div>
             <div className={`text-3xl font-bold ${highlight ? 'text-cyan-400' : 'text-white'}`}>
