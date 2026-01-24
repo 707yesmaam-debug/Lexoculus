@@ -1,0 +1,324 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+interface AiSystem {
+    id: string;
+    name: string;
+    description: string | null;
+    source_repo_url: string | null;
+    risk_classification: string | null;
+    risk_score: number | null;
+    status: string;
+    lifecycle_stage: string;
+    last_scanned_at: string | null;
+    created_at: string;
+    updated_at: string;
+    latest_scan: {
+        id: string;
+        repo_name: string;
+        repo_owner: string;
+    } | null;
+}
+
+interface Stats {
+    total: number;
+    high_risk: number;
+    limited_risk: number;
+    minimal_risk: number;
+    unclassified: number;
+}
+
+export default function RegistryPage() {
+    const router = useRouter();
+    const [systems, setSystems] = useState<AiSystem[]>([]);
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [newSystemName, setNewSystemName] = useState('');
+    const [newSystemDesc, setNewSystemDesc] = useState('');
+    const [creating, setCreating] = useState(false);
+
+    useEffect(() => {
+        fetchSystems();
+    }, []);
+
+    const fetchSystems = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/ai-systems');
+            if (res.ok) {
+                const data = await res.json();
+                setSystems(data.ai_systems || []);
+                setStats(data.stats || null);
+            }
+        } catch (error) {
+            console.error('Failed to fetch AI systems:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateSystem = async () => {
+        if (!newSystemName.trim()) return;
+
+        setCreating(true);
+        try {
+            const res = await fetch('/api/ai-systems', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newSystemName,
+                    description: newSystemDesc || null,
+                }),
+            });
+
+            if (res.ok) {
+                setShowAddModal(false);
+                setNewSystemName('');
+                setNewSystemDesc('');
+                fetchSystems();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to create AI system');
+            }
+        } catch (error) {
+            console.error('Failed to create AI system:', error);
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const getRiskBadge = (classification: string | null) => {
+        switch (classification) {
+            case 'UNACCEPTABLE':
+                return <span className="px-2 py-1 text-[10px] font-mono uppercase bg-red-600 text-white">UNACCEPTABLE</span>;
+            case 'HIGH_RISK':
+                return <span className="px-2 py-1 text-[10px] font-mono uppercase bg-[#FF4F00] text-white">HIGH_RISK</span>;
+            case 'LIMITED_RISK':
+                return <span className="px-2 py-1 text-[10px] font-mono uppercase bg-yellow-500 text-black">LIMITED_RISK</span>;
+            case 'MINIMAL_RISK':
+                return <span className="px-2 py-1 text-[10px] font-mono uppercase bg-green-600 text-white">MINIMAL_RISK</span>;
+            default:
+                return <span className="px-2 py-1 text-[10px] font-mono uppercase bg-gray-400 text-white">UNCLASSIFIED</span>;
+        }
+    };
+
+    const getRiskIcon = (classification: string | null) => {
+        switch (classification) {
+            case 'UNACCEPTABLE':
+            case 'HIGH_RISK':
+                return <ShieldAlert className="w-5 h-5 text-[#FF4F00]" />;
+            case 'LIMITED_RISK':
+                return <Shield className="w-5 h-5 text-yellow-500" />;
+            case 'MINIMAL_RISK':
+                return <ShieldCheck className="w-5 h-5 text-green-600" />;
+            default:
+                return <Shield className="w-5 h-5 text-gray-400" />;
+        }
+    };
+
+    return (
+        <div className="max-w-5xl mx-auto p-4 md:p-12">
+            {/* Header */}
+            <div className="mb-12 border-b-2 border-black pb-8">
+                <div className="font-mono text-[10px] md:text-xs text-[#FF4F00] mb-4 tracking-widest uppercase">
+                    REGISTRY // AI_SYSTEMS
+                </div>
+                <h1 className="font-serif text-3xl md:text-5xl font-bold mb-4 tracking-tight">AI System Registry.</h1>
+                <p className="font-mono text-xs md:text-sm text-[#555] max-w-xl leading-relaxed">
+                    Central inventory of all AI systems under compliance management.
+                    Track risk levels, documentation status, and compliance posture.
+                </p>
+            </div>
+
+            {/* Stats Cards */}
+            {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+                    <div className="border-2 border-black p-4 bg-white">
+                        <div className="font-mono text-[10px] text-[#555] uppercase tracking-widest mb-1">TOTAL</div>
+                        <div className="font-serif text-3xl font-bold">{stats.total}</div>
+                    </div>
+                    <div className="border-2 border-[#FF4F00] p-4 bg-white">
+                        <div className="font-mono text-[10px] text-[#FF4F00] uppercase tracking-widest mb-1">HIGH_RISK</div>
+                        <div className="font-serif text-3xl font-bold text-[#FF4F00]">{stats.high_risk}</div>
+                    </div>
+                    <div className="border-2 border-yellow-500 p-4 bg-white">
+                        <div className="font-mono text-[10px] text-yellow-600 uppercase tracking-widest mb-1">LIMITED</div>
+                        <div className="font-serif text-3xl font-bold text-yellow-600">{stats.limited_risk}</div>
+                    </div>
+                    <div className="border-2 border-green-600 p-4 bg-white">
+                        <div className="font-mono text-[10px] text-green-600 uppercase tracking-widest mb-1">MINIMAL</div>
+                        <div className="font-serif text-3xl font-bold text-green-600">{stats.minimal_risk}</div>
+                    </div>
+                    <div className="border-2 border-gray-300 p-4 bg-white">
+                        <div className="font-mono text-[10px] text-gray-500 uppercase tracking-widest mb-1">PENDING</div>
+                        <div className="font-serif text-3xl font-bold text-gray-500">{stats.unclassified}</div>
+                    </div>
+                </div>
+            )}
+
+            {/* Actions Bar */}
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-2xl font-bold">Registered Systems</h2>
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={fetchSystems}
+                        className="text-black hover:bg-black hover:text-white rounded-none font-mono text-xs"
+                    >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        REFRESH
+                    </Button>
+                    <Button
+                        onClick={() => setShowAddModal(true)}
+                        className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        ADD_SYSTEM
+                    </Button>
+                </div>
+            </div>
+
+            {/* Systems List */}
+            <div className="border-2 border-black bg-white">
+                {loading ? (
+                    <div className="p-12 text-center font-mono text-xs text-[#999] uppercase tracking-widest">
+                        LOADING_REGISTRY...
+                    </div>
+                ) : systems.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <div className="font-mono text-xs text-[#999] uppercase tracking-widest mb-4">
+                            NO_SYSTEMS_REGISTERED
+                        </div>
+                        <p className="font-mono text-sm text-[#555] mb-6">
+                            Add your first AI system to begin compliance tracking.
+                        </p>
+                        <Button
+                            onClick={() => setShowAddModal(true)}
+                            className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            REGISTER_FIRST_SYSTEM
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-[#E5E5E5]">
+                        {systems.map((system) => (
+                            <div
+                                key={system.id}
+                                className="p-6 hover:bg-[#F9F9F9] transition-colors cursor-pointer group"
+                                onClick={() => router.push(`/dashboard/scanner`)}
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-start gap-4">
+                                        {getRiskIcon(system.risk_classification)}
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <h3 className="font-serif text-xl font-bold">{system.name}</h3>
+                                                {getRiskBadge(system.risk_classification)}
+                                                <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-[#F5F5F5] text-[#555] border border-[#E5E5E5]">
+                                                    {system.lifecycle_stage}
+                                                </span>
+                                            </div>
+                                            {system.description && (
+                                                <p className="font-mono text-xs text-[#555] mb-2">{system.description}</p>
+                                            )}
+                                            <div className="flex items-center gap-4 font-mono text-[10px] text-[#999]">
+                                                {system.source_repo_url && (
+                                                    <a
+                                                        href={system.source_repo_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="flex items-center gap-1 hover:text-black"
+                                                    >
+                                                        <ExternalLink className="w-3 h-3" />
+                                                        {system.latest_scan?.repo_owner}/{system.latest_scan?.repo_name}
+                                                    </a>
+                                                )}
+                                                {system.risk_score !== null && (
+                                                    <span>SCORE: {system.risk_score}/100</span>
+                                                )}
+                                                {system.last_scanned_at && (
+                                                    <span>SCANNED: {new Date(system.last_scanned_at).toLocaleDateString()}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-[#999] group-hover:text-black group-hover:translate-x-1 transition-all" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Add Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white border-2 border-black w-full max-w-md">
+                        <div className="p-4 border-b-2 border-black bg-[#F5F5F5]">
+                            <h3 className="font-serif text-xl font-bold">Register AI System</h3>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block font-mono text-xs uppercase tracking-widest mb-2">
+                                    SYSTEM_NAME *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newSystemName}
+                                    onChange={(e) => setNewSystemName(e.target.value)}
+                                    placeholder="e.g., Customer Support Chatbot"
+                                    className="w-full border-2 border-black p-3 font-mono text-sm focus:outline-none focus:border-[#FF4F00]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block font-mono text-xs uppercase tracking-widest mb-2">
+                                    DESCRIPTION
+                                </label>
+                                <textarea
+                                    value={newSystemDesc}
+                                    onChange={(e) => setNewSystemDesc(e.target.value)}
+                                    placeholder="Brief description of the AI system's purpose..."
+                                    rows={3}
+                                    className="w-full border-2 border-black p-3 font-mono text-sm focus:outline-none focus:border-[#FF4F00] resize-none"
+                                />
+                            </div>
+                            <div className="font-mono text-[10px] text-[#999] bg-[#F5F5F5] p-3 border border-[#E5E5E5]">
+                                <AlertTriangle className="w-3 h-3 inline mr-1" />
+                                After creating, link a GitHub repository to enable automated compliance scanning.
+                            </div>
+                        </div>
+                        <div className="p-4 border-t-2 border-black bg-[#F5F5F5] flex justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowAddModal(false);
+                                    setNewSystemName('');
+                                    setNewSystemDesc('');
+                                }}
+                                className="border-black text-black hover:bg-black hover:text-white rounded-none font-mono text-xs uppercase tracking-widest"
+                            >
+                                CANCEL
+                            </Button>
+                            <Button
+                                onClick={handleCreateSystem}
+                                disabled={!newSystemName.trim() || creating}
+                                className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest disabled:opacity-50"
+                            >
+                                {creating ? 'CREATING...' : 'REGISTER'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

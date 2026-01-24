@@ -86,10 +86,16 @@ export default function DashboardLayout({
     // Dynamic Navigation items
     const navItems = [
         {
+            name: '00_REGISTRY',
+            href: '/dashboard/registry',
+            status: '[NEW]',
+            isActive: pathname === '/dashboard/registry' || pathname === '/dashboard'
+        },
+        {
             name: '01_SCANNER',
             href: '/dashboard/scanner',
             status: '[ACTIVE]',
-            isActive: pathname === '/dashboard/scanner'
+            isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard/free-scanner'
         },
         {
             name: '02_ANALYSIS',
@@ -114,6 +120,7 @@ export default function DashboardLayout({
             isActive: pathname === '/dashboard/integrations'
         },
     ];
+
 
     return (
         <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">

@@ -43,6 +43,9 @@ model User {
   // Feedback
   feedback     Feedback[]
 
+  // AI System Registry
+  ai_systems   AiSystem[]
+
   @@index([email])
   @@map("users")
 }
@@ -93,6 +96,7 @@ model RepoScan {
   llm_analysis          LlmCapabilityAnalysis? // One-to-one: each scan has one analysis
   risk_assessment       RiskAssessment?        // One-to-one: each scan has one risk assessment
   final_risk_assessment FinalRiskAssessment?   // One-to-one: each scan has one final assessment
+  ai_system             AiSystem?              @relation("AiSystemLatestScan") // Link to AI System Registry
 
   @@index([user_id])
   @@index([github_repo_url])
@@ -446,4 +450,48 @@ model Feedback {
   @@index([user_id])
   @@index([created_at])
   @@map("feedback")
+}
+
+// =============================================================================
+// AI System Registry - Phase 1 of Platform Rebuild
+// =============================================================================
+
+model AiSystem {
+  id              String   @id @default(cuid())
+  user_id         String
+  
+  // Identification
+  name            String
+  description     String?
+  
+  // Source (links to existing scan)
+  source_repo_url String?
+  latest_scan_id  String?  @unique
+  
+  // Classification (synced from latest assessment)
+  risk_classification String?   // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
+  risk_score          Int?      // 0-100
+  
+  // Status
+  status          String   @default("active")  // active, archived
+  lifecycle_stage String   @default("development")  // development, testing, production, retired
+  
+  // Last scan metadata
+  last_scanned_at   DateTime?
+  capabilities      Json?     // Synced from LlmCapabilityAnalysis
+  matched_articles  Json?     // Synced from RiskAssessment
+  
+  // Timestamps
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  latest_scan     RepoScan? @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id])
+  
+  @@unique([user_id, name])
+  @@index([user_id])
+  @@index([risk_classification])
+  @@index([status])
+  @@map("ai_systems")
 }
