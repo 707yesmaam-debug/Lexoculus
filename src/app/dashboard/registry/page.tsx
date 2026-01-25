@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink, Share2, Copy, Check, Code } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink, Share2, Copy, Check, Code, GitCompare, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AiSystem {
@@ -26,6 +26,10 @@ interface AiSystem {
     // Share fields
     public_share_id: string | null;
     share_enabled: boolean;
+    // Drift tracking (Phase 3.1)
+    drift_detected: boolean;
+    files_changed_count: number | null;
+    drift_checked_at: string | null;
 }
 
 interface Stats {
@@ -284,6 +288,21 @@ export default function RegistryPage() {
                                                 {system.last_scanned_at && (
                                                     <span>SCANNED: {new Date(system.last_scanned_at).toLocaleDateString()}</span>
                                                 )}
+                                                {/* Drift Badge (Phase 3.1) */}
+                                                {system.drift_detected && system.files_changed_count && system.files_changed_count > 0 && (
+                                                    <span className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 font-mono text-[10px]">
+                                                        <GitCompare className="w-3 h-3" />
+                                                        {system.files_changed_count} FILES CHANGED
+                                                    </span>
+                                                )}
+                                                {/* Docs Link (Phase 2) */}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/documents/${system.id}`); }}
+                                                    className="flex items-center gap-1 hover:text-black"
+                                                >
+                                                    <FileText className="w-3 h-3" />
+                                                    DOCS
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
