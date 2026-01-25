@@ -9,7 +9,7 @@ export async function generatePdfBuffer(buildContent: (doc: typeof PDFDocument.p
         try {
             const doc = new PDFDocument({
                 size: 'A4',
-                margins: { top: 72, bottom: 72, left: 72, right: 72 }
+                margins: { top: 60, bottom: 60, left: 60, right: 60 }
             });
 
             const buffers: Buffer[] = [];
@@ -30,161 +30,246 @@ export async function generatePdfBuffer(buildContent: (doc: typeof PDFDocument.p
 
 /**
  * Generates the official Compliance Report PDF
+ * Following LexOculus editorial design: serif headers, monospace data, clean borders
  */
 export async function generateComplianceReport(data: any): Promise<Buffer> {
     return generatePdfBuffer((doc) => {
         const PRIMARY = '#000000';
         const ACCENT = '#FF4F00';
-        const GRAY = '#666666';
+        const GRAY = '#555555';
         const LIGHT_GRAY = '#999999';
+        const BORDER = '#E5E5E5';
 
-        // Header
-        doc.fontSize(16)
-            .font('Helvetica-Bold')
+        // === HEADER SECTION ===
+        // Logo/Brand (Editorial style)
+        doc.fontSize(20)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text('LEX', 72, 72, { continued: true })
+            .text('LEX', 60, 60, { continued: true })
             .fillColor(ACCENT)
             .text('OCULUS');
 
-        doc.fontSize(9)
-            .font('Helvetica')
+        // Metadata (Monospace style)
+        doc.fontSize(8)
+            .font('Courier')
             .fillColor(GRAY)
-            .text(`Generated: ${new Date().toLocaleDateString()}`, 400, 72, { align: 'right' });
+            .text(`GENERATED: ${new Date().toLocaleDateString('en-US').toUpperCase()}`, 400, 60, { align: 'right' });
 
-        doc.fontSize(9)
-            .text(`Repo: ${data.repo?.repo_name || 'N/A'}`, 400, 85, { align: 'right' });
+        doc.fontSize(8)
+            .text(`REPOSITORY: ${(data.repo?.repo_name || 'N/A').toUpperCase()}`, 400, 72, { align: 'right' });
 
-        // Divider
-        doc.moveTo(72, 110)
-            .lineTo(540, 110)
+        // Top border (editorial divider)
+        doc.moveTo(60, 95)
+            .lineTo(535, 95)
             .lineWidth(2)
             .stroke(PRIMARY);
 
-        // Title
-        doc.moveDown(2);
-        doc.fontSize(24)
-            .font('Helvetica-Bold')
+        // === TITLE SECTION ===
+        doc.fontSize(32)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text('Compliance Report', 72, 140);
+            .text('Compliance Report', 60, 115);
 
         doc.fontSize(11)
             .font('Helvetica')
             .fillColor(GRAY)
-            .text('Detailed risk assessment and capabilities analysis for EU AI Act compliance.', 72, 175, { width: 450 });
+            .text('EU AI Act Risk Assessment & Capabilities Analysis', 60, 155, { width: 475 });
 
-        // Score Card
+        // === SCORE CARD (Bordered Box) ===
         const score = data.assessment?.final_risk_score || 0;
         const classification = data.assessment?.final_risk_classification || 'UNKNOWN';
-        const scoreColor = score > 80 ? '#16a34a' : '#d97706';
 
-        doc.rect(72, 210, 450, 120)
-            .fillAndStroke('#f8f9fa', '#e9ecef');
+        // Risk color mapping
+        let riskColor = PRIMARY;
+        let riskBg = '#F5F5F5';
+        if (classification === 'MINIMAL_RISK') {
+            riskColor = '#10B981';
+            riskBg = '#ECFDF5';
+        } else if (classification === 'LIMITED_RISK') {
+            riskColor = '#F59E0B';
+            riskBg = '#FFFBEB';
+        } else if (classification === 'HIGH_RISK') {
+            riskColor = ACCENT;
+            riskBg = '#FFF7ED';
+        } else if (classification === 'UNACCEPTABLE') {
+            riskColor = '#EF4444';
+            riskBg = '#FEF2F2';
+        }
 
+        // Score box with editorial border
+        doc.rect(60, 185, 475, 140)
+            .fillAndStroke(riskBg, PRIMARY)
+            .lineWidth(2);
+
+        // Label (Monospace uppercase)
         doc.fontSize(9)
-            .font('Helvetica')
+            .font('Courier-Bold')
             .fillColor(LIGHT_GRAY)
-            .text('COMPLIANCE SCORE', 72, 230, { width: 450, align: 'center' });
+            .text('COMPLIANCE SCORE', 60, 205, { width: 475, align: 'center' });
 
-        doc.fontSize(48)
-            .font('Helvetica-Bold')
+        // Score (Large serif)
+        doc.fontSize(56)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text(`${score}/100`, 72, 250, { width: 450, align: 'center' });
+            .text(`${score}`, 60, 230, { width: 475, align: 'center' });
 
-        doc.fontSize(14)
-            .font('Helvetica-Bold')
-            .fillColor(scoreColor)
-            .text(classification, 72, 310, { width: 450, align: 'center' });
-
-        // Capabilities Section
+        // Out of 100
         doc.fontSize(16)
-            .font('Helvetica-Bold')
-            .fillColor(PRIMARY)
-            .text('Capabilities Detected', 72, 370);
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text('/100', 60, 290, { width: 475, align: 'center' });
 
-        doc.moveTo(72, 395)
-            .lineTo(540, 395)
+        // Risk classification badge
+        doc.fontSize(12)
+            .font('Courier-Bold')
+            .fillColor(riskColor)
+            .text(classification.replace(/_/g, ' '), 60, 308, { width: 475, align: 'center' });
+
+        // === CAPABILITIES SECTION ===
+        doc.fontSize(18)
+            .font('Times-Bold')
+            .fillColor(PRIMARY)
+            .text('Capabilities Detected', 60, 360);
+
+        // Section divider
+        doc.moveTo(60, 385)
+            .lineTo(535, 385)
             .lineWidth(1)
-            .stroke('#eeeeee');
+            .stroke(BORDER);
 
         const capabilities = data.capabilities?.detected_capabilities || [];
-        let yPos = 410;
+        let yPos = 405;
 
         if (capabilities.length === 0) {
             doc.fontSize(11)
                 .font('Helvetica')
                 .fillColor(GRAY)
-                .text('No specific AI capabilities detected.', 72, yPos);
+                .text('No specific AI capabilities detected.', 60, yPos);
         } else {
             capabilities.forEach((capability: string, index: number) => {
                 // Check if we need a new page
-                if (yPos > 700) {
+                if (yPos > 720) {
                     doc.addPage();
-                    yPos = 72;
+                    yPos = 60;
+
+                    // Repeat header on new page
+                    doc.fontSize(18)
+                        .font('Times-Bold')
+                        .fillColor(PRIMARY)
+                        .text('Capabilities Detected (continued)', 60, yPos);
+                    yPos += 35;
                 }
 
+                // Bullet point (editorial style)
                 doc.fontSize(11)
                     .font('Helvetica')
                     .fillColor(PRIMARY)
-                    .text('•', 82, yPos)
-                    .text(capability, 102, yPos, { width: 420 });
+                    .text('■', 70, yPos)
+                    .text(capability, 90, yPos, { width: 445 });
 
-                yPos += 20;
+                yPos += 22;
             });
+        }
+
+        // === FOOTER ===
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+
+            // Footer divider
+            doc.moveTo(60, 780)
+                .lineTo(535, 780)
+                .lineWidth(1)
+                .stroke(BORDER);
+
+            // Footer text
+            doc.fontSize(8)
+                .font('Courier')
+                .fillColor(LIGHT_GRAY)
+                .text('Generated by LexOculus Compliance Platform', 60, 790, { width: 235 });
+
+            doc.text(`Page ${i + 1} of ${pageCount}`, 300, 790, { width: 235, align: 'right' });
         }
     });
 }
 
 /**
  * Generates the Trust Pack PDF for vendors
+ * Editorial certificate design
  */
 export async function generateTrustPackPDF(data: any): Promise<Buffer> {
     return generatePdfBuffer((doc) => {
         const PRIMARY = '#000000';
         const ACCENT = '#FF4F00';
-        const GRAY = '#666666';
+        const GRAY = '#555555';
 
-        // Logo
-        doc.fontSize(16)
-            .font('Helvetica-Bold')
+        // === HEADER ===
+        doc.fontSize(20)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text('LEX', 72, 72, { continued: true })
+            .text('LEX', 60, 60, { continued: true })
             .fillColor(ACCENT)
             .text('OCULUS');
 
-        // Trust Seal Box
-        doc.rect(120, 200, 350, 280)
-            .lineWidth(2)
-            .fillAndStroke('#fafafa', PRIMARY);
+        // === CERTIFICATE SEAL ===
+        // Outer border (thick)
+        doc.rect(120, 200, 350, 320)
+            .lineWidth(3)
+            .stroke(PRIMARY);
 
-        doc.fontSize(24)
-            .font('Helvetica-Bold')
+        // Inner border
+        doc.rect(130, 210, 330, 300)
+            .lineWidth(1)
+            .stroke(PRIMARY);
+
+        // Title
+        doc.fontSize(32)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text('Scan Verified', 120, 240, { width: 350, align: 'center' });
+            .text('Scan Verified', 120, 250, { width: 350, align: 'center' });
 
+        // Subtitle
         doc.fontSize(12)
             .font('Helvetica')
             .fillColor(GRAY)
-            .text('This software repository has been scanned for', 120, 280, { width: 350, align: 'center' })
-            .text('EU AI Act compliance risks.', 120, 297, { width: 350, align: 'center' });
+            .text('This software repository has been scanned', 120, 300, { width: 350, align: 'center' })
+            .text('for EU AI Act compliance risks.', 120, 317, { width: 350, align: 'center' });
 
-        doc.fontSize(14)
-            .font('Helvetica-Bold')
-            .fillColor(PRIMARY)
-            .text(`Risk Level: ${data.riskClassification || 'UNKNOWN'}`, 120, 340, { width: 350, align: 'center' });
+        // Risk badge
+        const riskText = data.riskClassification || 'UNKNOWN';
+        let riskColor = PRIMARY;
+        if (riskText.includes('MINIMAL')) riskColor = '#10B981';
+        else if (riskText.includes('LIMITED')) riskColor = '#F59E0B';
+        else if (riskText.includes('HIGH')) riskColor = ACCENT;
+        else if (riskText.includes('UNACCEPTABLE')) riskColor = '#EF4444';
+
+        doc.fontSize(16)
+            .font('Courier-Bold')
+            .fillColor(riskColor)
+            .text(`RISK LEVEL: ${riskText.replace(/_/g, ' ')}`, 120, 360, { width: 350, align: 'center' });
 
         // Metadata
         doc.fontSize(9)
             .font('Courier')
             .fillColor(GRAY)
-            .text(`Repo: ${data.repoScan?.repo_name || 'N/A'}`, 120, 400, { width: 350, align: 'center' })
-            .text(`Date: ${new Date(data.generatedAt).toLocaleDateString()}`, 120, 415, { width: 350, align: 'center' })
-            .text(`Ref: ${data.repoScan?.id?.slice(0, 8) || 'N/A'}`, 120, 430, { width: 350, align: 'center' });
+            .text(`REPOSITORY: ${(data.repoScan?.repo_name || 'N/A').toUpperCase()}`, 120, 420, { width: 350, align: 'center' })
+            .text(`SCAN DATE: ${new Date(data.generatedAt).toLocaleDateString('en-US').toUpperCase()}`, 120, 435, { width: 350, align: 'center' })
+            .text(`REFERENCE ID: ${(data.repoScan?.id?.slice(0, 8) || 'N/A').toUpperCase()}`, 120, 450, { width: 350, align: 'center' });
+
+        // Footer
+        doc.fontSize(8)
+            .font('Courier')
+            .fillColor(GRAY)
+            .text('This certificate is valid only with the accompanying compliance documentation.', 60, 750, {
+                width: 475,
+                align: 'center'
+            });
     });
 }
 
 /**
  * Generates a compliance document PDF from HTML content
- * This is used for exporting user-generated compliance documents
+ * Editorial document style
  */
 export async function generateDocumentPDF(documentData: {
     title: string;
@@ -195,41 +280,42 @@ export async function generateDocumentPDF(documentData: {
     return generatePdfBuffer((doc) => {
         const PRIMARY = '#000000';
         const ACCENT = '#FF4F00';
-        const GRAY = '#666666';
+        const GRAY = '#555555';
+        const LIGHT_GRAY = '#999999';
 
-        // Header
-        doc.fontSize(16)
-            .font('Helvetica-Bold')
+        // === HEADER ===
+        doc.fontSize(20)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text('LEX', 72, 72, { continued: true })
+            .text('LEX', 60, 60, { continued: true })
             .fillColor(ACCENT)
             .text('OCULUS');
 
-        doc.fontSize(9)
-            .font('Helvetica')
+        // Metadata
+        doc.fontSize(8)
+            .font('Courier')
             .fillColor(GRAY)
-            .text(`AI System: ${documentData.aiSystemName}`, 72, 95);
+            .text(`AI SYSTEM: ${documentData.aiSystemName.toUpperCase()}`, 60, 85);
 
         doc.fontSize(8)
-            .fillColor(GRAY)
-            .text(`Document Type: ${documentData.documentType}`, 72, 108);
+            .text(`DOCUMENT TYPE: ${documentData.documentType.toUpperCase()}`, 60, 97);
 
-        // Divider
-        doc.moveTo(72, 130)
-            .lineTo(540, 130)
+        // Top divider
+        doc.moveTo(60, 120)
+            .lineTo(535, 120)
             .lineWidth(2)
             .stroke(PRIMARY);
 
-        // Title
-        doc.fontSize(20)
-            .font('Helvetica-Bold')
+        // === TITLE ===
+        doc.fontSize(28)
+            .font('Times-Bold')
             .fillColor(PRIMARY)
-            .text(documentData.title, 72, 150, { width: 450 });
+            .text(documentData.title, 60, 140, { width: 475 });
 
-        // Body Content (simplified HTML rendering)
-        // Note: PDFKit doesn't support HTML, so we extract text content
+        // === BODY ===
+        // Strip HTML and clean text
         const plainText = documentData.bodyHtml
-            .replace(/<[^>]*>/g, '') // Strip HTML tags
+            .replace(/<[^>]*>/g, '')
             .replace(/&nbsp;/g, ' ')
             .replace(/&amp;/g, '&')
             .replace(/&lt;/g, '<')
@@ -240,18 +326,22 @@ export async function generateDocumentPDF(documentData: {
         doc.fontSize(11)
             .font('Helvetica')
             .fillColor(PRIMARY)
-            .text(plainText, 72, 200, {
-                width: 450,
+            .text(plainText, 60, 200, {
+                width: 475,
                 align: 'left',
-                lineGap: 5
+                lineGap: 6
             });
 
-        // Footer
-        const footerY = doc.page.height - 100;
+        // === FOOTER ===
+        doc.moveTo(60, 780)
+            .lineTo(535, 780)
+            .lineWidth(1)
+            .stroke('#E5E5E5');
+
         doc.fontSize(8)
-            .font('Helvetica')
-            .fillColor(GRAY)
-            .text(`Generated by LexOculus EU AI Act Compliance Platform`, 72, footerY, { width: 450, align: 'center' })
-            .text(`${new Date().toISOString()}`, 72, footerY + 12, { width: 450, align: 'center' });
+            .font('Courier')
+            .fillColor(LIGHT_GRAY)
+            .text('Generated by LexOculus EU AI Act Compliance Platform', 60, 790, { width: 475, align: 'center' })
+            .text(new Date().toISOString(), 60, 802, { width: 475, align: 'center' });
     });
 }
