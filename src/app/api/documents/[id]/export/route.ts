@@ -201,10 +201,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
             }
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('PDF export error:', error);
         return NextResponse.json(
-            { error: 'Failed to export PDF' },
+            { error: error.message || 'Failed to export PDF' },
             { status: 500 }
         );
     }

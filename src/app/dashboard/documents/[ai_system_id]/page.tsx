@@ -169,7 +169,7 @@ export default function DocumentsPage() {
                     Compliance Documents
                 </h1>
                 <p className="font-mono text-xs text-[#666] mt-1">
-                    {aiSystem?.name || 'Loading...'}
+                    {aiSystem ? aiSystem.name : loading ? 'Loading...' : 'System Not Found'}
                 </p>
             </div>
 

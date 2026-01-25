@@ -42,6 +42,7 @@ export async function GET() {
             high_risk: aiSystems.filter(s => s.risk_classification === 'HIGH_RISK').length,
             limited_risk: aiSystems.filter(s => s.risk_classification === 'LIMITED_RISK').length,
             minimal_risk: aiSystems.filter(s => s.risk_classification === 'MINIMAL_RISK').length,
+            unacceptable_risk: aiSystems.filter(s => s.risk_classification === 'UNACCEPTABLE').length,
             unclassified: aiSystems.filter(s => !s.risk_classification).length,
         };
 

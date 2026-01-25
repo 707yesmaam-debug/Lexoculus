@@ -37,6 +37,7 @@ interface Stats {
     high_risk: number;
     limited_risk: number;
     minimal_risk: number;
+    unacceptable_risk: number;
     unclassified: number;
 }
 
@@ -185,10 +186,14 @@ export default function RegistryPage() {
 
             {/* Stats Cards */}
             {stats && stats.total > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-12">
                     <div className="border-2 border-black p-4 bg-white">
                         <div className="font-mono text-[10px] text-[#555] uppercase tracking-widest mb-1">TOTAL</div>
                         <div className="font-serif text-3xl font-bold">{stats.total}</div>
+                    </div>
+                    <div className="border-2 border-red-600 p-4 bg-white">
+                        <div className="font-mono text-[10px] text-red-600 uppercase tracking-widest mb-1">UNACCEPTABLE</div>
+                        <div className="font-serif text-3xl font-bold text-red-600">{stats.unacceptable_risk}</div>
                     </div>
                     <div className="border-2 border-[#FF4F00] p-4 bg-white">
                         <div className="font-mono text-[10px] text-[#FF4F00] uppercase tracking-widest mb-1">HIGH_RISK</div>
