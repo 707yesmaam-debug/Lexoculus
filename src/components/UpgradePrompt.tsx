@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Lock } from 'lucide-react';
 
@@ -9,11 +10,39 @@ interface UpgradePromptProps {
 }
 
 export default function UpgradePrompt({ variant = 'banner', className = '' }: UpgradePromptProps) {
+    const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchSubscription() {
+            try {
+                const res = await fetch('/api/subscription/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSubscriptionTier(data.tier || 'free');
+                }
+            } catch (error) {
+                console.error('Failed to fetch subscription:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchSubscription();
+    }, []);
+
+    // Don't show upgrade prompts for pro users
+    if (!loading && subscriptionTier !== 'free') {
+        return null;
+    }
+
+    const statusText = loading ? 'LOADING...' : `STATUS: ${subscriptionTier.toUpperCase()}`;
+    const tierStatusText = loading ? 'LOADING...' : `TIER_STATUS: ${subscriptionTier.toUpperCase()}`;
+
     if (variant === 'sidebar') {
         return (
             <div className={`border border-[#E5E5E5] p-4 bg-white ${className}`}>
                 <div className="font-mono text-[10px] text-[#999] mb-2 uppercase tracking-widest flex justify-between">
-                    <span>STATUS: FREE</span>
+                    <span>{statusText}</span>
                     <Lock className="w-3 h-3" />
                 </div>
                 <p className="font-serif text-sm font-bold mb-3 leading-tight">
@@ -51,7 +80,7 @@ export default function UpgradePrompt({ variant = 'banner', className = '' }: Up
     return (
         <div className={`border border-black p-6 bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${className}`}>
             <div>
-                <div className="font-mono text-xs text-[#FF4F00] mb-1 tracking-widest">TIER_STATUS: FREE</div>
+                <div className="font-mono text-xs text-[#FF4F00] mb-1 tracking-widest">{tierStatusText}</div>
                 <p className="font-serif font-bold text-lg">Unlock unlimited scans and compliance reports.</p>
             </div>
             <Link

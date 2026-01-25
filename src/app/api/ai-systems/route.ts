@@ -17,7 +17,7 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const aiSystems = await prisma.aiSystem.findMany({
+        let aiSystems = await prisma.aiSystem.findMany({
             where: {
                 user_id: user.id,
                 status: 'active'
@@ -35,6 +35,43 @@ export async function GET() {
             },
             orderBy: { updated_at: 'desc' }
         });
+
+        // Auto-enable sharing for systems without a public_share_id
+        // This ensures all systems can be shared (required for LINK/BADGE buttons)
+        const systemsToUpdate = aiSystems.filter(s => !s.public_share_id);
+        if (systemsToUpdate.length > 0) {
+            await Promise.all(
+                systemsToUpdate.map(system =>
+                    prisma.aiSystem.update({
+                        where: { id: system.id },
+                        data: {
+                            public_share_id: crypto.randomUUID(),
+                            share_enabled: true
+                        }
+                    })
+                )
+            );
+
+            // Re-fetch systems with updated share IDs
+            aiSystems = await prisma.aiSystem.findMany({
+                where: {
+                    user_id: user.id,
+                    status: 'active'
+                },
+                include: {
+                    latest_scan: {
+                        select: {
+                            id: true,
+                            repo_name: true,
+                            repo_owner: true,
+                            github_repo_url: true,
+                            scanned_at: true,
+                        }
+                    }
+                },
+                orderBy: { updated_at: 'desc' }
+            });
+        }
 
         // Calculate summary stats
         const stats = {
