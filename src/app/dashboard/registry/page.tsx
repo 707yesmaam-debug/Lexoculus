@@ -257,8 +257,7 @@ export default function RegistryPage() {
                         {systems.map((system) => (
                             <div
                                 key={system.id}
-                                className="p-6 hover:bg-[#F9F9F9] transition-colors cursor-pointer group"
-                                onClick={() => router.push(`/dashboard/scanner`)}
+                                className="p-6 hover:bg-[#F9F9F9] transition-colors group"
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-4">
