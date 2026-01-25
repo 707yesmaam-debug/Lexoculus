@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink, Share2, Copy, Check } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink, Share2, Copy, Check, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AiSystem {
@@ -47,6 +47,8 @@ export default function RegistryPage() {
     const [creating, setCreating] = useState(false);
     const [sharingSystemId, setSharingSystemId] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [badgeModalSystem, setBadgeModalSystem] = useState<AiSystem | null>(null);
+    const [badgeCopied, setBadgeCopied] = useState<string | null>(null);
 
     useEffect(() => {
         fetchSystems();
@@ -288,22 +290,31 @@ export default function RegistryPage() {
                                     <div className="flex items-center gap-2">
                                         {/* Share Button */}
                                         {system.share_enabled && system.public_share_id ? (
-                                            <button
-                                                onClick={(e) => handleCopyUrl(system.public_share_id!, e)}
-                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 transition-colors"
-                                            >
-                                                {copiedId === system.public_share_id ? (
-                                                    <>
-                                                        <Check className="w-3 h-3" />
-                                                        COPIED!
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy className="w-3 h-3" />
-                                                        COPY_LINK
-                                                    </>
-                                                )}
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={(e) => handleCopyUrl(system.public_share_id!, e)}
+                                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 transition-colors"
+                                                >
+                                                    {copiedId === system.public_share_id ? (
+                                                        <>
+                                                            <Check className="w-3 h-3" />
+                                                            COPIED!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy className="w-3 h-3" />
+                                                            LINK
+                                                        </>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setBadgeModalSystem(system); }}
+                                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase bg-blue-100 text-blue-700 border border-blue-300 hover:bg-blue-200 transition-colors"
+                                                >
+                                                    <Code className="w-3 h-3" />
+                                                    BADGE
+                                                </button>
+                                            </>
                                         ) : (
                                             <button
                                                 onClick={(e) => handleShare(system.id, e)}
@@ -389,6 +400,91 @@ export default function RegistryPage() {
                                 className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest disabled:opacity-50"
                             >
                                 {creating ? 'CREATING...' : 'REGISTER'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Badge Embed Modal */}
+            {badgeModalSystem && badgeModalSystem.public_share_id && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white border-2 border-black w-full max-w-lg">
+                        <div className="p-4 border-b-2 border-black bg-[#F5F5F5] flex items-center justify-between">
+                            <h3 className="font-serif text-xl font-bold">Embed Compliance Badge</h3>
+                            <button
+                                onClick={() => setBadgeModalSystem(null)}
+                                className="text-[#999] hover:text-black"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {/* Preview */}
+                            <div>
+                                <div className="font-mono text-xs uppercase tracking-widest mb-2 text-[#999]">PREVIEW</div>
+                                <div className="border border-[#E5E5E5] p-4 bg-[#F9F9F9] flex items-center justify-center">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={`/api/badge/${badgeModalSystem.public_share_id}`}
+                                        alt="Compliance Badge"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Markdown */}
+                            <div>
+                                <div className="font-mono text-xs uppercase tracking-widest mb-2 text-[#999]">MARKDOWN (for README)</div>
+                                <div className="relative">
+                                    <code className="block bg-[#1a1a1a] text-green-400 p-3 text-xs font-mono break-all">
+                                        {`[![EU AI Act](${typeof window !== 'undefined' ? window.location.origin : ''}/api/badge/${badgeModalSystem.public_share_id})](${typeof window !== 'undefined' ? window.location.origin : ''}/status/${badgeModalSystem.public_share_id})`}
+                                    </code>
+                                    <button
+                                        onClick={async () => {
+                                            const url = typeof window !== 'undefined' ? window.location.origin : '';
+                                            await navigator.clipboard.writeText(`[![EU AI Act](${url}/api/badge/${badgeModalSystem.public_share_id})](${url}/status/${badgeModalSystem.public_share_id})`);
+                                            setBadgeCopied('markdown');
+                                            setTimeout(() => setBadgeCopied(null), 2000);
+                                        }}
+                                        className="absolute top-2 right-2 px-2 py-1 text-[10px] font-mono uppercase bg-white text-black border border-black hover:bg-black hover:text-white transition-colors"
+                                    >
+                                        {badgeCopied === 'markdown' ? 'COPIED!' : 'COPY'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* HTML */}
+                            <div>
+                                <div className="font-mono text-xs uppercase tracking-widest mb-2 text-[#999]">HTML (for websites)</div>
+                                <div className="relative">
+                                    <code className="block bg-[#1a1a1a] text-green-400 p-3 text-xs font-mono break-all">
+                                        {`<a href="${typeof window !== 'undefined' ? window.location.origin : ''}/status/${badgeModalSystem.public_share_id}"><img src="${typeof window !== 'undefined' ? window.location.origin : ''}/api/badge/${badgeModalSystem.public_share_id}" alt="EU AI Act Compliance"></a>`}
+                                    </code>
+                                    <button
+                                        onClick={async () => {
+                                            const url = typeof window !== 'undefined' ? window.location.origin : '';
+                                            await navigator.clipboard.writeText(`<a href="${url}/status/${badgeModalSystem.public_share_id}"><img src="${url}/api/badge/${badgeModalSystem.public_share_id}" alt="EU AI Act Compliance"></a>`);
+                                            setBadgeCopied('html');
+                                            setTimeout(() => setBadgeCopied(null), 2000);
+                                        }}
+                                        className="absolute top-2 right-2 px-2 py-1 text-[10px] font-mono uppercase bg-white text-black border border-black hover:bg-black hover:text-white transition-colors"
+                                    >
+                                        {badgeCopied === 'html' ? 'COPIED!' : 'COPY'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="font-mono text-[10px] text-[#999] bg-[#F5F5F5] p-3 border border-[#E5E5E5]">
+                                <AlertTriangle className="w-3 h-3 inline mr-1" />
+                                Badge updates automatically when risk classification changes.
+                            </div>
+                        </div>
+                        <div className="p-4 border-t-2 border-black bg-[#F5F5F5] flex justify-end">
+                            <Button
+                                onClick={() => setBadgeModalSystem(null)}
+                                className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest"
+                            >
+                                DONE
                             </Button>
                         </div>
                     </div>
