@@ -200,19 +200,47 @@ export async function POST(request: NextRequest) {
             });
 
             if (repoScan) {
-                await prisma.aiSystem.updateMany({
+                // Find and update the AI System
+                const aiSystem = await prisma.aiSystem.findFirst({
                     where: {
                         user_id: user.id,
                         name: repoScan.repo_name
-                    },
-                    data: {
-                        risk_classification: assessment.risk_classification,
-                        risk_score: assessment.risk_score,
-                        capabilities: llmAnalysis.capabilities || undefined,
-                        matched_articles: assessment.matched_annex_iii_articles || undefined,
                     }
                 });
-                console.log(`✅ [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
+
+                if (aiSystem) {
+                    const previousClassification = aiSystem.risk_classification;
+                    const classificationChanged = previousClassification !== assessment.risk_classification;
+
+                    await prisma.aiSystem.update({
+                        where: { id: aiSystem.id },
+                        data: {
+                            risk_classification: assessment.risk_classification,
+                            risk_score: assessment.risk_score,
+                            capabilities: llmAnalysis.capabilities || undefined,
+                            matched_articles: assessment.matched_annex_iii_articles || undefined,
+                        }
+                    });
+
+                    // Phase 1.2: Update scan history with classification
+                    await prisma.aiSystemScan.updateMany({
+                        where: {
+                            ai_system_id: aiSystem.id,
+                            repo_scan_id: repo_scan_id
+                        },
+                        data: {
+                            risk_classification: assessment.risk_classification,
+                            risk_score: assessment.risk_score,
+                            previous_classification: previousClassification,
+                            classification_changed: classificationChanged,
+                        }
+                    });
+
+                    console.log(`✅ [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
+                    if (classificationChanged) {
+                        console.log(`📜 [HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
+                    }
+                }
             }
         } catch (aiSystemError) {
             console.error('⚠️ [AI_SYSTEM] Failed to update AI System (non-fatal):', aiSystemError);

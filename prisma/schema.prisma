@@ -97,6 +97,7 @@ model RepoScan {
   risk_assessment       RiskAssessment?        // One-to-one: each scan has one risk assessment
   final_risk_assessment FinalRiskAssessment?   // One-to-one: each scan has one final assessment
   ai_system             AiSystem?              @relation("AiSystemLatestScan") // Link to AI System Registry
+  scan_history          AiSystemScan[]         @relation("ScanHistory") // Phase 1.2: History tracking
 
   @@index([user_id])
   @@index([github_repo_url])
@@ -492,6 +493,7 @@ model AiSystem {
   // Relations
   user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   latest_scan     RepoScan? @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id])
+  scan_history    AiSystemScan[]
   
   @@unique([user_id, name])
   @@index([user_id])
@@ -499,3 +501,33 @@ model AiSystem {
   @@index([status])
   @@map("ai_systems")
 }
+
+// =============================================================================
+// Scan History - Phase 1.2: Track all scans per AI System
+// =============================================================================
+
+model AiSystemScan {
+  id            String   @id @default(cuid())
+  ai_system_id  String
+  repo_scan_id  String
+  
+  // Snapshot of risk at time of scan
+  risk_classification String?
+  risk_score          Int?
+  
+  // Change tracking
+  previous_classification String?
+  classification_changed  Boolean @default(false)
+  
+  scanned_at    DateTime @default(now())
+  
+  // Relations
+  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  repo_scan     RepoScan @relation("ScanHistory", fields: [repo_scan_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ai_system_id, repo_scan_id])
+  @@index([ai_system_id])
+  @@index([scanned_at])
+  @@map("ai_system_scans")
+}
+
