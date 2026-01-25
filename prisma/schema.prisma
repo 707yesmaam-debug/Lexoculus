@@ -48,6 +48,10 @@ model User {
   
   // Monitoring Alerts (Phase 3.3)
   monitoring_alerts MonitoringAlert[]
+  
+  // Audit & Evidence (Phase 4)
+  audit_logs        AuditLog[]
+  evidence          ComplianceEvidence[]
 
   @@index([email])
   @@map("users")
@@ -505,6 +509,8 @@ model AiSystem {
   scan_history    AiSystemScan[]
   documents       ComplianceDocument[]  // Phase 2: Generated docs
   alerts          MonitoringAlert[]     // Phase 3.3: Monitoring alerts
+  audit_logs      AuditLog[]            // Phase 4.1: Audit trail
+  evidence        ComplianceEvidence[]  // Phase 4.2: Compliance evidence
   
   @@unique([user_id, name])
   @@index([user_id])
@@ -616,4 +622,92 @@ model MonitoringAlert {
   @@index([status])
   @@index([category])
   @@map("monitoring_alerts")
+}
+
+// =============================================================================
+// Audit Log - Phase 4.1: Tamper-proof compliance action logging
+// =============================================================================
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  user_id       String
+  ai_system_id  String?
+  
+  // Action details
+  action        String   // scan, classify, generate_doc, export, upload_evidence, etc.
+  entity_type   String   // ai_system, document, report, evidence, etc.
+  entity_id     String?
+  
+  // Description
+  description   String
+  metadata      Json?    // Additional context
+  
+  // Tamper-proof hash chain
+  previous_hash String?  // Hash of previous log entry
+  hash          String   // SHA-256 of this entry's content
+  
+  // IP tracking for audit
+  ip_address    String?
+  user_agent    String?
+  
+  created_at    DateTime @default(now())
+  
+  // Relations
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([ai_system_id])
+  @@index([action])
+  @@index([entity_type])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// Compliance Evidence - Phase 4.2: Evidence collection and chain of custody
+// =============================================================================
+
+model ComplianceEvidence {
+  id            String   @id @default(cuid())
+  user_id       String
+  ai_system_id  String
+  
+  // Evidence details
+  evidence_type String   // scan_result, risk_assessment, document, user_upload, test_result
+  title         String
+  description   String?
+  
+  // File storage
+  file_url      String?
+  file_name     String?
+  file_size     Int?
+  mime_type     String?
+  
+  // Source reference
+  source_type   String?  // repo_scan, document, upload
+  source_id     String?  // ID of the source entity
+  
+  // Chain of custody
+  collected_at  DateTime @default(now())
+  collected_by  String   // User ID who collected/uploaded
+  hash          String   // SHA-256 file integrity hash
+  
+  // Verification
+  verified      Boolean  @default(false)
+  verified_at   DateTime?
+  verified_by   String?
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([ai_system_id])
+  @@index([evidence_type])
+  @@index([collected_at])
+  @@map("compliance_evidence")
 }
