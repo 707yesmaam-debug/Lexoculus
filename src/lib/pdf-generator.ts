@@ -1,185 +1,257 @@
-
-import puppeteer from 'puppeteer';
-// We use 'puppeteer-core' and '@sparticuz/chromium' for production (Serverless/Vercel)
-// We use 'puppeteer' (standard) for local development
-import chromium from '@sparticuz/chromium';
-import puppeteerCore from 'puppeteer-core';
+import PDFDocument from 'pdfkit';
 
 /**
- * Core function to generate PDF from HTML
+ * Core function to generate PDF from structured data using PDFKit
+ * This replaces Puppeteer/Chromium to avoid serverless compatibility issues
  */
-export async function generatePdfBuffer(html: string): Promise<Buffer> {
-    let browser;
-    try {
-        // Detect production environment (Vercel, AWS, or any Linux container)
-        // We use sparticuz/chromium for all Linux production builds to avoid missing binary issues
-        const isProduction = process.env.NODE_ENV === 'production' && process.platform !== 'win32';
-
-        if (isProduction) {
-            console.log('🚀 [PDF] Launching Serverless Chrome (Sparticuz v119)...');
-            // Essential for Vercel/Lambda to avoid libnss3 missing errors
-            chromium.setGraphicsMode = false;
-
-            browser = await puppeteerCore.launch({
-                args: (chromium as any).args,
-                defaultViewport: (chromium as any).defaultViewport,
-                executablePath: await chromium.executablePath(
-                    "https://github.com/Sparticuz/chromium/releases/download/v119.0.0/chromium-v119.0.0-pack.tar"
-                ),
-                headless: (chromium as any).headless,
-                ignoreHTTPSErrors: true,
-            } as any);
-        } else {
-            console.log('💻 [PDF] Launching Local Chrome (Puppeteer)...');
-            browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+export async function generatePdfBuffer(buildContent: (doc: typeof PDFDocument.prototype) => void): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        try {
+            const doc = new PDFDocument({
+                size: 'A4',
+                margins: { top: 72, bottom: 72, left: 72, right: 72 }
             });
+
+            const buffers: Buffer[] = [];
+
+            doc.on('data', (buffer) => buffers.push(buffer));
+            doc.on('end', () => resolve(Buffer.concat(buffers)));
+            doc.on('error', (err) => reject(err));
+
+            // Execute the content builder
+            buildContent(doc);
+
+            doc.end();
+        } catch (error) {
+            reject(error);
         }
-
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
-        });
-
-        await browser.close();
-        return Buffer.from(pdfBuffer);
-    } catch (error) {
-        console.error('Puppeteer generation error:', error);
-        if (browser) await browser.close();
-        throw error;
-    }
+    });
 }
 
 /**
  * Generates the official Compliance Report PDF
  */
 export async function generateComplianceReport(data: any): Promise<Buffer> {
-    const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            @page { margin: 2.5cm; }
-            body { 
-                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-                line-height: 1.6; 
-                color: #1a1a1a;
-                padding: 0;
-            }
-            .brand-header {
-                border-bottom: 2px solid #000;
-                padding-bottom: 20px;
-                margin-bottom: 40px;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-end;
-            }
-            .brand-logo { font-weight: 900; font-size: 16pt; text-transform: uppercase; }
-            .brand-logo span { color: #FF4F00; }
-            
-            h1 { font-size: 24pt; font-weight: 700; margin-bottom: 10px; }
-            h2 { font-size: 16pt; border-bottom: 1px solid #eee; padding-bottom: 5pt; margin-top: 30px; }
-            
-            .score-card {
-                background: #f8f9fa;
-                border: 1px solid #e9ecef;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 20px 0;
-                text-align: center;
-            }
-            .score-val { font-size: 32pt; font-weight: 800; color: #1a1a1a; }
-            .score-label { text-transform: uppercase; letter-spacing: 1px; font-size: 9pt; color: #666; }
-            
-            ul { line-height: 1.8; }
-            li { margin-bottom: 8px; }
-        </style>
-    </head>
-    <body>
-        <div class="brand-header">
-            <div class="brand-logo">Lex<span>Oculus</span></div>
-            <div style="text-align:right; font-size:9pt; color:#666;">
-                Generated: ${new Date().toLocaleDateString()}<br>
-                Repo: ${data.repo?.repo_name}
-            </div>
-        </div>
+    return generatePdfBuffer((doc) => {
+        const PRIMARY = '#000000';
+        const ACCENT = '#FF4F00';
+        const GRAY = '#666666';
+        const LIGHT_GRAY = '#999999';
 
-        <h1>Compliance Report</h1>
-        <p>Detailed risk assessment and capabilities analysis for EU AI Act compliance.</p>
-        
-        <div class="score-card">
-            <div class="score-label">Compliance Score</div>
-            <div class="score-val">${data.assessment?.final_risk_score || 0}/100</div>
-            <div style="margin-top:10px; font-weight:600; color: ${data.assessment?.final_risk_score > 80 ? '#16a34a' : '#d97706'}">
-                ${data.assessment?.final_risk_classification || 'UNKNOWN'}
-            </div>
-        </div>
+        // Header
+        doc.fontSize(16)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('LEX', 72, 72, { continued: true })
+            .fillColor(ACCENT)
+            .text('OCULUS');
 
-        <h2>Capabilities Detected</h2>
-        <ul>
-            ${(data.capabilities?.detected_capabilities || []).map((c: string) => `<li>${c}</li>`).join('')}
-        </ul>
-        ${(!data.capabilities?.detected_capabilities?.length) ? '<p>No specific AI capabilities detected.</p>' : ''}
-    </body>
-    </html>
-    `;
-    return generatePdfBuffer(html);
+        doc.fontSize(9)
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text(`Generated: ${new Date().toLocaleDateString()}`, 400, 72, { align: 'right' });
+
+        doc.fontSize(9)
+            .text(`Repo: ${data.repo?.repo_name || 'N/A'}`, 400, 85, { align: 'right' });
+
+        // Divider
+        doc.moveTo(72, 110)
+            .lineTo(540, 110)
+            .lineWidth(2)
+            .stroke(PRIMARY);
+
+        // Title
+        doc.moveDown(2);
+        doc.fontSize(24)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('Compliance Report', 72, 140);
+
+        doc.fontSize(11)
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text('Detailed risk assessment and capabilities analysis for EU AI Act compliance.', 72, 175, { width: 450 });
+
+        // Score Card
+        const score = data.assessment?.final_risk_score || 0;
+        const classification = data.assessment?.final_risk_classification || 'UNKNOWN';
+        const scoreColor = score > 80 ? '#16a34a' : '#d97706';
+
+        doc.rect(72, 210, 450, 120)
+            .fillAndStroke('#f8f9fa', '#e9ecef');
+
+        doc.fontSize(9)
+            .font('Helvetica')
+            .fillColor(LIGHT_GRAY)
+            .text('COMPLIANCE SCORE', 72, 230, { width: 450, align: 'center' });
+
+        doc.fontSize(48)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text(`${score}/100`, 72, 250, { width: 450, align: 'center' });
+
+        doc.fontSize(14)
+            .font('Helvetica-Bold')
+            .fillColor(scoreColor)
+            .text(classification, 72, 310, { width: 450, align: 'center' });
+
+        // Capabilities Section
+        doc.fontSize(16)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('Capabilities Detected', 72, 370);
+
+        doc.moveTo(72, 395)
+            .lineTo(540, 395)
+            .lineWidth(1)
+            .stroke('#eeeeee');
+
+        const capabilities = data.capabilities?.detected_capabilities || [];
+        let yPos = 410;
+
+        if (capabilities.length === 0) {
+            doc.fontSize(11)
+                .font('Helvetica')
+                .fillColor(GRAY)
+                .text('No specific AI capabilities detected.', 72, yPos);
+        } else {
+            capabilities.forEach((capability: string, index: number) => {
+                // Check if we need a new page
+                if (yPos > 700) {
+                    doc.addPage();
+                    yPos = 72;
+                }
+
+                doc.fontSize(11)
+                    .font('Helvetica')
+                    .fillColor(PRIMARY)
+                    .text('•', 82, yPos)
+                    .text(capability, 102, yPos, { width: 420 });
+
+                yPos += 20;
+            });
+        }
+    });
 }
 
 /**
  * Generates the Trust Pack PDF for vendors
  */
 export async function generateTrustPackPDF(data: any): Promise<Buffer> {
-    const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            @page { margin: 2.5cm; }
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1a1a1a; }
-            .brand-logo { font-weight: 900; font-size: 16pt; text-transform: uppercase; margin-bottom: 40px;}
-            .brand-logo span { color: #FF4F00; }
-            
-            .trust-seal {
-                text-align: center;
-                margin: 60px 0;
-                padding: 40px;
-                border: 2px solid #000;
-                background: #fafafa;
-            }
-            .verified-text {
-                font-size: 24pt;
-                font-weight: 700;
-                letter-spacing: -1px;
-                margin-bottom: 10px;
-            }
-            .meta { color: #666; margin-top: 20px; font-family: monospace; }
-        </style>
-    </head>
-    <body>
-        <div class="brand-logo">Lex<span>Oculus</span></div>
-        
-        <div class="trust-seal">
-            <div class="verified-text">Scan Verified</div>
-            <p>This software repository has been scanned for EU AI Act compliance risks.</p>
-            
-            <div style="margin-top: 30px; font-size: 14pt; font-weight: 600;">
-                Risk Level: ${data.riskClassification}
-            </div>
-            
-            <div class="meta">
-                Repo: ${data.repoScan?.repo_name}<br>
-                Date: ${new Date(data.generatedAt).toLocaleDateString()}<br>
-                Ref: ${data.repoScan?.id?.slice(0, 8)}
-            </div>
-        </div>
-    </body>
-    </html>
-    `;
-    return generatePdfBuffer(html);
+    return generatePdfBuffer((doc) => {
+        const PRIMARY = '#000000';
+        const ACCENT = '#FF4F00';
+        const GRAY = '#666666';
+
+        // Logo
+        doc.fontSize(16)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('LEX', 72, 72, { continued: true })
+            .fillColor(ACCENT)
+            .text('OCULUS');
+
+        // Trust Seal Box
+        doc.rect(120, 200, 350, 280)
+            .lineWidth(2)
+            .fillAndStroke('#fafafa', PRIMARY);
+
+        doc.fontSize(24)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('Scan Verified', 120, 240, { width: 350, align: 'center' });
+
+        doc.fontSize(12)
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text('This software repository has been scanned for', 120, 280, { width: 350, align: 'center' })
+            .text('EU AI Act compliance risks.', 120, 297, { width: 350, align: 'center' });
+
+        doc.fontSize(14)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text(`Risk Level: ${data.riskClassification || 'UNKNOWN'}`, 120, 340, { width: 350, align: 'center' });
+
+        // Metadata
+        doc.fontSize(9)
+            .font('Courier')
+            .fillColor(GRAY)
+            .text(`Repo: ${data.repoScan?.repo_name || 'N/A'}`, 120, 400, { width: 350, align: 'center' })
+            .text(`Date: ${new Date(data.generatedAt).toLocaleDateString()}`, 120, 415, { width: 350, align: 'center' })
+            .text(`Ref: ${data.repoScan?.id?.slice(0, 8) || 'N/A'}`, 120, 430, { width: 350, align: 'center' });
+    });
+}
+
+/**
+ * Generates a compliance document PDF from HTML content
+ * This is used for exporting user-generated compliance documents
+ */
+export async function generateDocumentPDF(documentData: {
+    title: string;
+    documentType: string;
+    aiSystemName: string;
+    bodyHtml: string;
+}): Promise<Buffer> {
+    return generatePdfBuffer((doc) => {
+        const PRIMARY = '#000000';
+        const ACCENT = '#FF4F00';
+        const GRAY = '#666666';
+
+        // Header
+        doc.fontSize(16)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text('LEX', 72, 72, { continued: true })
+            .fillColor(ACCENT)
+            .text('OCULUS');
+
+        doc.fontSize(9)
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text(`AI System: ${documentData.aiSystemName}`, 72, 95);
+
+        doc.fontSize(8)
+            .fillColor(GRAY)
+            .text(`Document Type: ${documentData.documentType}`, 72, 108);
+
+        // Divider
+        doc.moveTo(72, 130)
+            .lineTo(540, 130)
+            .lineWidth(2)
+            .stroke(PRIMARY);
+
+        // Title
+        doc.fontSize(20)
+            .font('Helvetica-Bold')
+            .fillColor(PRIMARY)
+            .text(documentData.title, 72, 150, { width: 450 });
+
+        // Body Content (simplified HTML rendering)
+        // Note: PDFKit doesn't support HTML, so we extract text content
+        const plainText = documentData.bodyHtml
+            .replace(/<[^>]*>/g, '') // Strip HTML tags
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .trim();
+
+        doc.fontSize(11)
+            .font('Helvetica')
+            .fillColor(PRIMARY)
+            .text(plainText, 72, 200, {
+                width: 450,
+                align: 'left',
+                lineGap: 5
+            });
+
+        // Footer
+        const footerY = doc.page.height - 100;
+        doc.fontSize(8)
+            .font('Helvetica')
+            .fillColor(GRAY)
+            .text(`Generated by LexOculus EU AI Act Compliance Platform`, 72, footerY, { width: 450, align: 'center' })
+            .text(`${new Date().toISOString()}`, 72, footerY + 12, { width: 450, align: 'center' });
+    });
 }

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
-import { generatePdfBuffer } from '@/lib/pdf-generator';
+import { generateDocumentPDF } from '@/lib/pdf-generator';
 import { marked } from 'marked';
 
 // Configure marked for professional output
@@ -181,8 +181,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 </body>
 </html>`;
 
-        // Generate PDF
-        const pdfBuffer = await generatePdfBuffer(html);
+        // Generate PDF using PDFKit
+        const pdfBuffer = await generateDocumentPDF({
+            title: document.title,
+            documentType: document.document_type,
+            aiSystemName: document.ai_system.name,
+            bodyHtml: bodyHtml
+        });
 
         // Mark document as exported
         await prisma.complianceDocument.update({
