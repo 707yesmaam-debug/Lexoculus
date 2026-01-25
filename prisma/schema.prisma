@@ -494,6 +494,7 @@ model AiSystem {
   user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   latest_scan     RepoScan? @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id])
   scan_history    AiSystemScan[]
+  documents       ComplianceDocument[]  // Phase 2: Generated docs
   
   @@unique([user_id, name])
   @@index([user_id])
@@ -530,4 +531,42 @@ model AiSystemScan {
   @@index([scanned_at])
   @@map("ai_system_scans")
 }
+
+// =============================================================================
+// Compliance Documents - Phase 2: Auto-generated EU AI Act documents
+// =============================================================================
+
+model ComplianceDocument {
+  id            String   @id @default(cuid())
+  ai_system_id  String
+  
+  // Document Type: technical_doc, risk_management, data_governance, 
+  //                instructions_for_use, declaration_of_conformity
+  document_type String
+  
+  // Content
+  title         String
+  content       Json     // Markdown content + field status
+  template_version String @default("1.0")
+  
+  // Completion Status
+  status        String   @default("draft")  // draft, complete, exported
+  completion_percent Int @default(0)
+  missing_fields Json?   // List of unfilled placeholders
+  
+  // Version tracking
+  version       Int      @default(1)
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  
+  @@unique([ai_system_id, document_type])
+  @@index([ai_system_id])
+  @@index([document_type])
+  @@map("compliance_documents")
+}
+
 
