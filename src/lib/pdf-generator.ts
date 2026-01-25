@@ -16,12 +16,15 @@ export async function generatePdfBuffer(html: string): Promise<Buffer> {
         const isProduction = process.env.NODE_ENV === 'production' && process.platform !== 'win32';
 
         if (isProduction) {
-            console.log('🚀 [PDF] Launching Serverless Chrome (Sparticuz)...');
+            console.log('🚀 [PDF] Launching Serverless Chrome (Sparticuz v119)...');
+            // Essential for Vercel/Lambda to avoid libnss3 missing errors
+            chromium.setGraphicsMode = false;
+
             browser = await puppeteerCore.launch({
                 args: (chromium as any).args,
                 defaultViewport: (chromium as any).defaultViewport,
                 executablePath: await chromium.executablePath(
-                    "https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar"
+                    "https://github.com/Sparticuz/chromium/releases/download/v119.0.0/chromium-v119.0.0-pack.tar"
                 ),
                 headless: (chromium as any).headless,
                 ignoreHTTPSErrors: true,
