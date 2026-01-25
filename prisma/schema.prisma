@@ -45,6 +45,9 @@ model User {
 
   // AI System Registry
   ai_systems   AiSystem[]
+  
+  // Monitoring Alerts (Phase 3.3)
+  monitoring_alerts MonitoringAlert[]
 
   @@index([email])
   @@map("users")
@@ -501,6 +504,7 @@ model AiSystem {
   latest_scan     RepoScan? @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id])
   scan_history    AiSystemScan[]
   documents       ComplianceDocument[]  // Phase 2: Generated docs
+  alerts          MonitoringAlert[]     // Phase 3.3: Monitoring alerts
   
   @@unique([user_id, name])
   @@index([user_id])
@@ -575,4 +579,41 @@ model ComplianceDocument {
   @@map("compliance_documents")
 }
 
+// =============================================================================
+// Monitoring Alerts - Phase 3.3: Alert system for compliance events
+// =============================================================================
 
+model MonitoringAlert {
+  id            String   @id @default(cuid())
+  user_id       String
+  ai_system_id  String?  // Optional - some alerts may be global
+  
+  // Alert Type
+  category      String   // risk_change, drift_detected, compliance_gap, document_missing
+  severity      String   @default("info")  // critical, warning, info
+  
+  // Content
+  title         String
+  message       String
+  
+  // Status
+  status        String   @default("unread")  // unread, read, resolved, dismissed
+  resolved_at   DateTime?
+  resolved_by   String?
+  
+  // Metadata
+  metadata      Json?    // Additional context (e.g., previous_risk, new_risk)
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([ai_system_id])
+  @@index([status])
+  @@index([category])
+  @@map("monitoring_alerts")
+}
