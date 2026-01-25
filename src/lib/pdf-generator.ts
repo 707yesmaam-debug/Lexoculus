@@ -20,7 +20,9 @@ export async function generatePdfBuffer(html: string): Promise<Buffer> {
             browser = await puppeteerCore.launch({
                 args: (chromium as any).args,
                 defaultViewport: (chromium as any).defaultViewport,
-                executablePath: await chromium.executablePath(),
+                executablePath: await chromium.executablePath(
+                    "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar"
+                ),
                 headless: (chromium as any).headless,
                 ignoreHTTPSErrors: true,
             } as any);
