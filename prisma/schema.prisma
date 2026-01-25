@@ -711,3 +711,41 @@ model ComplianceEvidence {
   @@index([collected_at])
   @@map("compliance_evidence")
 }
+
+// =============================================================================
+// Regulatory Updates - Phase 3.4: Track EU AI Act amendments and guidance
+// =============================================================================
+
+model RegulatoryUpdate {
+  id              String   @id @default(cuid())
+  
+  // Source and reference
+  source          String   // eu_ai_office, eur_lex, ai_act_news
+  source_url      String?
+  reference_id    String?  @unique  // External ID to prevent duplicates
+  
+  // Content
+  title           String
+  summary         String
+  content         String?  // Full text if available
+  
+  // Classification
+  update_type     String   // amendment, guidance, clarification, deadline
+  severity        String   @default("info")  // critical, warning, info
+  
+  // EU AI Act relevance
+  affected_articles   String[]  // ["Article 6", "Article 9", "Annex III"]
+  affected_risks      String[]  // ["HIGH_RISK", "LIMITED_RISK"]
+  
+  // Status
+  published_at    DateTime
+  effective_date  DateTime?
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  @@index([update_type])
+  @@index([severity])
+  @@index([published_at])
+  @@map("regulatory_updates")
+}
