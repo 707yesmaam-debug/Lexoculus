@@ -290,10 +290,23 @@ export default function RegistryPage() {
                                                 )}
                                                 {/* Drift Badge (Phase 3.1) */}
                                                 {system.drift_detected && system.files_changed_count && system.files_changed_count > 0 && (
-                                                    <span className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 font-mono text-[10px]">
-                                                        <GitCompare className="w-3 h-3" />
-                                                        {system.files_changed_count} FILES CHANGED
-                                                    </span>
+                                                    <>
+                                                        <span className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 font-mono text-[10px]">
+                                                            <GitCompare className="w-3 h-3" />
+                                                            {system.files_changed_count} FILES CHANGED
+                                                        </span>
+                                                        {/* Phase 3.2: Rescan Recommendation */}
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                router.push(`/dashboard/scanner?repo=${encodeURIComponent(system.source_repo_url || '')}`);
+                                                            }}
+                                                            className="flex items-center gap-1 px-2 py-0.5 bg-[#FF4F00] text-white font-mono text-[10px] hover:bg-black transition-colors"
+                                                        >
+                                                            <RefreshCw className="w-3 h-3" />
+                                                            RESCAN
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {/* Docs Link (Phase 2) */}
                                                 <button
