@@ -192,6 +192,32 @@ export async function POST(request: NextRequest) {
             console.log('✅ [DB] Fallback save successful with ID:', assessment.id);
         }
 
+        // 10. Update AI System with risk classification
+        try {
+            const repoScan = await prisma.repoScan.findUnique({
+                where: { id: repo_scan_id },
+                select: { repo_name: true }
+            });
+
+            if (repoScan) {
+                await prisma.aiSystem.updateMany({
+                    where: {
+                        user_id: user.id,
+                        name: repoScan.repo_name
+                    },
+                    data: {
+                        risk_classification: assessment.risk_classification,
+                        risk_score: assessment.risk_score,
+                        capabilities: llmAnalysis.capabilities || undefined,
+                        matched_articles: assessment.matched_annex_iii_articles || undefined,
+                    }
+                });
+                console.log(`✅ [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
+            }
+        } catch (aiSystemError) {
+            console.error('⚠️ [AI_SYSTEM] Failed to update AI System (non-fatal):', aiSystemError);
+        }
+
         console.log('🚀 [API] Returning successful response');
         // 9. Return assessment with constraint validation data
         return NextResponse.json({

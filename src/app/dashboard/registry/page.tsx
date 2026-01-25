@@ -131,13 +131,13 @@ export default function RegistryPage() {
                 </div>
                 <h1 className="font-serif text-3xl md:text-5xl font-bold mb-4 tracking-tight">AI System Registry.</h1>
                 <p className="font-mono text-xs md:text-sm text-[#555] max-w-xl leading-relaxed">
-                    Central inventory of all AI systems under compliance management.
-                    Track risk levels, documentation status, and compliance posture.
+                    All your scanned AI systems in one place.
+                    Systems are automatically added when you scan a repository.
                 </p>
             </div>
 
             {/* Stats Cards */}
-            {stats && (
+            {stats && stats.total > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
                     <div className="border-2 border-black p-4 bg-white">
                         <div className="font-mono text-[10px] text-[#555] uppercase tracking-widest mb-1">TOTAL</div>
@@ -175,13 +175,6 @@ export default function RegistryPage() {
                         <RefreshCw className="w-4 h-4 mr-2" />
                         REFRESH
                     </Button>
-                    <Button
-                        onClick={() => setShowAddModal(true)}
-                        className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        ADD_SYSTEM
-                    </Button>
                 </div>
             </div>
 
@@ -194,17 +187,17 @@ export default function RegistryPage() {
                 ) : systems.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="font-mono text-xs text-[#999] uppercase tracking-widest mb-4">
-                            NO_SYSTEMS_REGISTERED
+                            NO_SYSTEMS_YET
                         </div>
                         <p className="font-mono text-sm text-[#555] mb-6">
-                            Add your first AI system to begin compliance tracking.
+                            Scan your first repository to automatically add it here.
                         </p>
                         <Button
-                            onClick={() => setShowAddModal(true)}
+                            onClick={() => router.push('/dashboard/scanner')}
                             className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            REGISTER_FIRST_SYSTEM
+                            <ArrowRight className="w-4 h-4 mr-2" />
+                            GO_TO_SCANNER
                         </Button>
                     </div>
                 ) : (

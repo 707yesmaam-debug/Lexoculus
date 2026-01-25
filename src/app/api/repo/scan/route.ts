@@ -111,6 +111,44 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        // Auto-create or update AI System entry
+        // Uses repo name as system name, creates if not exists, updates if exists
+        const systemName = scanData.repo_name;
+        const existingSystem = await prisma.aiSystem.findUnique({
+            where: {
+                user_id_name: {
+                    user_id: user.id,
+                    name: systemName
+                }
+            }
+        });
+
+        if (existingSystem) {
+            // Update existing system with new scan
+            await prisma.aiSystem.update({
+                where: { id: existingSystem.id },
+                data: {
+                    latest_scan_id: repoScan.id,
+                    source_repo_url: `https://github.com/${repo_url}`,
+                    last_scanned_at: new Date(),
+                }
+            });
+            console.log(`✅ [AI_SYSTEM] Updated: ${systemName} with new scan`);
+        } else {
+            // Create new AI System entry
+            await prisma.aiSystem.create({
+                data: {
+                    user_id: user.id,
+                    name: systemName,
+                    description: scanData.repo_description || null,
+                    source_repo_url: `https://github.com/${repo_url}`,
+                    latest_scan_id: repoScan.id,
+                    last_scanned_at: new Date(),
+                }
+            });
+            console.log(`✅ [AI_SYSTEM] Auto-created: ${systemName}`);
+        }
+
         // Return success response - THIS IS THE OUTPUT FOR FEATURE 2
         return NextResponse.json({
             repo_scan_id: repoScan.id,

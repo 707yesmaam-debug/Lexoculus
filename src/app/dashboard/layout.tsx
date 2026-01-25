@@ -86,16 +86,10 @@ export default function DashboardLayout({
     // Dynamic Navigation items
     const navItems = [
         {
-            name: '00_REGISTRY',
-            href: '/dashboard/registry',
-            status: '[NEW]',
-            isActive: pathname === '/dashboard/registry' || pathname === '/dashboard'
-        },
-        {
             name: '01_SCANNER',
             href: '/dashboard/scanner',
-            status: '[ACTIVE]',
-            isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard/free-scanner'
+            status: '[START]',
+            isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard/free-scanner' || pathname === '/dashboard'
         },
         {
             name: '02_ANALYSIS',
@@ -114,7 +108,13 @@ export default function DashboardLayout({
             isActive: pathname.includes('/report/')
         },
         {
-            name: '04_INTEGRATIONS',
+            name: '04_REGISTRY',
+            href: '/dashboard/registry',
+            status: '[VIEW]',
+            isActive: pathname === '/dashboard/registry'
+        },
+        {
+            name: '05_INTEGRATIONS',
             href: '/dashboard/integrations',
             status: '[PRO]',
             isActive: pathname === '/dashboard/integrations'

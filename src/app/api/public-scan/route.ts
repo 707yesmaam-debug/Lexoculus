@@ -101,7 +101,42 @@ export async function POST(request: NextRequest) {
         // 8. Increment Usage
         await incrementUsage(user.id, 'scan');
 
-        // 9. Return Success
+        // 9. Auto-create or update AI System entry
+        const systemName = scanData.repo_name;
+        const existingSystem = await prisma.aiSystem.findUnique({
+            where: {
+                user_id_name: {
+                    user_id: user.id,
+                    name: systemName
+                }
+            }
+        });
+
+        if (existingSystem) {
+            await prisma.aiSystem.update({
+                where: { id: existingSystem.id },
+                data: {
+                    latest_scan_id: repoScan.id,
+                    source_repo_url: `https://github.com/${owner}/${repo}`,
+                    last_scanned_at: new Date(),
+                }
+            });
+            console.log(`✅ [AI_SYSTEM] Updated: ${systemName} with new scan`);
+        } else {
+            await prisma.aiSystem.create({
+                data: {
+                    user_id: user.id,
+                    name: systemName,
+                    description: scanData.repo_description || null,
+                    source_repo_url: `https://github.com/${owner}/${repo}`,
+                    latest_scan_id: repoScan.id,
+                    last_scanned_at: new Date(),
+                }
+            });
+            console.log(`✅ [AI_SYSTEM] Auto-created: ${systemName}`);
+        }
+
+        // 10. Return Success
         return NextResponse.json({
             repo_scan_id: repoScan.id,
             repo_url: `https://github.com/${owner}/${repo}`,
