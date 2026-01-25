@@ -1,8 +1,17 @@
-'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
+import { generatePdfBuffer } from '@/lib/pdf-generator';
+import { marked } from 'marked';
+
+// Configure marked for professional output
+marked.use({
+    gfm: true,
+    breaks: true
+});
+
+export const dynamic = 'force-dynamic';
 
 interface RouteContext {
     params: Promise<{ id: string }>;
@@ -62,69 +71,118 @@ export async function POST(request: NextRequest, context: RouteContext) {
         }
 
         // Get markdown content
-        const content = (document.content as { markdown?: string })?.markdown || '';
+        let contentMarkdown = (document.content as { markdown?: string })?.markdown || '';
 
-        // Generate HTML for PDF
-        const html = generatePdfHtml(document.title, content, document.ai_system.name);
+        // Strip the main title from markdown to avoid duplication (since we add a styled Brand Header)
+        // We look for the first H1 (# Title)
+        contentMarkdown = contentMarkdown.replace(/^#\s+.*$/m, '');
 
-        // Convert to PDF using simple HTML approach
-        // In production, you'd use a proper PDF library like puppeteer or pdfkit
-        // For now, we return an HTML file that can be printed to PDF
+        // Convert to HTML using standard library
+        const bodyHtml = await marked.parse(contentMarkdown);
 
-        const pdfHtml = `
+        // Generate full HTML with LexOculus Theme
+        const html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>${document.title}</title>
     <style>
-        @page { margin: 2cm; }
+        @page {
+            margin: 2.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
         body { 
-            font-family: 'Times New Roman', serif; 
-            line-height: 1.6; 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            line-height: 1.5; 
+            color: #222;
             max-width: 21cm;
             margin: 0 auto;
-            padding: 2cm;
+            background: white;
+            font-size: 11pt;
         }
-        h1 { font-size: 24pt; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        h2 { font-size: 18pt; margin-top: 20pt; }
-        h3 { font-size: 14pt; margin-top: 16pt; }
-        h4 { font-size: 12pt; }
-        table { border-collapse: collapse; width: 100%; margin: 10pt 0; }
-        th, td { border: 1px solid #333; padding: 8pt; text-align: left; }
-        th { background: #f5f5f5; }
-        .missing { background: #fff3cd; color: #856404; padding: 2px 4px; border-radius: 3px; }
-        .header { text-align: center; margin-bottom: 20pt; }
-        .footer { 
-            text-align: center; 
-            font-size: 10pt; 
-            color: #666; 
-            margin-top: 40pt; 
-            padding-top: 10pt;
-            border-top: 1px solid #ccc;
+        
+        /* Typography Scale */
+        h1 { font-size: 24pt; font-weight: 700; margin-bottom: 24px; color: #111; line-height: 1.2; break-after: avoid; }
+        h2 { font-size: 18pt; font-weight: 600; margin-top: 32px; margin-bottom: 16px; border-bottom: 1px solid #eaeaea; padding-bottom: 8px; color: #333; break-after: avoid; }
+        h3 { font-size: 14pt; font-weight: 600; margin-top: 24px; margin-bottom: 8px; color: #444; break-after: avoid; }
+        h4 { font-size: 12pt; font-weight: 600; margin-top: 16px; margin-bottom: 8px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; break-after: avoid; }
+        h5, h6 { font-size: 11pt; font-weight: 700; margin-top: 16px; margin-bottom: 8px; color: #666; break-after: avoid; }
+        
+        p { margin-bottom: 16px; text-align: justify; }
+        ul, ol { margin-bottom: 16px; padding-left: 24px; }
+        li { margin-bottom: 4px; }
+        
+        /* Missing Field Warning */
+        .missing {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-family: monospace;
+            border: 1px solid #ffeeba;
         }
-        .meta { font-size: 10pt; color: #666; margin-bottom: 20pt; }
-        hr { border: none; border-top: 1px solid #ccc; margin: 20pt 0; }
+
+        /* Branding Header */
+        .brand-header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .brand-logo { font-weight: 900; font-size: 18pt; text-transform: uppercase; letter-spacing: -1px; }
+        .brand-logo span { color: #FF4F00; }
+        
+        .doc-meta { text-align: right; font-size: 9pt; color: #666; line-height: 1.4; }
+
+        /* Tables - Professional Look */
+        table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 10pt; page-break-inside: avoid; }
+        th, td { border: 1px solid #ddd; padding: 12px 10px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: 600; color: #333; }
+        tr:nth-child(even) { background-color: #fafafa; }
+
+        /* Code Blocks */
+        pre { background: #f5f5f5; padding: 16px; border-radius: 6px; overflow-x: auto; margin-bottom: 16px; page-break-inside: avoid; }
+        code { font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.9em; background: #f5f5f5; padding: 2px 4px; border-radius: 3px; }
+
+        /* Blockquotes */
+        blockquote { border-left: 4px solid #FF4F00; margin: 0 0 16px 0; padding-left: 16px; color: #555; font-style: italic; }
+
+        /* Footer */
+        .footer-info { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eaeaea; font-size: 8pt; color: #999; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <img src="data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect width="40" height="40" fill="%23000"/><text x="20" y="28" text-anchor="middle" fill="%23fff" font-family="serif" font-size="20">L</text></svg>')}" alt="LexOculus" style="width: 40px; height: 40px;">
-        <h1>${escapeHtml(document.title)}</h1>
-        <div class="meta">
+    <div class="brand-header">
+        <div class="brand-logo">Lex<span>Oculus</span></div>
+        <div class="doc-meta">
             AI System: ${escapeHtml(document.ai_system.name)}<br>
-            Generated: ${new Date().toLocaleDateString()}<br>
-            Version: ${document.version}
+            Version: ${document.version}.0<br>
+            Date: ${new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
     </div>
-    ${markdownToHtml(content)}
-    <div class="footer">
-        <p>Generated by LexOculus EU AI Act Compliance Platform</p>
-        <p>Document ID: ${document.id}</p>
-        <p>Export Date: ${new Date().toISOString()}</p>
+
+    <h1>${escapeHtml(document.title)}</h1>
+    
+    ${bodyHtml}
+
+    <div class="footer-info">
+        Generated by LexOculus EU AI Act Compliance Platform | Document ID: ${document.id}<br>
+        ${new Date().toISOString()}
     </div>
 </body>
 </html>`;
+
+        // Generate PDF
+        const pdfBuffer = await generatePdfBuffer(html);
 
         // Mark document as exported
         await prisma.complianceDocument.update({
@@ -132,14 +190,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
             data: { status: 'exported' }
         });
 
-        console.log(`📄 [EXPORT] PDF exported for ${document.title}`);
+        console.log(`📄 [EXPORT] PDF generated for ${document.title} (${pdfBuffer.length} bytes)`);
 
-        // Return as HTML (browser can Print to PDF)
-        // In production, integrate with pdf-lib or puppeteer
-        return new NextResponse(pdfHtml, {
+        // Return PDF binary
+        // Cast to any to avoid BodyInit type issues with Buffer/Uint8Array
+        return new NextResponse(pdfBuffer as any, {
             headers: {
-                'Content-Type': 'text/html',
-                'Content-Disposition': `attachment; filename="${document.document_type}-${document.ai_system.name.replace(/\s+/g, '-')}.html"`,
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="${document.document_type}-${document.ai_system.name.replace(/\s+/g, '-')}.pdf"`,
             }
         });
 
@@ -158,46 +216,4 @@ function escapeHtml(text: string): string {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
-}
-
-function generatePdfHtml(title: string, content: string, systemName: string): string {
-    return content;
-}
-
-/**
- * Simple markdown to HTML converter
- */
-function markdownToHtml(markdown: string): string {
-    let html = markdown
-        // Headers
-        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-        // Bold
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        // Italic
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Code
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        // Horizontal rule
-        .replace(/^---$/gm, '<hr>')
-        // Lists
-        .replace(/^- (.*$)/gm, '<li>$1</li>')
-        // MISSING placeholders
-        .replace(/\{\{MISSING:\s*([^}]+)\}\}/g, '<span class="missing">⚠️ MISSING: $1</span>')
-        // Paragraphs
-        .replace(/\n\n/g, '</p><p>')
-        // Line breaks
-        .replace(/\n/g, '<br>');
-
-    // Wrap in paragraphs
-    html = '<p>' + html + '</p>';
-
-    // Fix list items (wrap consecutive li in ul)
-    html = html.replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>');
-
-    // Simple table handling
-    html = html.replace(/\|([^|]+)\|([^|]+)\|/g, '<tr><td>$1</td><td>$2</td></tr>');
-
-    return html;
 }

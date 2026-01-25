@@ -1,196 +1,160 @@
-import PDFDocument from 'pdfkit';
-import { RepoScan, LlmCapabilityAnalysis } from '@prisma/client';
 
-export interface ReportData {
-    assessment: any;
-    repo: RepoScan;
-    capabilities: any;
-    preliminary: any;
+import puppeteer from 'puppeteer';
+
+/**
+ * Core function to generate PDF from HTML
+ */
+export async function generatePdfBuffer(html: string): Promise<Buffer> {
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
+        });
+
+        await browser.close();
+        return Buffer.from(pdfBuffer);
+    } catch (error) {
+        console.error('Puppeteer generation error:', error);
+        if (browser) await browser.close();
+        throw error;
+    }
 }
 
 /**
- * Generate System 3.0 "Optical Legality" Compliance Report
- * font: Times-Roman (Serif) for headings, Courier (Mono) for data
- * colors: Black (#000000), Safety Orange (#FF4F00), Grey (#999999)
+ * Generates the official Compliance Report PDF
  */
-export async function generateComplianceReport(data: ReportData): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-        const doc = new PDFDocument({
-            margin: 40,
-            size: 'A4',
-            info: {
-                Title: `Compliance Report - ${data.repo.repo_name}`,
-                Author: 'LexOculus System',
-                Subject: 'EU AI Act Compliance Assessment',
-                Keywords: 'compliance, ai-act, risk-assessment, lex-oculus'
+export async function generateComplianceReport(data: any): Promise<Buffer> {
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            @page { margin: 2.5cm; }
+            body { 
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+                line-height: 1.6; 
+                color: #1a1a1a;
+                padding: 0;
             }
-        });
+            .brand-header {
+                border-bottom: 2px solid #000;
+                padding-bottom: 20px;
+                margin-bottom: 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+            }
+            .brand-logo { font-weight: 900; font-size: 16pt; text-transform: uppercase; }
+            .brand-logo span { color: #FF4F00; }
+            
+            h1 { font-size: 24pt; font-weight: 700; margin-bottom: 10px; }
+            h2 { font-size: 16pt; border-bottom: 1px solid #eee; padding-bottom: 5pt; margin-top: 30px; }
+            
+            .score-card {
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                text-align: center;
+            }
+            .score-val { font-size: 32pt; font-weight: 800; color: #1a1a1a; }
+            .score-label { text-transform: uppercase; letter-spacing: 1px; font-size: 9pt; color: #666; }
+            
+            ul { line-height: 1.8; }
+            li { margin-bottom: 8px; }
+        </style>
+    </head>
+    <body>
+        <div class="brand-header">
+            <div class="brand-logo">Lex<span>Oculus</span></div>
+            <div style="text-align:right; font-size:9pt; color:#666;">
+                Generated: ${new Date().toLocaleDateString()}<br>
+                Repo: ${data.repo?.repo_name}
+            </div>
+        </div>
 
-        const buffers: Buffer[] = [];
-        doc.on('data', (buffer) => buffers.push(buffer));
-        doc.on('end', () => resolve(Buffer.concat(buffers)));
-        doc.on('error', (err) => reject(err));
+        <h1>Compliance Report</h1>
+        <p>Detailed risk assessment and capabilities analysis for EU AI Act compliance.</p>
+        
+        <div class="score-card">
+            <div class="score-label">Compliance Score</div>
+            <div class="score-val">${data.assessment?.final_risk_score || 0}/100</div>
+            <div style="margin-top:10px; font-weight:600; color: ${data.assessment?.final_risk_score > 80 ? '#16a34a' : '#d97706'}">
+                ${data.assessment?.final_risk_classification || 'UNKNOWN'}
+            </div>
+        </div>
 
-        // Colors
-        const C_BLACK = '#000000';
-        const C_ORANGE = '#FF4F00';
-        const C_GREY = '#999999';
-
-        // =====================================================================
-        // HEADER
-        // =====================================================================
-
-        // "LEX|OCULUS" Wordmark
-        doc.font('Times-Bold').fontSize(24).fillColor(C_BLACK).text('LEX', 40, 40, { continued: true });
-        doc.font('Times-Roman').fillColor(C_ORANGE).text('|', { continued: true });
-        doc.font('Times-Bold').fillColor(C_BLACK).text('OCULUS');
-
-        doc.font('Courier').fontSize(8).fillColor(C_GREY).text('THE MICROSCOPE FOR CODE LAW', 40, 65);
-
-        // Divider
-        doc.moveTo(40, 80).lineTo(555, 80).lineWidth(2).strokeColor(C_BLACK).stroke();
-
-        // Report Metadata (Right Aligned)
-        const dateStr = new Date().toISOString().split('T')[0];
-        doc.font('Courier').fontSize(8).fillColor(C_BLACK);
-        doc.text(`REPORT_ID: ${data.assessment.id.substring(0, 8).toUpperCase()}`, 350, 45, { align: 'right', width: 200 });
-        doc.text(`DATE: ${dateStr}`, 350, 55, { align: 'right', width: 200 });
-        doc.text(`REF: ${data.repo.repo_name.toUpperCase()}`, 350, 65, { align: 'right', width: 200 });
-
-        doc.moveDown(4);
-
-        // =====================================================================
-        // 01 EXECUTIVE SUMMARY
-        // =====================================================================
-
-        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('01_EXECUTIVE_SUMMARY');
-        doc.font('Times-Bold').fontSize(18).fillColor(C_BLACK).text('Compliance Status Assessment');
-        doc.moveDown(1);
-
-        // Main Risk Badge
-        const riskClass = data.assessment.final_risk_classification;
-        const score = data.assessment.final_risk_score;
-        let riskLabel = 'MINIMAL RISK';
-        let riskColor = C_BLACK;
-
-        if (riskClass === 'UNACCEPTABLE') {
-            riskLabel = 'UNACCEPTABLE RISK';
-            riskColor = C_ORANGE;
-        } else if (riskClass === 'HIGH_RISK') {
-            riskLabel = 'HIGH RISK';
-            riskColor = C_ORANGE;
-        } else if (riskClass === 'LIMITED_RISK') {
-            riskLabel = 'LIMITED RISK';
-            riskColor = C_BLACK;
-        }
-
-        // Draw Sharp Badge
-        doc.rect(40, doc.y, 515, 60).strokeColor(riskColor).lineWidth(1).stroke();
-
-        const badgeStartY = doc.y;
-        doc.font('Courier-Bold').fontSize(24).fillColor(riskColor).text(riskLabel, 50, badgeStartY + 15);
-        doc.font('Courier').fontSize(10).fillColor(C_BLACK).text(`COMPLIANCE SCORE: ${score}/100`, 50, badgeStartY + 40);
-
-        doc.moveDown(5);
-
-        // Narrative
-        doc.font('Times-Roman').fontSize(11).fillColor(C_BLACK).text(
-            `This automated assessment certifies that the software repository "${data.repo.repo_name}" has been analyzed for compliance with the EU AI Act (Regulation (EU) 2024/1689). The system has been classified as ${riskLabel} based on heuristic analysis of capability signatures and operational context.`,
-            { align: 'justify', width: 515 }
-        );
-
-        doc.moveDown(2);
-
-        // =====================================================================
-        // 02 SYSTEM IDENTIFICATION
-        // =====================================================================
-
-        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('02_SYSTEM_IDENTIFICATION');
-        doc.moveDown(0.5);
-
-        const rowY = doc.y;
-        const col1 = 40;
-        const col2 = 200;
-
-        // Helper for rows
-        const drawRow = (label: string, value: string) => {
-            doc.font('Courier').fontSize(9).fillColor(C_GREY).text(label, col1, doc.y);
-            doc.font('Courier-Bold').fontSize(9).fillColor(C_BLACK).text(value, col2, doc.y - 9); // Adjust for alignment
-            doc.moveDown(1);
-            doc.moveTo(col1, doc.y).lineTo(555, doc.y).lineWidth(0.5).strokeColor('#E5E5E5').stroke(); // Light grey line
-            doc.moveDown(1);
-        };
-
-        drawRow('REPOSITORY_URL', data.repo.github_repo_url);
-        drawRow('OWNER_HANDLE', data.repo.repo_owner);
-        drawRow('SCAN_TIMESTAMP', new Date(data.repo.scanned_at).toISOString());
-        drawRow('PRIMARY_LANGUAGE', data.capabilities.primary_language || 'UNKNOWN');
-
-        const context = data.assessment.context_summary || {};
-        drawRow('INTENDED_USE', context.intended_use || 'NOT_SPECIFIED');
-        drawRow('DEPLOYMENT_REGION', context.deployment_region || 'GLOBAL');
-
-        doc.moveDown(2);
-
-        // =====================================================================
-        // 03 REGULATORY MAPPING
-        // =====================================================================
-
-        doc.font('Courier-Bold').fontSize(10).fillColor(C_ORANGE).text('03_REGULATORY_MAPPING');
-        doc.moveDown(0.5);
-
-        // Header for table
-        doc.rect(40, doc.y, 515, 20).fillColor(C_BLACK).fill();
-        doc.fillColor('#FFFFFF').font('Courier-Bold').fontSize(8);
-        doc.text('REGULATION', 50, doc.y - 14);
-        doc.text('STATUS', 400, doc.y - 14);
-        doc.moveDown(2);
-
-        const drawRegRow = (reg: string, status: string, isRisk: boolean) => {
-            const y = doc.y;
-            doc.fillColor(C_BLACK).font('Times-Bold').fontSize(10).text(reg, 50, y);
-
-            // Status Box
-            const statusColor = isRisk ? C_ORANGE : C_BLACK;
-            const statusText = status.toUpperCase();
-
-            doc.rect(400, y - 2, 140, 14).strokeColor(statusColor).lineWidth(1).stroke();
-            doc.fillColor(statusColor).font('Courier-Bold').fontSize(8).text(statusText, 405, y + 2);
-
-            doc.moveDown(1.5);
-            doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(0.5).strokeColor('#E5E5E5').stroke();
-            doc.moveDown(1);
-        };
-
-        // Article 5
-        const isProhibited = riskClass === 'UNACCEPTABLE';
-        drawRegRow('EU AI Act Art. 5 (Prohibited)', isProhibited ? 'DETECTED' : 'CLEAR', isProhibited);
-
-        // Article 6
-        const isHighRisk = riskClass === 'HIGH_RISK' || riskClass === 'UNACCEPTABLE';
-        drawRegRow('EU AI Act Art. 6 (High Risk)', isHighRisk ? 'APPLICABLE' : 'NOT_APPLICABLE', isHighRisk);
-
-        // Article 50
-        const isLimited = riskClass === 'LIMITED_RISK';
-        drawRegRow('EU AI Act Art. 50 (Transparency)', isLimited || isHighRisk ? 'REQUIRED' : 'VOLUNTARY', false);
-
-        // =====================================================================
-        // FOOTER
-        // =====================================================================
-
-        const bottomY = 780;
-        doc.moveTo(40, bottomY).lineTo(555, bottomY).lineWidth(2).strokeColor(C_BLACK).stroke();
-
-        doc.font('Times-Bold').fontSize(8).fillColor(C_BLACK).text('LEX|OCULUS', 40, bottomY + 10);
-        doc.font('Courier').fontSize(8).fillColor(C_GREY).text(`PAGE 1 OF 1 // SIGNED: ${data.assessment.digital_signature || 'PENDING'}`, 40, bottomY + 10, { align: 'right', width: 515 });
-
-        doc.end();
-    });
+        <h2>Capabilities Detected</h2>
+        <ul>
+            ${(data.capabilities?.detected_capabilities || []).map((c: string) => `<li>${c}</li>`).join('')}
+        </ul>
+        ${(!data.capabilities?.detected_capabilities?.length) ? '<p>No specific AI capabilities detected.</p>' : ''}
+    </body>
+    </html>
+    `;
+    return generatePdfBuffer(html);
 }
 
-// Deprecating separate TrustPack function to unify on System 3.0
+/**
+ * Generates the Trust Pack PDF for vendors
+ */
 export async function generateTrustPackPDF(data: any): Promise<Buffer> {
-    // Mapping legacy call to new system if necessary, but ideally unused.
-    // For now, keeping signature to avoid breaking imports but throwing error or redirecting logic.
-    return Buffer.from('');
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            @page { margin: 2.5cm; }
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1a1a1a; }
+            .brand-logo { font-weight: 900; font-size: 16pt; text-transform: uppercase; margin-bottom: 40px;}
+            .brand-logo span { color: #FF4F00; }
+            
+            .trust-seal {
+                text-align: center;
+                margin: 60px 0;
+                padding: 40px;
+                border: 2px solid #000;
+                background: #fafafa;
+            }
+            .verified-text {
+                font-size: 24pt;
+                font-weight: 700;
+                letter-spacing: -1px;
+                margin-bottom: 10px;
+            }
+            .meta { color: #666; margin-top: 20px; font-family: monospace; }
+        </style>
+    </head>
+    <body>
+        <div class="brand-logo">Lex<span>Oculus</span></div>
+        
+        <div class="trust-seal">
+            <div class="verified-text">Scan Verified</div>
+            <p>This software repository has been scanned for EU AI Act compliance risks.</p>
+            
+            <div style="margin-top: 30px; font-size: 14pt; font-weight: 600;">
+                Risk Level: ${data.riskClassification}
+            </div>
+            
+            <div class="meta">
+                Repo: ${data.repoScan?.repo_name}<br>
+                Date: ${new Date(data.generatedAt).toLocaleDateString()}<br>
+                Ref: ${data.repoScan?.id?.slice(0, 8)}
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+    return generatePdfBuffer(html);
 }
