@@ -1,5 +1,9 @@
 
 import puppeteer from 'puppeteer';
+// We use 'puppeteer-core' and '@sparticuz/chromium' for production (Serverless/Vercel)
+// We use 'puppeteer' (standard) for local development
+import chromium from '@sparticuz/chromium';
+import puppeteerCore from 'puppeteer-core';
 
 /**
  * Core function to generate PDF from HTML
@@ -7,10 +11,26 @@ import puppeteer from 'puppeteer';
 export async function generatePdfBuffer(html: string): Promise<Buffer> {
     let browser;
     try {
-        browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
+        // Detect production environment (Vercel, AWS, or any Linux container)
+        // We use sparticuz/chromium for all Linux production builds to avoid missing binary issues
+        const isProduction = process.env.NODE_ENV === 'production' && process.platform !== 'win32';
+
+        if (isProduction) {
+            console.log('🚀 [PDF] Launching Serverless Chrome (Sparticuz)...');
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+                ignoreHTTPSErrors: true,
+            });
+        } else {
+            console.log('💻 [PDF] Launching Local Chrome (Puppeteer)...');
+            browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            });
+        }
 
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
