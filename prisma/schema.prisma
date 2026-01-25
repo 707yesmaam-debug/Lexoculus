@@ -481,6 +481,10 @@ model AiSystem {
   capabilities      Json?     // Synced from LlmCapabilityAnalysis
   matched_articles  Json?     // Synced from RiskAssessment
   
+  // Public sharing (Phase 1.1)
+  public_share_id   String?   @unique  // Random ID for public URL
+  share_enabled     Boolean   @default(false)
+  
   // Timestamps
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt

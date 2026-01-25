@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink } from 'lucide-react';
+import { Plus, RefreshCw, AlertTriangle, Shield, ShieldCheck, ShieldAlert, ArrowRight, Archive, ExternalLink, Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AiSystem {
@@ -23,6 +23,9 @@ interface AiSystem {
         repo_name: string;
         repo_owner: string;
     } | null;
+    // Share fields
+    public_share_id: string | null;
+    share_enabled: boolean;
 }
 
 interface Stats {
@@ -42,6 +45,8 @@ export default function RegistryPage() {
     const [newSystemName, setNewSystemName] = useState('');
     const [newSystemDesc, setNewSystemDesc] = useState('');
     const [creating, setCreating] = useState(false);
+    const [sharingSystemId, setSharingSystemId] = useState<string | null>(null);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchSystems();
@@ -91,6 +96,42 @@ export default function RegistryPage() {
         } finally {
             setCreating(false);
         }
+    };
+
+    const handleShare = async (systemId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSharingSystemId(systemId);
+
+        try {
+            const res = await fetch(`/api/ai-systems/${systemId}/share`, {
+                method: 'POST',
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                // Copy URL to clipboard
+                await navigator.clipboard.writeText(data.share_url);
+                setCopiedId(systemId);
+                setTimeout(() => setCopiedId(null), 2000);
+                // Refresh to show updated share status
+                fetchSystems();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to enable sharing');
+            }
+        } catch (error) {
+            console.error('Share error:', error);
+        } finally {
+            setSharingSystemId(null);
+        }
+    };
+
+    const handleCopyUrl = async (shareId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/status/${shareId}`;
+        await navigator.clipboard.writeText(url);
+        setCopiedId(shareId);
+        setTimeout(() => setCopiedId(null), 2000);
     };
 
     const getRiskBadge = (classification: string | null) => {
@@ -244,7 +285,48 @@ export default function RegistryPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="w-5 h-5 text-[#999] group-hover:text-black group-hover:translate-x-1 transition-all" />
+                                    <div className="flex items-center gap-2">
+                                        {/* Share Button */}
+                                        {system.share_enabled && system.public_share_id ? (
+                                            <button
+                                                onClick={(e) => handleCopyUrl(system.public_share_id!, e)}
+                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 transition-colors"
+                                            >
+                                                {copiedId === system.public_share_id ? (
+                                                    <>
+                                                        <Check className="w-3 h-3" />
+                                                        COPIED!
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Copy className="w-3 h-3" />
+                                                        COPY_LINK
+                                                    </>
+                                                )}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => handleShare(system.id, e)}
+                                                disabled={sharingSystemId === system.id}
+                                                className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase bg-[#F5F5F5] text-[#555] border border-[#E5E5E5] hover:bg-black hover:text-white hover:border-black transition-colors disabled:opacity-50"
+                                            >
+                                                {sharingSystemId === system.id ? (
+                                                    'SHARING...'
+                                                ) : copiedId === system.id ? (
+                                                    <>
+                                                        <Check className="w-3 h-3" />
+                                                        COPIED!
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Share2 className="w-3 h-3" />
+                                                        SHARE
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                        <ArrowRight className="w-5 h-5 text-[#999] group-hover:text-black group-hover:translate-x-1 transition-all" />
+                                    </div>
                                 </div>
                             </div>
                         ))}
