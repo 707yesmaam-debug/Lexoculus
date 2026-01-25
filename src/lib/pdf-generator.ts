@@ -18,12 +18,12 @@ export async function generatePdfBuffer(html: string): Promise<Buffer> {
         if (isProduction) {
             console.log('🚀 [PDF] Launching Serverless Chrome (Sparticuz)...');
             browser = await puppeteerCore.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
+                args: (chromium as any).args,
+                defaultViewport: (chromium as any).defaultViewport,
                 executablePath: await chromium.executablePath(),
-                headless: chromium.headless,
+                headless: (chromium as any).headless,
                 ignoreHTTPSErrors: true,
-            });
+            } as any);
         } else {
             console.log('💻 [PDF] Launching Local Chrome (Puppeteer)...');
             browser = await puppeteer.launch({
