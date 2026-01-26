@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FileText, ArrowLeft, Download, RefreshCw, CheckCircle, AlertCircle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import MarkdownEditor from '@/components/MarkdownEditor';
 
 interface Document {
     id: string;
@@ -43,6 +44,7 @@ export default function DocumentsPage() {
     const [exporting, setExporting] = useState<string | null>(null);
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [docContent, setDocContent] = useState<string>('');
+    const [openingDocId, setOpeningDocId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAiSystem();
@@ -104,16 +106,50 @@ export default function DocumentsPage() {
     };
 
     const viewDocument = async (doc: Document) => {
-        setSelectedDoc(doc);
+        setOpeningDocId(doc.id);
         try {
             const res = await fetch(`/api/documents/${doc.id}`);
             if (res.ok) {
                 const data = await res.json();
                 const content = data.content?.markdown || '';
                 setDocContent(content);
+                setSelectedDoc(doc);
             }
         } catch (error) {
             console.error('Failed to load document:', error);
+        } finally {
+            setOpeningDocId(null);
+        }
+    };
+
+    const handleSaveDocument = async (newContent: string) => {
+        if (!selectedDoc) return;
+
+        try {
+            const res = await fetch(`/api/documents/${selectedDoc.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: newContent,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                // Update local document state
+                setDocuments(docs => docs.map(d =>
+                    d.id === selectedDoc.id
+                        ? { ...d, completion_percent: data.completion_percent || d.completion_percent, status: data.status || d.status }
+                        : d
+                ));
+                setSelectedDoc(null);
+                setDocContent('');
+            } else {
+                alert('Failed to save document');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            alert('Failed to save document');
         }
     };
 
@@ -216,14 +252,18 @@ export default function DocumentsPage() {
                                                         <AlertCircle className="w-5 h-5 text-orange-500" />
                                                     )}
 
-                                                    {/* View Button */}
+                                                    {/* View/Edit Button */}
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
                                                         onClick={() => viewDocument(doc)}
+                                                        disabled={!!openingDocId}
                                                         className="border-black rounded-none font-mono text-xs"
                                                     >
-                                                        VIEW
+                                                        {openingDocId === doc.id ? (
+                                                            <RefreshCw className="w-3 h-3 animate-spin mr-1" />
+                                                        ) : null}
+                                                        OPEN
                                                     </Button>
 
                                                     {/* Export Button */}
@@ -281,62 +321,14 @@ export default function DocumentsPage() {
                 )}
             </div>
 
-            {/* Document Viewer Modal */}
+            {/* Document Editor */}
             {selectedDoc && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white border-2 border-black w-full max-w-4xl max-h-[90vh] flex flex-col">
-                        <div className="p-4 border-b-2 border-black bg-[#F5F5F5] flex items-center justify-between">
-                            <h3 className="font-serif text-xl font-bold">{selectedDoc.title}</h3>
-                            <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 font-mono text-xs ${getCompletionColor(selectedDoc.completion_percent)}`}>
-                                    {selectedDoc.completion_percent}%
-                                </span>
-                                <button
-                                    onClick={() => { setSelectedDoc(null); setDocContent(''); }}
-                                    className="text-[#999] hover:text-black text-xl"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                        <div className="flex-1 overflow-auto p-6">
-                            <div
-                                className="prose prose-sm max-w-none font-mono text-sm whitespace-pre-wrap"
-                                style={{ fontFamily: 'monospace' }}
-                            >
-                                {docContent.split(/(\{\{MISSING:[^}]+\}\})/).map((part, i) => {
-                                    if (part.startsWith('{{MISSING:')) {
-                                        return (
-                                            <span
-                                                key={i}
-                                                className="bg-orange-100 text-orange-700 px-1 rounded"
-                                            >
-                                                {part}
-                                            </span>
-                                        );
-                                    }
-                                    return <span key={i}>{part}</span>;
-                                })}
-                            </div>
-                        </div>
-                        <div className="p-4 border-t-2 border-black bg-[#F5F5F5] flex justify-end gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => { setSelectedDoc(null); setDocContent(''); }}
-                                className="border-black rounded-none font-mono text-xs"
-                            >
-                                CLOSE
-                            </Button>
-                            <Button
-                                onClick={() => exportPdf(selectedDoc.id)}
-                                disabled={exporting === selectedDoc.id}
-                                className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs"
-                            >
-                                {exporting === selectedDoc.id ? 'EXPORTING...' : 'EXPORT PDF'}
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <MarkdownEditor
+                    title={selectedDoc.title}
+                    initialContent={docContent}
+                    onSave={handleSaveDocument}
+                    onCancel={() => { setSelectedDoc(null); setDocContent(''); }}
+                />
             )}
         </div>
     );
