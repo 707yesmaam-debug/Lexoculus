@@ -60,12 +60,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         // MRR GATING: Check subscription
         const subscription = document.ai_system.user?.subscription;
-        const hasActiveSubscription = subscription?.status === 'active' ||
-            subscription?.status === 'trialing';
+        const hasActiveProSubscription = (subscription?.status === 'active' || subscription?.status === 'trialing') &&
+            subscription?.tier !== 'free';
 
-        if (!hasActiveSubscription) {
+        if (!hasActiveProSubscription) {
             return NextResponse.json(
-                { error: 'Active subscription required to export PDF' },
+                { error: 'Pro subscription required to export PDF' },
                 { status: 403 }
             );
         }

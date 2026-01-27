@@ -104,6 +104,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // MRR GATING: Check subscription
+        const subscription = await prisma.subscription.findUnique({
+            where: { user_id: user.id }
+        });
+
+        if (subscription?.tier === 'free') {
+            return NextResponse.json(
+                { error: 'Upgrade to Pro to generate compliance documents.' },
+                { status: 403 }
+            );
+        }
+
         // Check if document already exists
         const existing = await prisma.complianceDocument.findUnique({
             where: {

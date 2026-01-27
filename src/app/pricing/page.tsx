@@ -20,6 +20,8 @@ export default function PricingPage() {
     const [region, setRegion] = useState<Region>(DEFAULT_REGION);
     const [pricing, setPricing] = useState<PricingTier>(REGIONAL_PRICING[DEFAULT_REGION]);
 
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
     useEffect(() => {
         // Hydrate region from cookie or default
         const regionCookie = getCookie('pricing_region') as Region;
@@ -27,6 +29,14 @@ export default function PricingPage() {
             setRegion(regionCookie);
             setPricing(REGIONAL_PRICING[regionCookie]);
         }
+
+        // Check session
+        import('@/lib/supabase').then(({ createClient }) => {
+            const supabase = createClient();
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setIsLoggedIn(!!session);
+            });
+        });
     }, []);
 
     const handleRegionChange = (newRegion: Region) => {
@@ -59,12 +69,21 @@ export default function PricingPage() {
                                 ))}
                             </select>
                         </div>
-                        <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors ml-2 md:ml-0">
-                            Login
-                        </Link>
-                        <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">
-                            Get Started
-                        </Link>
+
+                        {isLoggedIn ? (
+                            <Link href="/dashboard" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors flex items-center gap-2">
+                                Dashboard <ArrowRight className="w-4 h-4" />
+                            </Link>
+                        ) : (
+                            <>
+                                <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors ml-2 md:ml-0">
+                                    Login
+                                </Link>
+                                <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>
