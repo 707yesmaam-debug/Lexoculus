@@ -48,9 +48,9 @@ export default function UpgradePrompt({ variant = 'banner', className = '' }: Up
                 <p className="font-serif text-sm font-bold mb-3 leading-tight">
                     Analyze private repos & generate reports.
                 </p>
-                <button disabled className="block w-full text-center bg-black text-white py-2 font-mono text-[10px] opacity-75 cursor-not-allowed">
+                <Link href="/pricing" className="block w-full text-center bg-black text-white py-2 font-mono text-[10px] hover:bg-[#FF4F00] transition-colors">
                     PRO_COMING_SOON
-                </button>
+                </Link>
             </div>
         );
     }

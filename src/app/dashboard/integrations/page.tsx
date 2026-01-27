@@ -128,9 +128,11 @@ export default function IntegrationsPage() {
                             Upgrade to activate the CI/CD defense layer.
                         </p>
                     </div>
-                    <Button className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 z-10 transition-colors">
-                        Upgrade_Account -&gt;
-                    </Button>
+                    <Link href="/pricing">
+                        <Button className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 z-10 transition-colors w-full sm:w-auto">
+                            Upgrade_Account -&gt;
+                        </Button>
+                    </Link>
                 </div>
             )}
 
