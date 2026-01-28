@@ -20,6 +20,19 @@ export default function DashboardLayout({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const repo_scan_id = params?.repo_scan_id as string | undefined;
+    const [persistentScanId, setPersistentScanId] = useState<string | null>(null);
+
+    // PERSISTENCE: Track the last active scan ID so users can return to it
+    useEffect(() => {
+        if (repo_scan_id) {
+            setPersistentScanId(repo_scan_id);
+            localStorage.setItem('last_active_scan_id', repo_scan_id);
+        } else {
+            // Try to recover from storage
+            const stored = localStorage.getItem('last_active_scan_id');
+            if (stored) setPersistentScanId(stored);
+        }
+    }, [repo_scan_id]);
 
     useEffect(() => {
         const supabase = createClient();
@@ -71,6 +84,7 @@ export default function DashboardLayout({
                 // Clear any app-specific state
                 localStorage.removeItem('github_connected');
                 localStorage.removeItem('last_repo');
+                localStorage.removeItem('last_active_scan_id'); // Clear persistent scan
             }
 
             // Force hard navigation to completely reset React state
@@ -84,6 +98,9 @@ export default function DashboardLayout({
     };
 
     // Dynamic Navigation items
+    // Use the persistent ID if the current URL param is missing
+    const activeScanId = repo_scan_id || persistentScanId;
+
     const navItems = [
         {
             name: '01_SCANNER',
@@ -94,17 +111,17 @@ export default function DashboardLayout({
         {
             name: '02_ANALYSIS',
             // Link to the current analysis if ID exists, otherwise blocked
-            href: repo_scan_id ? `/dashboard/analyzer/${repo_scan_id}` : '#',
-            status: repo_scan_id ? '[IN_PROGRESS]' : '[LOCKED]',
-            disabled: !repo_scan_id,
+            href: activeScanId ? `/dashboard/analyzer/${activeScanId}` : '#',
+            status: activeScanId ? (repo_scan_id ? '[IN_PROGRESS]' : '[RESUME]') : '[LOCKED]',
+            disabled: !activeScanId,
             // Active if we are in analyzer, risk, or context pages
             isActive: pathname.includes('/analyzer/') || pathname.includes('/risk-classifier/') || pathname.includes('/context-verifier/')
         },
         {
             name: '03_REPORTS',
-            href: repo_scan_id ? `/dashboard/report/${repo_scan_id}` : '#',
-            status: repo_scan_id ? '[AVAILABLE]' : '[LOCKED]',
-            disabled: !repo_scan_id,
+            href: '#',
+            status: '[PRO]',
+            disabled: true,
             isActive: pathname.includes('/report/')
         },
         {
