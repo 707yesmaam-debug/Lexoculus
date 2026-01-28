@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase-server';
 import { decrypt } from '@/lib/encryption';
 import { scanRepository, isTokenExpired } from '@/lib/github';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
 import prisma from '@/lib/prisma';
 
 interface ScanRequestBody {
@@ -34,10 +35,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Check rate limit
+        // Check rate limit (DDOS protection)
         const rateLimit = await checkRateLimit(user.id, 'REPO_SCAN');
         if (!rateLimit.allowed) {
             return rateLimitResponse(rateLimit.resetAt);
+        }
+
+        // FEATURE GATING & QUOTA: Check subscription limits
+        // This stops the "unlimited scan" exploit
+        const usageCheck = await checkUsageLimit(user.id, 'scan');
+        if (!usageCheck.allowed) {
+            return NextResponse.json(
+                { error: 'Limit exceeded', message: usageCheck.reason },
+                { status: 403 }
+            );
         }
 
         // Get GitHub connection
@@ -166,6 +177,9 @@ export async function POST(request: NextRequest) {
             }
         });
         console.log(`📜 [HISTORY] Added scan to history for ${systemName}`);
+
+        // QUOTA: Increment usage counter
+        await incrementUsage(user.id, 'scan');
 
         // Return success response - THIS IS THE OUTPUT FOR FEATURE 2
         return NextResponse.json({

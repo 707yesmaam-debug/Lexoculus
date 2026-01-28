@@ -105,7 +105,10 @@ export default function DashboardLayout({
         {
             name: '01_SCANNER',
             href: '/dashboard/scanner',
-            status: '[START]',
+            // LOCKING: If a scan is active, prevent going back to scanner to start a new one
+            // This forces the user to complete the lifecycle or terminate explicitly
+            status: activeScanId ? '[LOCKED]' : '[START]',
+            disabled: !!activeScanId,
             isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard/free-scanner' || pathname === '/dashboard'
         },
         {
@@ -127,7 +130,9 @@ export default function DashboardLayout({
         {
             name: '04_REGISTRY',
             href: '/dashboard/registry',
-            status: '[VIEW]',
+            // LOCKING: Force focus on active scan
+            status: activeScanId ? '[LOCKED]' : '[VIEW]',
+            disabled: !!activeScanId,
             isActive: pathname === '/dashboard/registry'
         },
         {
@@ -207,6 +212,24 @@ export default function DashboardLayout({
                                 <span className="text-[#FF4F00]">SECURE</span>
                             </div>
                         </div>
+                        {activeScanId && (
+                            <div className="mb-4">
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('WARNING: Aborting this scan will not refund your scan credit. Are you sure you want to proceed?')) {
+                                            localStorage.removeItem('last_active_scan_id');
+                                            window.location.href = '/dashboard/scanner';
+                                        }
+                                    }}
+                                    className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors text-center mb-1"
+                                >
+                                    ABORT_SCAN
+                                </button>
+                                <div className="text-[10px] text-red-600 font-mono text-center leading-tight">
+                                    [!] CREDIT_WILL_BE_LOST
+                                </div>
+                            </div>
+                        )}
                         <button
                             onClick={handleLogout}
                             className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
