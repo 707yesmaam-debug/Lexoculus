@@ -258,11 +258,15 @@ export default function ContextVerifierPage() {
                             </div>
                             {finalAssessment.approved_for_report && (
                                 <button
-                                    onClick={() => router.push(`/dashboard/report/${repo_scan_id}`)}
+                                    onClick={() => {
+                                        // CLEAR ACTIVE SCAN STATE to unlock sidebar
+                                        localStorage.removeItem('last_active_scan_id');
+                                        router.push('/dashboard/registry');
+                                    }}
                                     className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white font-mono text-xs uppercase tracking-widest transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                                 >
-                                    <FileText className="w-4 h-4" />
-                                    Generate_Report
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    COMPLETE_ANALYSIS
                                     <ArrowRight className="w-4 h-4" />
                                 </button>
                             )}
