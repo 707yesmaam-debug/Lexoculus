@@ -30,7 +30,7 @@ export default function DashboardLayout({
         } else {
             // Try to recover from storage
             const stored = localStorage.getItem('last_active_scan_id');
-            if (stored) setPersistentScanId(stored);
+            setPersistentScanId(stored);
         }
     }, [repo_scan_id]);
 
