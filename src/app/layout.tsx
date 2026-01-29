@@ -21,7 +21,19 @@ export const metadata: Metadata = {
   title: "LexOculus | AI Compliance",
   description: "The optical engine for code compliance. Automated EU AI Act audit.",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    other: [
+      {
+        rel: "mask-icon",
+        url: "/favicon.svg",
+        color: "#FF4F00", // LexOculus Brand Orange
+      },
+    ],
   },
 };
 
