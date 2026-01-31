@@ -61,8 +61,11 @@ export default function DashboardLayout({
     }, [router]);
 
     const handleLogout = async () => {
-        // Clear client-side storage immediately for fast UX
         try {
+            // MUST await server-side logout to clear HttpOnly cookies
+            // Otherwise middleware will still see the session as valid
+            await fetch('/api/auth/logout', { method: 'POST' });
+
             // Clear all Supabase auth keys from localStorage
             const keysToRemove: string[] = [];
             for (let i = 0; i < localStorage.length; i++) {
@@ -80,14 +83,11 @@ export default function DashboardLayout({
             localStorage.removeItem('github_connected');
             localStorage.removeItem('last_repo');
             localStorage.removeItem('last_active_scan_id');
-        } catch (e) {
-            // Ignore storage errors
+        } catch (error) {
+            console.error('Logout failed:', error);
         }
 
-        // Fire-and-forget server logout (non-blocking for faster redirect)
-        fetch('/api/auth/logout', { method: 'POST' }).catch(() => { });
-
-        // Redirect to landing page immediately
+        // Redirect to landing page
         window.location.href = '/';
     };
 
