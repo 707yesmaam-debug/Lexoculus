@@ -19,7 +19,10 @@ const spaceMono = Space_Mono({
 
 export const metadata: Metadata = {
   title: "LexOculus | AI Compliance",
-  description: "The optical engine for code compliance. Automated EU AI Act audit.",
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
 };
 
 export default function RootLayout({
