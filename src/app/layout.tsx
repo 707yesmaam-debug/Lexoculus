@@ -20,7 +20,7 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: "LexOculus | AI Compliance",
   icons: {
-    icon: '/icon',
+    icon: '/favicon.ico',
     apple: '/apple-icon',
   },
 };
