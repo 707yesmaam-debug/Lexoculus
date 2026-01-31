@@ -51,7 +51,7 @@ export default function DashboardLayout({
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
-                router.push('/auth/login');
+                router.push('/');
             } else if (session) {
                 setEmail(session.user.email || null);
             }
@@ -61,40 +61,34 @@ export default function DashboardLayout({
     }, [router]);
 
     const handleLogout = async () => {
+        // Clear client-side storage immediately for fast UX
         try {
-            // Call server-side logout to clear HttpOnly cookies
-            const response = await fetch('/api/auth/logout', { method: 'POST' });
-            const data = await response.json();
-
-            // Clear ALL client-side storage to prevent any session leakage
-            if (data.clearStorage || true) {
-                // Clear all Supabase auth keys from localStorage
-                const keysToRemove: string[] = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
-                        keysToRemove.push(key);
-                    }
+            // Clear all Supabase auth keys from localStorage
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('sb-') || key.includes('supabase'))) {
+                    keysToRemove.push(key);
                 }
-                keysToRemove.forEach(key => localStorage.removeItem(key));
-
-                // Clear sessionStorage as well
-                sessionStorage.clear();
-
-                // Clear any app-specific state
-                localStorage.removeItem('github_connected');
-                localStorage.removeItem('last_repo');
-                localStorage.removeItem('last_active_scan_id'); // Clear persistent scan
             }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
 
-            // Force hard navigation to completely reset React state
-            // Using window.location instead of router.push to ensure full page reload
-            window.location.href = '/auth/login';
-        } catch (error) {
-            console.error('Logout failed:', error);
-            // Even on error, try to redirect
-            window.location.href = '/auth/login';
+            // Clear sessionStorage as well
+            sessionStorage.clear();
+
+            // Clear any app-specific state
+            localStorage.removeItem('github_connected');
+            localStorage.removeItem('last_repo');
+            localStorage.removeItem('last_active_scan_id');
+        } catch (e) {
+            // Ignore storage errors
         }
+
+        // Fire-and-forget server logout (non-blocking for faster redirect)
+        fetch('/api/auth/logout', { method: 'POST' }).catch(() => { });
+
+        // Redirect to landing page immediately
+        window.location.href = '/';
     };
 
     // Dynamic Navigation items
