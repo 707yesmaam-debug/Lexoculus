@@ -201,7 +201,13 @@ export async function getOrCreateSubscription(userId: string, email?: string, fu
 export async function getUsageStatus(userId: string, email?: string): Promise<UsageStatus> {
     const subscription = await getOrCreateSubscription(userId, email);
     const tier = subscription.tier as SubscriptionTier;
-    const limits = TIER_LIMITS[tier];
+    const limits = { ...TIER_LIMITS[tier] };
+
+    // Override limits with actual DB values (handles manual grants/overrides)
+    limits.repos_limit = subscription.repos_limit;
+    limits.scans_limit = subscription.scans_limit;
+    limits.pr_scans_limit = subscription.pr_scans_limit;
+    limits.reports_limit = subscription.reports_limit;
 
     // Check if usage needs reset (monthly)
     const now = new Date();
