@@ -3,9 +3,14 @@
  * 
  * Uses Groq's fast inference API with Llama-3 or Mixtral models
  * Free tier: https://console.groq.com/
+ * 
+ * HYBRID APPROACH:
+ * 1. Deterministic scanner runs FIRST to detect verified libraries
+ * 2. LLM focuses on PURPOSE/CONTEXT only (not library guessing)
  */
 
 import { RepoScan } from '@prisma/client';
+import { scanDependencies, DependencyScanResult, getScanSummary } from './dependency-scanner';
 
 // Types for analysis results
 export interface AnalysisResult {
@@ -56,6 +61,7 @@ const DEFAULT_RISK_INDICATORS = {
 
 /**
  * Build the analysis prompt from repository scan data
+ * @deprecated Use buildEnhancedPrompt with scanner results instead
  */
 function buildPrompt(repoScan: RepoScan): string {
     const fileTreeStr = repoScan.file_tree
@@ -111,6 +117,89 @@ Based on this information, analyze and respond with ONLY valid JSON (no markdown
     "high_impact_decision_making": boolean
   },
   "reasoning": "Brief explanation of your analysis"
+}`;
+}
+
+/**
+ * Build enhanced prompt with VERIFIED scanner data
+ * The LLM focuses on PURPOSE/CONTEXT, not library detection (already done)
+ */
+function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResult): string {
+    // Prepare verified data from scanner
+    const verifiedLibraries = scanResult.detected_libraries.map(l => l.library.name);
+    const verifiedCategories = scanResult.detected_categories;
+    const verifiedFrameworks = scanResult.frameworks;
+    const highRiskLibs = scanResult.high_risk_libraries;
+    const modelFiles = scanResult.detected_model_files.slice(0, 10); // Limit
+
+    // Risk indicators already computed by scanner
+    const riskFlags = Object.entries(scanResult.risk_indicators)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
+
+    return `You are an expert EU AI Act compliance analyst. Analyze the PURPOSE and CONTEXT of this repository.
+
+IMPORTANT: Library detection has ALREADY been done by our scanner. Do NOT guess libraries.
+Focus on: HOW are these AI capabilities being used? WHAT is the intended purpose?
+
+=== REPOSITORY INFO ===
+Name: ${repoScan.repo_name}
+Owner: ${repoScan.repo_owner}
+Language: ${repoScan.primary_language || 'Unknown'}
+
+=== VERIFIED AI LIBRARIES (scanner-confirmed) ===
+${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None detected'}
+
+=== DETECTED FRAMEWORKS ===
+${verifiedFrameworks.length > 0 ? verifiedFrameworks.join(', ') : 'None'}
+
+=== DETECTED CATEGORIES ===
+${verifiedCategories.length > 0 ? verifiedCategories.join(', ') : 'None'}
+
+=== HIGH-RISK LIBRARIES ⚠️ ===
+${highRiskLibs.length > 0 ? highRiskLibs.join(', ') : 'None'}
+
+=== MODEL FILES FOUND ===
+${modelFiles.length > 0 ? modelFiles.join(', ') : 'None'}
+
+=== SCANNER RISK FLAGS ===
+${riskFlags.length > 0 ? riskFlags.join(', ') : 'None'}
+
+=== README (for context) ===
+${(repoScan.readme_content || 'N/A').slice(0, 2500)}
+
+=== YOUR TASK ===
+Based on the VERIFIED libraries above, determine:
+1. What is this AI system's PURPOSE? (e.g., face recognition for security, chatbot for support)
+2. Is this for training, inference, or both?
+3. Does the README reveal any high-risk use cases (biometrics, critical infrastructure, etc.)?
+4. What model types are likely being used?
+
+Respond with ONLY valid JSON:
+{
+  "is_ai_system": ${scanResult.is_ai_system},
+  "capabilities": ["list capabilities like 'Face Recognition', 'Text Generation', 'Object Detection'"],
+  "libraries": ${JSON.stringify(verifiedLibraries)},
+  "ai_frameworks": ${JSON.stringify(verifiedFrameworks)},
+  "programming_languages": ["${repoScan.primary_language || 'Unknown'}"],
+  "detected_model_types": ["infer from libraries: 'Neural Network', 'Transformer', 'CNN', etc."],
+  "has_ml_pipeline": boolean,
+  "has_training_code": boolean,
+  "has_inference_code": boolean,
+  "has_data_processing": boolean,
+  "has_model_serialization": ${modelFiles.length > 0},
+  "estimated_risk_indicators": {
+    "uses_computer_vision": ${scanResult.risk_indicators.uses_computer_vision},
+    "uses_biometric_processing": ${scanResult.risk_indicators.uses_biometric_processing},
+    "uses_emotion_recognition": ${scanResult.risk_indicators.uses_emotion_recognition},
+    "uses_critical_infrastructure": boolean (infer from README context),
+    "uses_generative_ai": ${scanResult.risk_indicators.uses_generative_ai},
+    "uses_nlp": ${scanResult.risk_indicators.uses_nlp},
+    "uses_nlp_decision_making": boolean (infer from README context),
+    "targets_vulnerable_persons": boolean (infer from README context),
+    "high_impact_decision_making": boolean (infer from README context)
+  },
+  "reasoning": "Brief explanation focusing on PURPOSE and USE CASE"
 }`;
 }
 
@@ -200,7 +289,40 @@ function calculateConfidence(analysis: AnalysisResult, repoScan: RepoScan): numb
 }
 
 /**
+ * Enhanced confidence calculation using scanner data
+ */
+function calculateEnhancedConfidence(
+    analysis: AnalysisResult,
+    repoScan: RepoScan,
+    scanResult: DependencyScanResult
+): number {
+    // Start with scanner confidence (already computed)
+    let score = scanResult.confidence_score;
+
+    // Has README → more context available
+    if (repoScan.readme_content && repoScan.readme_content.length > 100) {
+        score += 0.1;
+    }
+
+    // LLM reasoning quality
+    if (analysis.reasoning && analysis.reasoning.length > 50) {
+        score += 0.05;
+    }
+
+    // High-risk libraries = higher confidence in classification
+    if (scanResult.high_risk_libraries.length > 0) {
+        score += 0.1;
+    }
+
+    return Math.min(score, 1.0);
+}
+
+/**
  * Main analysis function - calls Groq API
+ * 
+ * HYBRID APPROACH:
+ * 1. Runs deterministic scanner FIRST for verified library detection
+ * 2. LLM focuses on PURPOSE/CONTEXT only (not library guessing)
  */
 export async function analyzeRepository(repoScan: RepoScan): Promise<GroqResponse> {
     const apiKey = process.env.GROQ_API_KEY;
@@ -208,13 +330,21 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
         throw new Error('GROQ_API_KEY environment variable is not set');
     }
 
-    // Updated model: llama-3.3-70b-versatile is currently available on Groq
+    // STEP 1: Run deterministic scanner FIRST (mandatory, ~10ms)
+    console.log(`🔍 [SCANNER] Running deterministic dependency scan...`);
+    const scanResult = scanDependencies(repoScan);
+    console.log(`✅ [SCANNER] Completed in ${scanResult.scan_duration_ms}ms`);
+    console.log(`   Detected ${scanResult.detected_libraries.length} AI libraries`);
+    console.log(`   AI System: ${scanResult.is_ai_system}`);
+    console.log(`   High-risk: ${scanResult.high_risk_libraries.length > 0 ? scanResult.high_risk_libraries.join(', ') : 'None'}`);
+
+    // STEP 2: Build enhanced prompt with VERIFIED scanner data
     const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-    const prompt = buildPrompt(repoScan);
+    const prompt = buildEnhancedPrompt(repoScan, scanResult);
 
     const startTime = Date.now();
 
-    console.log(`🤖 [GROQ] Calling Groq API...`);
+    console.log(`🤖 [GROQ] Calling Groq API for PURPOSE/CONTEXT analysis...`);
     console.log(`   Model: ${model}`);
     console.log(`   Repo: ${repoScan.repo_owner}/${repoScan.repo_name}`);
 
@@ -258,11 +388,14 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
         }
 
         const analysis = parseAndValidateResponse(content);
-        const confidence_score = calculateConfidence(analysis, repoScan);
+
+        // Use enhanced confidence that incorporates scanner data
+        const confidence_score = calculateEnhancedConfidence(analysis, repoScan, scanResult);
 
         console.log(`   AI System: ${analysis.is_ai_system}`);
         console.log(`   Capabilities: ${analysis.capabilities.length} found`);
         console.log(`   Confidence: ${(confidence_score * 100).toFixed(0)}%`);
+        console.log(`   Scanner contribution: ${scanResult.detected_libraries.length} verified libraries`);
 
         return {
             analysis,
