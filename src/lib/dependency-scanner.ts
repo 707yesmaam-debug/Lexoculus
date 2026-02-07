@@ -35,6 +35,36 @@ export interface DetectedLibrary {
 
     /** Version if detected */
     version?: string;
+
+    /** Detection layer (1 = known DB, 2 = pattern, 3 = LLM) */
+    detection_layer: 1 | 2 | 3;
+}
+
+/**
+ * Candidate AI library detected by pattern matching (Layer 2)
+ * Not in our database but has AI-related naming patterns
+ */
+export interface CandidateLibrary {
+    /** Package name */
+    name: string;
+
+    /** Where it was found */
+    source: DetectedLibrary['source'];
+
+    /** Version if detected */
+    version?: string;
+
+    /** Pattern that matched */
+    matched_pattern: string;
+
+    /** Confidence based on pattern strength (0.5-0.8) */
+    pattern_confidence: number;
+
+    /** Inferred category from pattern */
+    inferred_category?: AICategory;
+
+    /** Inferred risk indicator */
+    inferred_risk?: RiskIndicatorKey;
 }
 
 export interface RiskIndicators {
@@ -50,8 +80,11 @@ export interface RiskIndicators {
 }
 
 export interface DependencyScanResult {
-    /** All detected AI/ML libraries */
+    /** All detected AI/ML libraries (Layer 1: known database) */
     detected_libraries: DetectedLibrary[];
+
+    /** Candidate AI libraries (Layer 2: pattern matching) */
+    candidate_libraries: CandidateLibrary[];
 
     /** Model files found in file tree */
     detected_model_files: string[];
@@ -80,11 +113,153 @@ export interface DependencyScanResult {
     /** Scan metadata */
     scan_duration_ms: number;
     libraries_checked: number;
+
+    /** All packages found (for LLM Layer 3) */
+    all_packages: string[];
 }
 
 // =============================================================================
-// PARSING FUNCTIONS
+// LAYER 2: AI PATTERN DETECTION
 // =============================================================================
+
+/**
+ * Patterns that strongly indicate AI/ML libraries
+ * Order matters - more specific patterns first
+ */
+const AI_PATTERNS: {
+    pattern: RegExp;
+    name: string;
+    confidence: number;
+    category?: AICategory;
+    risk?: RiskIndicatorKey;
+}[] = [
+        // LLM and Generative AI
+        { pattern: /\b(llm|llama|gpt|claude|gemini|mistral|ollama|openai|anthropic)\b/i, name: 'llm', confidence: 0.85, category: 'generative_ai', risk: 'uses_generative_ai' },
+        { pattern: /-llm|-gpt|-ai$/i, name: 'llm-suffix', confidence: 0.8, category: 'generative_ai', risk: 'uses_generative_ai' },
+        { pattern: /^(langchain|llama[-_]?index|autogen|crewai|phidata)/i, name: 'agent-framework', confidence: 0.9, category: 'generative_ai', risk: 'uses_generative_ai' },
+
+        // Agent frameworks
+        { pattern: /[-_](agent|agents)$|^agent[-_]|[-_]agent[-_]/i, name: 'agent', confidence: 0.75, category: 'generative_ai', risk: 'uses_generative_ai' },
+
+        // ML/AI suffixes and prefixes
+        { pattern: /[-_](ml|ai|nn|dnn)$|^(ml|ai)[-_]/i, name: 'ml-suffix', confidence: 0.7, category: 'mlops' },
+        { pattern: /[-_](neural|network|model|predict)/i, name: 'neural', confidence: 0.7, category: 'deep_learning' },
+
+        // Deep Learning
+        { pattern: /\b(torch|pytorch|tensorflow|keras|jax|flax|mxnet|caffe|paddle)\b/i, name: 'deep-learning', confidence: 0.95, category: 'deep_learning' },
+        { pattern: /[-_](transformer|bert|embedding|encoder|decoder)/i, name: 'transformer', confidence: 0.8, category: 'nlp', risk: 'uses_nlp' },
+
+        // Computer Vision
+        { pattern: /\b(opencv|pillow|cv2|vision|image[-_]?net|yolo|detectron)\b/i, name: 'cv', confidence: 0.85, category: 'computer_vision', risk: 'uses_computer_vision' },
+        { pattern: /[-_](vision|image|video|camera|ocr|face)[-_]/i, name: 'cv-related', confidence: 0.7, category: 'computer_vision', risk: 'uses_computer_vision' },
+
+        // NLP
+        { pattern: /\b(nltk|spacy|huggingface|tokenizers?|sentiment|ner)\b/i, name: 'nlp', confidence: 0.85, category: 'nlp', risk: 'uses_nlp' },
+        { pattern: /[-_](nlp|text|language|chat|speech|tts|stt|whisper)/i, name: 'nlp-related', confidence: 0.7, category: 'nlp', risk: 'uses_nlp' },
+
+        // Cloud AI Services (using generative_ai since cloud_ai isn't in AICategory)
+        { pattern: /@aws-sdk\/client-(bedrock|sagemaker|rekognition|comprehend|polly|transcribe)/i, name: 'aws-ai', confidence: 0.9, category: 'generative_ai', risk: 'uses_generative_ai' },
+        { pattern: /@azure\/(openai|cognitiveservices|ai)/i, name: 'azure-ai', confidence: 0.9, category: 'generative_ai', risk: 'uses_generative_ai' },
+        { pattern: /@google-cloud\/(aiplatform|vision|language|speech|translate)/i, name: 'gcp-ai', confidence: 0.9, category: 'generative_ai', risk: 'uses_generative_ai' },
+
+        // Vector/Embedding stores
+        { pattern: /\b(pinecone|weaviate|qdrant|milvus|chroma|faiss|annoy|pgvector)\b/i, name: 'vector-db', confidence: 0.85, category: 'data_processing', risk: 'uses_generative_ai' },
+        { pattern: /[-_](embedding|vector[-_]?store|semantic)/i, name: 'embedding', confidence: 0.75, category: 'data_processing' },
+
+        // Biometrics (high-risk)
+        { pattern: /\b(face[-_]?recognition|deepface|insightface|dlib|biometric)/i, name: 'biometrics', confidence: 0.95, category: 'biometrics', risk: 'uses_biometric_processing' },
+        { pattern: /[-_](face|fingerprint|iris|voice[-_]?id)/i, name: 'bio-related', confidence: 0.7, category: 'biometrics', risk: 'uses_biometric_processing' },
+
+        // Audio/Speech
+        { pattern: /\b(elevenlabs|bark|coqui|pyttsx|resemble|playht)\b/i, name: 'tts', confidence: 0.85, category: 'nlp', risk: 'uses_nlp' },
+
+        // Reinforcement Learning
+        { pattern: /\b(gym|stable[-_]?baselines|ray[-_]?rllib|tianshou)\b/i, name: 'rl', confidence: 0.9, category: 'reinforcement_learning' },
+
+        // Data Science (lower confidence - might not be AI)
+        { pattern: /\b(numpy|pandas|scipy|sklearn|scikit[-_]?learn)\b/i, name: 'data-science', confidence: 0.75, category: 'data_processing' },
+        { pattern: /\b(matplotlib|seaborn|plotly)\b/i, name: 'visualization', confidence: 0.5, category: 'data_processing' },
+    ];
+
+/**
+ * Known AI library namespace prefixes
+ */
+const AI_NAMESPACE_PREFIXES = [
+    '@huggingface/',
+    '@tensorflow/',
+    '@langchain/',
+    '@llamaindex/',
+    '@openai/',
+    '@anthropic/',
+    '@google-ai/',
+    '@mariozechner/pi-', // OpenClaw's AI lib
+];
+
+/**
+ * Check if package name matches AI patterns (Layer 2)
+ */
+export function matchAIPatterns(packageName: string): CandidateLibrary | null {
+    // First check namespace prefixes
+    for (const prefix of AI_NAMESPACE_PREFIXES) {
+        if (packageName.startsWith(prefix)) {
+            return {
+                name: packageName,
+                source: 'package.json',
+                matched_pattern: `namespace:${prefix}`,
+                pattern_confidence: 0.85,
+                inferred_category: 'generative_ai',
+                inferred_risk: 'uses_generative_ai',
+            };
+        }
+    }
+
+    // Then check regex patterns
+    for (const { pattern, name, confidence, category, risk } of AI_PATTERNS) {
+        if (pattern.test(packageName)) {
+            return {
+                name: packageName,
+                source: 'package.json',
+                matched_pattern: name,
+                pattern_confidence: confidence,
+                inferred_category: category,
+                inferred_risk: risk,
+            };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Detect candidate AI libraries from all packages (Layer 2)
+ */
+function detectCandidateLibraries(
+    packages: { name: string; version?: string }[],
+    source: DetectedLibrary['source'],
+    knownLibraryNames: Set<string>
+): CandidateLibrary[] {
+    const candidates: CandidateLibrary[] = [];
+
+    for (const pkg of packages) {
+        // Skip if already matched in Layer 1 (known database)
+        if (knownLibraryNames.has(pkg.name.toLowerCase())) {
+            continue;
+        }
+
+        const candidate = matchAIPatterns(pkg.name);
+        if (candidate) {
+            candidates.push({
+                ...candidate,
+                source,
+                version: pkg.version,
+            });
+        }
+    }
+
+    return candidates;
+}
+
+
 
 /**
  * Parse requirements.txt format
@@ -418,7 +593,7 @@ function findModelFiles(fileTree: unknown): string[] {
 }
 
 /**
- * Match detected packages against AI library database
+ * Match detected packages against AI library database (Layer 1)
  */
 function matchLibraries(
     packages: { name: string; version?: string }[],
@@ -435,6 +610,7 @@ function matchLibraries(
                 source,
                 matched_string: pkg.name,
                 version: pkg.version,
+                detection_layer: 1, // Layer 1: Known database match
             });
         }
     }
@@ -531,23 +707,35 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
     const startTime = Date.now();
 
     const detectedLibraries: DetectedLibrary[] = [];
+    const candidateLibraries: CandidateLibrary[] = [];
     const sampledImports: string[] = [];
+    const allPackages: { name: string; version?: string; source: DetectedLibrary['source'] }[] = [];
+
+    // Helper to collect all packages for Layer 3 LLM fallback
+    const collectPackages = (pkgs: { name: string; version?: string }[], source: DetectedLibrary['source']) => {
+        for (const pkg of pkgs) {
+            allPackages.push({ ...pkg, source });
+        }
+    };
 
     // Parse requirements.txt
     if (repoScan.requirements_txt_content) {
         const pkgs = parseRequirementsTxt(repoScan.requirements_txt_content);
+        collectPackages(pkgs, 'requirements.txt');
         detectedLibraries.push(...matchLibraries(pkgs, 'requirements.txt'));
     }
 
     // Parse package.json
     if (repoScan.package_json_content) {
         const pkgs = parsePackageJson(repoScan.package_json_content);
+        collectPackages(pkgs, 'package.json');
         detectedLibraries.push(...matchLibraries(pkgs, 'package.json'));
     }
 
     // Parse pyproject.toml
     if (repoScan.pyproject_toml_content) {
         const pkgs = parsePyprojectToml(repoScan.pyproject_toml_content);
+        collectPackages(pkgs, 'pyproject.toml');
         detectedLibraries.push(...matchLibraries(pkgs, 'pyproject.toml'));
     }
 
@@ -563,26 +751,31 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
 
     if (extendedScan.setup_py_content) {
         const pkgs = parseSetupPy(extendedScan.setup_py_content);
+        collectPackages(pkgs, 'setup.py');
         detectedLibraries.push(...matchLibraries(pkgs, 'setup.py'));
     }
 
     if (extendedScan.pipfile_content) {
         const pkgs = parsePipfile(extendedScan.pipfile_content);
+        collectPackages(pkgs, 'pipfile');
         detectedLibraries.push(...matchLibraries(pkgs, 'pipfile'));
     }
 
     if (extendedScan.environment_yml_content) {
         const pkgs = parseEnvironmentYml(extendedScan.environment_yml_content);
+        collectPackages(pkgs, 'environment.yml');
         detectedLibraries.push(...matchLibraries(pkgs, 'environment.yml'));
     }
 
     if (extendedScan.cargo_toml_content) {
         const pkgs = parseCargoToml(extendedScan.cargo_toml_content);
+        collectPackages(pkgs, 'cargo.toml');
         detectedLibraries.push(...matchLibraries(pkgs, 'cargo.toml'));
     }
 
     if (extendedScan.go_mod_content) {
         const pkgs = parseGoMod(extendedScan.go_mod_content);
+        collectPackages(pkgs, 'go.mod');
         detectedLibraries.push(...matchLibraries(pkgs, 'go.mod'));
     }
 
@@ -604,14 +797,55 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
     }
     const finalLibraries = Array.from(uniqueLibraries.values());
 
-    // Aggregate results
+    // =================================================================
+    // LAYER 2: Pattern matching for unknown packages
+    // =================================================================
+    const knownLibNames = new Set(finalLibraries.map(l => l.library.name.toLowerCase()));
+
+    // Group all packages by source for Layer 2 detection
+    const packagesBySource = new Map<DetectedLibrary['source'], { name: string; version?: string }[]>();
+    for (const pkg of allPackages) {
+        if (!packagesBySource.has(pkg.source)) {
+            packagesBySource.set(pkg.source, []);
+        }
+        packagesBySource.get(pkg.source)!.push({ name: pkg.name, version: pkg.version });
+    }
+
+    // Run Layer 2 pattern detection on each source
+    for (const [source, pkgs] of packagesBySource) {
+        const candidates = detectCandidateLibraries(pkgs, source, knownLibNames);
+        candidateLibraries.push(...candidates);
+    }
+
+    // Deduplicate candidates
+    const uniqueCandidates = new Map<string, CandidateLibrary>();
+    for (const cand of candidateLibraries) {
+        const key = cand.name.toLowerCase();
+        if (!uniqueCandidates.has(key)) {
+            uniqueCandidates.set(key, cand);
+        }
+    }
+    const finalCandidates = Array.from(uniqueCandidates.values());
+
+    // Aggregate results (include candidate risk indicators)
     const riskIndicators = aggregateRiskIndicators(finalLibraries);
+
+    // Add candidate risk indicators
+    for (const cand of finalCandidates) {
+        if (cand.inferred_risk) {
+            const key = cand.inferred_risk as keyof RiskIndicators;
+            if (key in riskIndicators) {
+                riskIndicators[key] = true;
+            }
+        }
+    }
+
     const confidence = calculateConfidence(finalLibraries, modelFiles, sampledImports);
 
-    // Determine if this is an AI system
-    const isAISystem = finalLibraries.length > 0 || modelFiles.length > 0;
+    // Determine if this is an AI system (now includes Layer 2 candidates)
+    const isAISystem = finalLibraries.length > 0 || finalCandidates.length > 0 || modelFiles.length > 0;
 
-    // Extract unique categories
+    // Extract unique categories (include candidate categories)
     const categories = new Set<AICategory>();
     for (const lib of finalLibraries) {
         categories.add(lib.library.category);
@@ -619,6 +853,11 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
             for (const cat of lib.library.secondary_categories) {
                 categories.add(cat);
             }
+        }
+    }
+    for (const cand of finalCandidates) {
+        if (cand.inferred_category) {
+            categories.add(cand.inferred_category);
         }
     }
 
@@ -639,6 +878,7 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
 
     return {
         detected_libraries: finalLibraries,
+        candidate_libraries: finalCandidates,
         detected_model_files: modelFiles,
         sampled_imports: sampledImports,
         is_ai_system: isAISystem,
@@ -649,6 +889,7 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
         high_risk_libraries: highRiskLibs,
         scan_duration_ms: Date.now() - startTime,
         libraries_checked: LIBRARY_STATS.total,
+        all_packages: allPackages.map(p => p.name),
     };
 }
 

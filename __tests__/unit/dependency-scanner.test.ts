@@ -246,3 +246,111 @@ describe('Scan Summary', () => {
         expect(summary).toContain('No AI/ML libraries detected');
     });
 });
+
+describe('Layer 2: Pattern Matching', () => {
+    test('should detect LLM-related packages by pattern', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    'custom-llm-client': '^1.0.0',
+                    'my-gpt-wrapper': '^2.0.0',
+                    'express': '^4.18.0'
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        // These are not in our database but should be detected by pattern
+        expect(result.candidate_libraries.some(c => c.name === 'custom-llm-client')).toBe(true);
+        expect(result.candidate_libraries.some(c => c.name === 'my-gpt-wrapper')).toBe(true);
+    });
+
+    test('should detect agent frameworks by pattern', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    '@mariozechner/pi-ai': '^0.52.7',
+                    '@mariozechner/pi-agent-core': '^0.52.7',
+                    'express': '^4.18.0'
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.is_ai_system).toBe(true);
+        expect(result.candidate_libraries.some(c => c.name.includes('pi-ai'))).toBe(true);
+        expect(result.candidate_libraries.some(c => c.name.includes('agent'))).toBe(true);
+    });
+
+    test('should detect AWS AI services by pattern', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    '@aws-sdk/client-bedrock': '^3.0.0',
+                    '@aws-sdk/client-s3': '^3.0.0'
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        // Bedrock is AI, S3 is not
+        expect(result.candidate_libraries.some(c => c.name === '@aws-sdk/client-bedrock')).toBe(true);
+        expect(result.candidate_libraries.some(c => c.name === '@aws-sdk/client-s3')).toBe(false);
+    });
+
+    test('should detect HuggingFace namespace packages', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    '@huggingface/inference': '^2.0.0',
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.candidate_libraries.some(c => c.name === '@huggingface/inference')).toBe(true);
+    });
+
+    test('should not duplicate Layer 1 libraries in Layer 2', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    'ollama': '^1.0.0', // Known in database (Layer 1)
+                    'my-llm-helper': '^1.0.0', // Pattern matched (Layer 2) - ends with -llm
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        // ollama should be in detected_libraries (Layer 1), not candidate_libraries
+        expect(result.detected_libraries.some(l => l.library.name === 'ollama')).toBe(true);
+        expect(result.candidate_libraries.some(c => c.name === 'ollama')).toBe(false);
+
+        // my-llm-helper should be in candidate_libraries (Layer 2) - has 'llm' in name
+        expect(result.candidate_libraries.some(c => c.name === 'my-llm-helper')).toBe(true);
+    });
+
+    test('should track all packages for Layer 3 LLM review', () => {
+        const scan = createMockRepoScan({
+            package_json_content: {
+                dependencies: {
+                    'express': '^4.18.0',
+                    'lodash': '^4.17.0',
+                    'random-package': '^1.0.0'
+                }
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        // All packages should be in all_packages for LLM to review
+        expect(result.all_packages).toContain('express');
+        expect(result.all_packages).toContain('lodash');
+        expect(result.all_packages).toContain('random-package');
+    });
+});

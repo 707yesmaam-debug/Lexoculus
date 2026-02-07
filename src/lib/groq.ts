@@ -121,34 +121,53 @@ Based on this information, analyze and respond with ONLY valid JSON (no markdown
 }
 
 /**
- * Build enhanced prompt with VERIFIED scanner data
- * The LLM focuses on PURPOSE/CONTEXT, not library detection (already done)
+ * Build enhanced prompt with VERIFIED scanner data + CANDIDATE libraries
+ * 3-Layer approach:
+ *   Layer 1: Known database matches (highest confidence)
+ *   Layer 2: Pattern-matched candidates (medium confidence)
+ *   Layer 3: LLM can supplement/validate (lower confidence)
  */
 function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResult): string {
-    // Prepare verified data from scanner
+    // Layer 1: Verified libraries from known database
     const verifiedLibraries = scanResult.detected_libraries.map(l => l.library.name);
     const verifiedCategories = scanResult.detected_categories;
     const verifiedFrameworks = scanResult.frameworks;
     const highRiskLibs = scanResult.high_risk_libraries;
     const modelFiles = scanResult.detected_model_files.slice(0, 10); // Limit
 
+    // Layer 2: Pattern-matched candidates
+    const candidateLibraries = scanResult.candidate_libraries.map(c => ({
+        name: c.name,
+        pattern: c.matched_pattern,
+        confidence: c.pattern_confidence,
+        category: c.inferred_category || 'unknown',
+    }));
+
+    // All packages (for Layer 3 LLM review)
+    const allPackages = scanResult.all_packages.slice(0, 100); // Limit for prompt size
+
     // Risk indicators already computed by scanner
     const riskFlags = Object.entries(scanResult.risk_indicators)
         .filter(([, v]) => v)
         .map(([k]) => k);
 
+    // Combine verified + high-confidence candidates for the library list
+    const allConfirmedLibs = [
+        ...verifiedLibraries,
+        ...candidateLibraries.filter(c => c.confidence >= 0.8).map(c => c.name),
+    ];
+
     return `You are an expert EU AI Act compliance analyst. Analyze the PURPOSE and CONTEXT of this repository.
 
-IMPORTANT: Library detection has ALREADY been done by our scanner. Do NOT guess libraries.
-Focus on: HOW are these AI capabilities being used? WHAT is the intended purpose?
+=== 3-LAYER LIBRARY DETECTION SYSTEM ===
+Layer 1 (VERIFIED - from known database): ${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None'}
+Layer 2 (CANDIDATES - pattern-matched): ${candidateLibraries.length > 0 ? candidateLibraries.map(c => `${c.name} (${c.pattern})`).join(', ') : 'None'}
+Layer 3 (YOUR TASK): Review ALL packages and ADD any AI/ML libraries not detected above.
 
 === REPOSITORY INFO ===
 Name: ${repoScan.repo_name}
 Owner: ${repoScan.repo_owner}
 Language: ${repoScan.primary_language || 'Unknown'}
-
-=== VERIFIED AI LIBRARIES (scanner-confirmed) ===
-${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None detected'}
 
 === DETECTED FRAMEWORKS ===
 ${verifiedFrameworks.length > 0 ? verifiedFrameworks.join(', ') : 'None'}
@@ -165,22 +184,24 @@ ${modelFiles.length > 0 ? modelFiles.join(', ') : 'None'}
 === SCANNER RISK FLAGS ===
 ${riskFlags.length > 0 ? riskFlags.join(', ') : 'None'}
 
+=== ALL PACKAGES (for Layer 3 review) ===
+${allPackages.join(', ')}
+
 === README (for context) ===
 ${(repoScan.readme_content || 'N/A').slice(0, 2500)}
 
 === YOUR TASK ===
-Based on the VERIFIED libraries above, determine:
-1. What is this AI system's PURPOSE? (e.g., face recognition for security, chatbot for support)
-2. Is this for training, inference, or both?
-3. Does the README reveal any high-risk use cases (biometrics, critical infrastructure, etc.)?
-4. What model types are likely being used?
+1. REVIEW Layer 2 candidates - are they truly AI/ML related?
+2. ADD any AI/ML libraries from the package list that we missed (Layer 3)
+3. Determine the PURPOSE and USE CASE of this AI system
+4. Identify risk indicators based on README context
 
 Respond with ONLY valid JSON:
 {
-  "is_ai_system": ${scanResult.is_ai_system},
+  "is_ai_system": ${scanResult.is_ai_system || candidateLibraries.length > 0},
   "capabilities": ["list capabilities like 'Face Recognition', 'Text Generation', 'Object Detection'"],
-  "libraries": ${JSON.stringify(verifiedLibraries)},
-  "ai_frameworks": ${JSON.stringify(verifiedFrameworks)},
+  "libraries": ["COMBINE Layer 1 + validated Layer 2 + any Layer 3 additions"],
+  "ai_frameworks": ${JSON.stringify(verifiedFrameworks.length > 0 ? verifiedFrameworks : ["infer from libraries"])},
   "programming_languages": ["${repoScan.primary_language || 'Unknown'}"],
   "detected_model_types": ["infer from libraries: 'Neural Network', 'Transformer', 'CNN', etc."],
   "has_ml_pipeline": boolean,
@@ -199,7 +220,7 @@ Respond with ONLY valid JSON:
     "targets_vulnerable_persons": boolean (infer from README context),
     "high_impact_decision_making": boolean (infer from README context)
   },
-  "reasoning": "Brief explanation focusing on PURPOSE and USE CASE"
+  "reasoning": "Explain which libraries you validated from Layer 2 and any you added from Layer 3"
 }`;
 }
 
