@@ -116,7 +116,32 @@ export interface DependencyScanResult {
 
     /** All packages found (for LLM Layer 3) */
     all_packages: string[];
+
+    /** Context signals for API wrapper detection (Layer 3.5) */
+    context_signals: ContextSignals;
 }
+
+/**
+ * Context signals for detecting API wrappers and AI systems without libraries
+ * These are heuristic signals that suggest AI usage even without explicit ML libraries
+ */
+export interface ContextSignals {
+    /** AI-related file names found (e.g., llm.ts, ai.ts, groq.ts) */
+    ai_file_names: string[];
+
+    /** README mentions AI/ML keywords */
+    readme_ai_keywords: string[];
+
+    /** Likely AI API usage detected (env var patterns, API URLs) */
+    likely_api_usage: boolean;
+
+    /** Overall context confidence (0-1) */
+    context_confidence: number;
+
+    /** Human-readable summary */
+    summary: string;
+}
+
 
 // =============================================================================
 // LAYER 2: AI PATTERN DETECTION
@@ -691,6 +716,109 @@ function calculateConfidence(
 }
 
 // =============================================================================
+// LAYER 3.5: CONTEXT SIGNAL DETECTION (API WRAPPER DETECTION)
+// =============================================================================
+
+/** Keywords that suggest AI/ML usage in README */
+const README_AI_KEYWORDS = [
+    'artificial intelligence', 'machine learning', 'deep learning',
+    'neural network', 'llm', 'large language model', 'gpt', 'chatgpt',
+    'openai', 'anthropic', 'claude', 'groq', 'gemini', 'llama',
+    'ai-powered', 'ai powered', 'uses ai', 'powered by ai',
+    'natural language processing', 'nlp', 'computer vision',
+    'text generation', 'image generation', 'speech recognition',
+    'face recognition', 'object detection', 'sentiment analysis',
+    'hugging face', 'huggingface', 'transformer', 'bert',
+    'embedding', 'vector database', 'rag', 'retrieval augmented',
+    'langchain', 'llamaindex', 'agent', 'ai agent',
+];
+
+/** File names that suggest AI/ML code */
+const AI_FILE_PATTERNS = [
+    /\b(llm|ai|ml|gpt|claude|groq|openai|anthropic|gemini)\.(ts|js|py|tsx|jsx)$/i,
+    /\b(model|inference|predict|embed|generate|chat|agent)\.(ts|js|py|tsx|jsx)$/i,
+    /\b(neural|transformer|bert|tokenizer)\.(ts|js|py)$/i,
+];
+
+/**
+ * Detect context signals that suggest AI usage without explicit libraries
+ * Useful for API wrappers and systems using raw HTTP calls to AI services
+ */
+function detectContextSignals(repoScan: RepoScan): ContextSignals {
+    const aiFileNames: string[] = [];
+    const readmeKeywords: string[] = [];
+    let likelyApiUsage = false;
+
+    // Check README for AI keywords
+    const readmeContent = (repoScan.readme_content || '').toLowerCase();
+    for (const keyword of README_AI_KEYWORDS) {
+        if (readmeContent.includes(keyword.toLowerCase())) {
+            readmeKeywords.push(keyword);
+        }
+    }
+
+    // Check file tree for AI-related file names
+    if (repoScan.file_tree) {
+        const checkFileTree = (node: unknown, path: string = '') => {
+            if (!node || typeof node !== 'object') return;
+            const n = node as { name?: string; type?: string; children?: unknown[] };
+            const currentPath = path ? `${path}/${n.name || ''}` : (n.name || '');
+
+            if (n.type === 'file' && n.name) {
+                for (const pattern of AI_FILE_PATTERNS) {
+                    if (pattern.test(n.name)) {
+                        aiFileNames.push(currentPath);
+                        break;
+                    }
+                }
+            }
+
+            if (n.children && Array.isArray(n.children)) {
+                for (const child of n.children) {
+                    checkFileTree(child, currentPath);
+                }
+            }
+        };
+        checkFileTree(repoScan.file_tree);
+    }
+
+    // Determine if likely using AI APIs
+    // Strong signals: readme mentions specific AI services + has AI-related files
+    likelyApiUsage = (
+        readmeKeywords.some(k => ['openai', 'anthropic', 'claude', 'groq', 'gemini'].includes(k.toLowerCase())) ||
+        aiFileNames.length > 0
+    );
+
+    // Calculate context confidence
+    let confidence = 0;
+    if (readmeKeywords.length > 0) confidence += Math.min(readmeKeywords.length * 0.1, 0.4);
+    if (aiFileNames.length > 0) confidence += Math.min(aiFileNames.length * 0.15, 0.4);
+    if (likelyApiUsage) confidence += 0.2;
+    confidence = Math.min(confidence, 0.95);
+
+    // Generate summary
+    let summary = '';
+    if (confidence > 0) {
+        const parts: string[] = [];
+        if (readmeKeywords.length > 0) {
+            parts.push(`README mentions: ${readmeKeywords.slice(0, 5).join(', ')}`);
+        }
+        if (aiFileNames.length > 0) {
+            parts.push(`AI files: ${aiFileNames.slice(0, 5).join(', ')}`);
+        }
+        summary = parts.join('; ') || 'Context signals detected';
+    }
+
+    return {
+        ai_file_names: aiFileNames,
+        readme_ai_keywords: readmeKeywords,
+        likely_api_usage: likelyApiUsage,
+        context_confidence: confidence,
+        summary,
+    };
+}
+
+// =============================================================================
 // MAIN SCANNER FUNCTION
 // =============================================================================
 
@@ -876,13 +1004,32 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
         .filter(l => l.library.high_risk_flag)
         .map(l => l.library.name);
 
+    // =================================================================
+    // LAYER 3.5: Context Signals (API Wrapper Detection)
+    // =================================================================
+    const contextSignals = detectContextSignals(repoScan);
+
+    // Update is_ai_system to include context signals
+    // If context signals are strong enough, treat as AI system even without libraries
+    const isAIByContext = contextSignals.context_confidence >= 0.5;
+    const finalIsAISystem = isAISystem || isAIByContext;
+
+    // Boost confidence if context signals support library detection
+    let finalConfidence = confidence;
+    if (finalLibraries.length > 0 && contextSignals.context_confidence > 0) {
+        finalConfidence = Math.min(confidence + contextSignals.context_confidence * 0.2, 1.0);
+    } else if (isAIByContext && !isAISystem) {
+        // API wrapper case: use context confidence as base
+        finalConfidence = contextSignals.context_confidence;
+    }
+
     return {
         detected_libraries: finalLibraries,
         candidate_libraries: finalCandidates,
         detected_model_files: modelFiles,
         sampled_imports: sampledImports,
-        is_ai_system: isAISystem,
-        confidence_score: confidence,
+        is_ai_system: finalIsAISystem,
+        confidence_score: finalConfidence,
         detected_categories: Array.from(categories),
         risk_indicators: riskIndicators,
         frameworks: Array.from(frameworks),
@@ -890,6 +1037,7 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
         scan_duration_ms: Date.now() - startTime,
         libraries_checked: LIBRARY_STATS.total,
         all_packages: allPackages.map(p => p.name),
+        context_signals: contextSignals,
     };
 }
 

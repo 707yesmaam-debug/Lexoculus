@@ -354,3 +354,74 @@ describe('Layer 2: Pattern Matching', () => {
         expect(result.all_packages).toContain('random-package');
     });
 });
+
+describe('Layer 3.5: Context Signals (API Wrapper Detection)', () => {
+    test('should detect AI keywords in README', () => {
+        const scan = createMockRepoScan({
+            readme_content: 'This app uses OpenAI GPT-4 for text generation and LLM-based analysis.',
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.context_signals.readme_ai_keywords.length).toBeGreaterThan(0);
+        expect(result.context_signals.readme_ai_keywords).toContain('openai');
+        expect(result.context_signals.likely_api_usage).toBe(true);
+    });
+
+    test('should detect AI file names in file tree', () => {
+        const scan = createMockRepoScan({
+            file_tree: {
+                name: 'src',
+                type: 'directory',
+                children: [
+                    { name: 'groq.ts', type: 'file' },
+                    { name: 'ai.ts', type: 'file' },
+                    { name: 'utils.ts', type: 'file' },
+                ]
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.context_signals.ai_file_names.length).toBe(2);
+        expect(result.context_signals.ai_file_names.some(f => f.includes('groq.ts'))).toBe(true);
+        expect(result.context_signals.ai_file_names.some(f => f.includes('ai.ts'))).toBe(true);
+    });
+
+    test('should mark as AI system when context signals are strong', () => {
+        const scan = createMockRepoScan({
+            readme_content: 'AI-powered compliance tool using Groq LLM for analysis.',
+            file_tree: {
+                name: 'src',
+                type: 'directory',
+                children: [
+                    { name: 'groq.ts', type: 'file' },
+                    { name: 'llm.ts', type: 'file' },
+                ]
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.is_ai_system).toBe(true);
+        expect(result.context_signals.context_confidence).toBeGreaterThan(0.5);
+    });
+
+    test('should not flag non-AI repos by context', () => {
+        const scan = createMockRepoScan({
+            readme_content: 'A simple web server for serving static files.',
+            file_tree: {
+                name: 'src',
+                type: 'directory',
+                children: [
+                    { name: 'server.ts', type: 'file' },
+                    { name: 'index.ts', type: 'file' },
+                ]
+            }
+        });
+
+        const result = scanDependencies(scan);
+
+        expect(result.context_signals.context_confidence).toBeLessThan(0.5);
+    });
+});

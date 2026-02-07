@@ -121,11 +121,12 @@ Based on this information, analyze and respond with ONLY valid JSON (no markdown
 }
 
 /**
- * Build enhanced prompt with VERIFIED scanner data + CANDIDATE libraries
- * 3-Layer approach:
+ * Build enhanced prompt with VERIFIED scanner data + CANDIDATE libraries + CONTEXT SIGNALS
+ * 4-Layer approach:
  *   Layer 1: Known database matches (highest confidence)
  *   Layer 2: Pattern-matched candidates (medium confidence)
- *   Layer 3: LLM can supplement/validate (lower confidence)
+ *   Layer 3: Context signals - API wrapper detection (medium confidence)
+ *   Layer 4: LLM can supplement/validate/OVERRIDE (variable confidence)
  */
 function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResult): string {
     // Layer 1: Verified libraries from known database
@@ -133,7 +134,7 @@ function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResul
     const verifiedCategories = scanResult.detected_categories;
     const verifiedFrameworks = scanResult.frameworks;
     const highRiskLibs = scanResult.high_risk_libraries;
-    const modelFiles = scanResult.detected_model_files.slice(0, 10); // Limit
+    const modelFiles = scanResult.detected_model_files.slice(0, 10);
 
     // Layer 2: Pattern-matched candidates
     const candidateLibraries = scanResult.candidate_libraries.map(c => ({
@@ -143,26 +144,37 @@ function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResul
         category: c.inferred_category || 'unknown',
     }));
 
-    // All packages (for Layer 3 LLM review)
-    const allPackages = scanResult.all_packages.slice(0, 100); // Limit for prompt size
+    // Layer 3: Context signals (API wrapper detection)
+    const contextSignals = scanResult.context_signals;
+    const hasContextSignals = contextSignals.context_confidence > 0;
 
-    // Risk indicators already computed by scanner
+    // All packages (for Layer 4 LLM review)
+    const allPackages = scanResult.all_packages.slice(0, 100);
+
+    // Risk indicators from scanner
     const riskFlags = Object.entries(scanResult.risk_indicators)
         .filter(([, v]) => v)
         .map(([k]) => k);
 
-    // Combine verified + high-confidence candidates for the library list
-    const allConfirmedLibs = [
-        ...verifiedLibraries,
-        ...candidateLibraries.filter(c => c.confidence >= 0.8).map(c => c.name),
-    ];
+    // Determine if this looks like an API wrapper
+    const isLikelyAPIWrapper = hasContextSignals && verifiedLibraries.length === 0;
 
-    return `You are an expert EU AI Act compliance analyst. Analyze the PURPOSE and CONTEXT of this repository.
+    return `You are an expert EU AI Act compliance analyst. Analyze this repository for AI system classification.
 
-=== 3-LAYER LIBRARY DETECTION SYSTEM ===
-Layer 1 (VERIFIED - from known database): ${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None'}
-Layer 2 (CANDIDATES - pattern-matched): ${candidateLibraries.length > 0 ? candidateLibraries.map(c => `${c.name} (${c.pattern})`).join(', ') : 'None'}
-Layer 3 (YOUR TASK): Review ALL packages and ADD any AI/ML libraries not detected above.
+=== 4-LAYER DETECTION SYSTEM ===
+Layer 1 (VERIFIED): ${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None'}
+Layer 2 (CANDIDATES): ${candidateLibraries.length > 0 ? candidateLibraries.map(c => `${c.name} (${c.pattern})`).join(', ') : 'None'}
+Layer 3 (CONTEXT SIGNALS): ${hasContextSignals ? `⚠️ ${contextSignals.summary}` : 'None'}
+Layer 4 (YOUR JUDGMENT): You have FULL AUTHORITY to classify this as AI if evidence suggests it.
+
+${isLikelyAPIWrapper ? `
+⚠️ IMPORTANT: This appears to be an API WRAPPER
+- No traditional ML libraries detected
+- But context signals suggest AI API usage
+- README keywords: ${contextSignals.readme_ai_keywords.slice(0, 5).join(', ') || 'None'}
+- AI files: ${contextSignals.ai_file_names.slice(0, 5).join(', ') || 'None'}
+- You SHOULD classify this as an AI system if it uses AI APIs (OpenAI, Anthropic, Groq, etc.)
+` : ''}
 
 === REPOSITORY INFO ===
 Name: ${repoScan.repo_name}
@@ -184,45 +196,46 @@ ${modelFiles.length > 0 ? modelFiles.join(', ') : 'None'}
 === SCANNER RISK FLAGS ===
 ${riskFlags.length > 0 ? riskFlags.join(', ') : 'None'}
 
-=== ALL PACKAGES (for Layer 3 review) ===
-${allPackages.join(', ')}
+=== ALL PACKAGES ===
+${allPackages.join(', ') || 'None'}
 
 === README (for context) ===
 ${(repoScan.readme_content || 'N/A').slice(0, 2500)}
 
 === YOUR TASK ===
-1. REVIEW Layer 2 candidates - are they truly AI/ML related?
-2. ADD any AI/ML libraries from the package list that we missed (Layer 3)
-3. Determine the PURPOSE and USE CASE of this AI system
-4. Identify risk indicators based on README context
+1. If README mentions AI/ML/LLM usage, this IS an AI system even without libraries
+2. API wrappers (calling OpenAI, Anthropic, Groq, etc.) ARE AI systems under EU AI Act
+3. Validate Layer 2 candidates and add any missed AI libraries
+4. Determine the PURPOSE and USE CASE
 
 Respond with ONLY valid JSON:
 {
-  "is_ai_system": ${scanResult.is_ai_system || candidateLibraries.length > 0},
-  "capabilities": ["list capabilities like 'Face Recognition', 'Text Generation', 'Object Detection'"],
-  "libraries": ["COMBINE Layer 1 + validated Layer 2 + any Layer 3 additions"],
-  "ai_frameworks": ${JSON.stringify(verifiedFrameworks.length > 0 ? verifiedFrameworks : ["infer from libraries"])},
+  "is_ai_system": boolean (TRUE if any AI/ML/LLM usage detected, including API calls),
+  "capabilities": ["list capabilities like 'LLM API Integration', 'Text Generation', 'AI-Powered Analysis'"],
+  "libraries": ["include: detected libs + API services used (e.g., 'Groq API', 'OpenAI API')"],
+  "ai_frameworks": ${JSON.stringify(verifiedFrameworks.length > 0 ? verifiedFrameworks : ["infer from context"])},
   "programming_languages": ["${repoScan.primary_language || 'Unknown'}"],
-  "detected_model_types": ["infer from libraries: 'Neural Network', 'Transformer', 'CNN', etc."],
+  "detected_model_types": ["infer: 'LLM', 'GPT', 'Neural Network', etc."],
   "has_ml_pipeline": boolean,
   "has_training_code": boolean,
-  "has_inference_code": boolean,
+  "has_inference_code": boolean (TRUE if calling AI APIs),
   "has_data_processing": boolean,
   "has_model_serialization": ${modelFiles.length > 0},
   "estimated_risk_indicators": {
     "uses_computer_vision": ${scanResult.risk_indicators.uses_computer_vision},
     "uses_biometric_processing": ${scanResult.risk_indicators.uses_biometric_processing},
     "uses_emotion_recognition": ${scanResult.risk_indicators.uses_emotion_recognition},
-    "uses_critical_infrastructure": boolean (infer from README context),
-    "uses_generative_ai": ${scanResult.risk_indicators.uses_generative_ai},
-    "uses_nlp": ${scanResult.risk_indicators.uses_nlp},
-    "uses_nlp_decision_making": boolean (infer from README context),
-    "targets_vulnerable_persons": boolean (infer from README context),
-    "high_impact_decision_making": boolean (infer from README context)
+    "uses_critical_infrastructure": boolean (infer from README),
+    "uses_generative_ai": ${scanResult.risk_indicators.uses_generative_ai || isLikelyAPIWrapper},
+    "uses_nlp": ${scanResult.risk_indicators.uses_nlp || isLikelyAPIWrapper},
+    "uses_nlp_decision_making": boolean (infer from README),
+    "targets_vulnerable_persons": boolean (infer from README),
+    "high_impact_decision_making": boolean (infer from README)
   },
-  "reasoning": "Explain which libraries you validated from Layer 2 and any you added from Layer 3"
+  "reasoning": "Explain your classification, especially if overriding scanner results"
 }`;
 }
+
 
 /**
  * Parse and validate LLM response
