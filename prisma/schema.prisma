@@ -52,6 +52,9 @@ model User {
   // Audit & Evidence (Phase 4)
   audit_logs        AuditLog[]
   evidence          ComplianceEvidence[]
+  
+  // Conformity Assessment (Phase 5)
+  conformity_assessments ConformityAssessment[]
 
   @@index([email])
   @@map("users")
@@ -511,6 +514,7 @@ model AiSystem {
   alerts          MonitoringAlert[]     // Phase 3.3: Monitoring alerts
   audit_logs      AuditLog[]            // Phase 4.1: Audit trail
   evidence        ComplianceEvidence[]  // Phase 4.2: Compliance evidence
+  conformity_assessments ConformityAssessment[]  // Phase 5: Conformity tracking
   
   @@unique([user_id, name])
   @@index([user_id])
@@ -748,4 +752,54 @@ model RegulatoryUpdate {
   @@index([severity])
   @@index([published_at])
   @@map("regulatory_updates")
+}
+
+// =============================================================================
+// Conformity Assessment - Phase 5: Track conformity assessment pathway progress
+// =============================================================================
+
+model ConformityAssessment {
+  id              String   @id @default(cuid())
+  ai_system_id    String
+  user_id         String
+
+  // Assessment Module
+  assessment_module String   // MODULE_A, MODULE_B_C, MODULE_D, MODULE_F, NOT_REQUIRED
+  module_name       String
+  legal_basis       String
+
+  // Progress
+  current_step    Int      @default(0)
+  total_steps     Int
+  steps_data      Json     // ConformityStep[] serialised
+
+  // Status
+  status          String   @default("not_started")  // not_started, in_progress, completed, needs_review
+  completion_percent Int   @default(0)
+
+  // Configuration
+  requires_notified_body Boolean @default(false)
+  self_assessment_eligible Boolean @default(false)
+  estimated_timeline String?
+
+  // Metadata
+  risk_classification String?
+  annex_iii_category  Int?
+  notes              Json?    // string[]
+
+  // Target date for completion
+  target_date     DateTime?
+
+  // Timestamps
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  ai_system       AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+
+  @@unique([ai_system_id])
+  @@index([user_id])
+  @@index([status])
+  @@map("conformity_assessments")
 }

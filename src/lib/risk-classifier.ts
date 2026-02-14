@@ -11,6 +11,7 @@
 import { LlmCapabilityAnalysis } from '@prisma/client';
 import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAIConstraint } from './annex-iii-articles';
 import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
+import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -76,6 +77,9 @@ export interface RiskAssessmentResult {
             constraint_matches: string[];
         };
     };
+
+    // GPAI Classification (Chapter V, Articles 51-55)
+    gpai_classification?: GPAIClassification;
 }
 
 /**
@@ -757,3 +761,72 @@ function generateEnhancedNarrative(
     return narratives.join(' ');
 }
 
+// =============================================================================
+// GPAI-ENHANCED CLASSIFICATION (NEW)
+// =============================================================================
+
+/**
+ * Enhanced risk classification with GPAI detection.
+ * 
+ * This wrapper:
+ * 1. Runs the standard constraint-validated classification
+ * 2. Runs GPAI classification (Chapter V, Articles 51-55)
+ * 3. Merges results without modifying the base classification
+ * 
+ * ADDITIVE ONLY: Does not modify classifyRiskWithConstraintValidation behavior.
+ * GPAI classification is a separate, parallel track.
+ */
+export function classifyRiskFull(
+    analysis: LlmCapabilityAnalysis
+): RiskAssessmentResult {
+    // Step 1: Run existing constraint-validated classification
+    const baseResult = classifyRiskWithConstraintValidation(analysis);
+
+    // Step 2: Run GPAI classification
+    const gpaiResult = classifyGPAI(analysis);
+
+    // Step 3: If GPAI deployer detected, enhance findings
+    if (gpaiResult.is_gpai_deployer || gpaiResult.is_gpai_provider) {
+        // Add GPAI-specific key findings
+        const gpaiFindings: string[] = [];
+
+        if (gpaiResult.is_gpai_deployer) {
+            const providers = gpaiResult.detected_providers.map(p => p.provider_name).join(', ');
+            gpaiFindings.push(`GPAI Deployer: integrates models from ${providers}`);
+        }
+
+        if (gpaiResult.is_systemic_risk) {
+            gpaiFindings.push('⚠️ Uses systemic risk GPAI models (≥10^25 FLOPs)');
+        }
+
+        if (gpaiResult.open_source_exception) {
+            gpaiFindings.push('Open-source exception may apply (Article 53(2))');
+        }
+
+        gpaiFindings.push(`Article 50 transparency obligations apply from 2 August 2026`);
+
+        // Merge findings (GPAI findings prepended for visibility)
+        baseResult.key_findings = [...gpaiFindings, ...baseResult.key_findings];
+
+        // Add GPAI article references to legal citations if constraint validation exists
+        if (baseResult.constraint_validation) {
+            const gpaiCitations = gpaiResult.article_references.map(ref => ({
+                constraint_id: `gpai_${ref.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                regulation_source: ref,
+                official_text: `See ${ref} of Regulation (EU) 2024/1689`,
+            }));
+            baseResult.constraint_validation.legal_citations = [
+                ...baseResult.constraint_validation.legal_citations,
+                ...gpaiCitations,
+            ];
+        }
+
+        // Enhance risk narrative with GPAI context
+        baseResult.risk_narrative = `${baseResult.risk_narrative} ${gpaiResult.summary}`;
+    }
+
+    // Step 4: Attach full GPAI classification
+    baseResult.gpai_classification = gpaiResult;
+
+    return baseResult;
+}

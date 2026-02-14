@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye, Globe, Shield, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
@@ -37,6 +37,32 @@ interface AssessmentData {
     manual_review_needed: boolean;
     manual_review_reason?: string;
     assessed_at: string;
+    gpai_classification?: {
+        is_gpai_deployer: boolean;
+        is_gpai_provider: boolean;
+        is_systemic_risk: boolean;
+        detected_providers: {
+            provider_name: string;
+            matched_by: string;
+            confidence: number;
+            systemic_risk: boolean;
+            open_source: boolean;
+        }[];
+        detected_models: string[];
+        open_source_exception: boolean;
+        obligations: {
+            article: string;
+            title: string;
+            description: string;
+            annex_reference?: string;
+            applies_to: string;
+            deadline: string;
+            systemic_risk_only: boolean;
+        }[];
+        transparency_requirements: string[];
+        article_references: string[];
+        summary: string;
+    };
 }
 
 interface AnalysisData {
@@ -308,6 +334,176 @@ export default function RiskClassifierPage() {
                         manualReviewNeeded={assessment.manual_review_needed}
                         manualReviewReason={assessment.manual_review_reason}
                     />
+                </div>
+            )}
+
+            {/* GPAI Classification Panel */}
+            {assessment?.gpai_classification && (assessment.gpai_classification.is_gpai_deployer || assessment.gpai_classification.is_gpai_provider) && (
+                <div className="mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+                    <div className="border-2 border-black bg-white">
+                        {/* GPAI Header */}
+                        <div className="px-6 py-4 border-b-2 border-black bg-gradient-to-r from-[#1a1a2e] to-[#16213e] flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Globe className="w-5 h-5 text-[#FF4F00]" />
+                                <h2 className="font-serif text-xl font-bold text-white tracking-tight">
+                                    GPAI Classification
+                                </h2>
+                                <span className="font-mono text-[10px] text-[#FF4F00] bg-[#FF4F00]/10 border border-[#FF4F00]/30 px-2 py-0.5 tracking-widest uppercase">
+                                    Chapter V
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {assessment.gpai_classification.is_systemic_risk ? (
+                                    <span className="font-mono text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 tracking-widest uppercase flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> Systemic Risk
+                                    </span>
+                                ) : (
+                                    <span className="font-mono text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 tracking-widest uppercase flex items-center gap-1">
+                                        <Shield className="w-3 h-3" /> Standard GPAI
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                            {/* Role Badge */}
+                            <div className="flex flex-wrap gap-3">
+                                {assessment.gpai_classification.is_gpai_deployer && (
+                                    <div className="border-2 border-[#FF4F00] bg-[#FFF5F0] px-4 py-2">
+                                        <span className="font-mono text-xs font-bold text-[#FF4F00] tracking-widest uppercase">GPAI Deployer</span>
+                                        <p className="font-mono text-[10px] text-[#555] mt-0.5">Integrates GPAI models via API</p>
+                                    </div>
+                                )}
+                                {assessment.gpai_classification.is_gpai_provider && (
+                                    <div className="border-2 border-black bg-[#F5F5F5] px-4 py-2">
+                                        <span className="font-mono text-xs font-bold text-black tracking-widest uppercase">GPAI Provider</span>
+                                        <p className="font-mono text-[10px] text-[#555] mt-0.5">Trains/hosts GPAI models</p>
+                                    </div>
+                                )}
+                                {assessment.gpai_classification.open_source_exception && (
+                                    <div className="border-2 border-emerald-600 bg-emerald-50 px-4 py-2">
+                                        <span className="font-mono text-xs font-bold text-emerald-700 tracking-widest uppercase">Open-Source Exception</span>
+                                        <p className="font-mono text-[10px] text-emerald-600 mt-0.5">Article 53(2) may apply</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Detected Providers */}
+                            {assessment.gpai_classification.detected_providers.length > 0 && (
+                                <div>
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Detected_Providers</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {assessment.gpai_classification.detected_providers.map((provider, i) => (
+                                            <div key={i} className="border border-black/20 bg-[#FAFAFA] p-3 flex items-center justify-between">
+                                                <div>
+                                                    <span className="font-serif text-sm font-bold text-black">{provider.provider_name}</span>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="font-mono text-[10px] text-[#999] uppercase">{provider.matched_by}</span>
+                                                        <span className="font-mono text-[10px] text-[#999]">{Math.round(provider.confidence * 100)}% conf</span>
+                                                    </div>
+                                                </div>
+                                                {provider.systemic_risk ? (
+                                                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                                                ) : provider.open_source ? (
+                                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                                ) : (
+                                                    <Info className="w-4 h-4 text-[#999]" />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Detected Models */}
+                            {assessment.gpai_classification.detected_models.length > 0 && (
+                                <div>
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-2">Detected_Models</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {assessment.gpai_classification.detected_models.map((model, i) => (
+                                            <span key={i} className="font-mono text-xs bg-black text-white px-3 py-1">{model}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Obligations */}
+                            {assessment.gpai_classification.obligations.length > 0 && (
+                                <div>
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">GPAI_Obligations</h3>
+                                    <div className="space-y-2">
+                                        {assessment.gpai_classification.obligations.map((obligation, i) => (
+                                            <div key={i} className={`border p-3 ${obligation.systemic_risk_only
+                                                    ? 'border-red-200 bg-red-50'
+                                                    : 'border-black/10 bg-[#FAFAFA]'
+                                                }`}>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-mono text-[10px] text-[#FF4F00] font-bold">{obligation.article}</span>
+                                                            {obligation.annex_reference && (
+                                                                <span className="font-mono text-[10px] text-[#999]">({obligation.annex_reference})</span>
+                                                            )}
+                                                            {obligation.systemic_risk_only && (
+                                                                <span className="font-mono text-[8px] bg-red-100 text-red-600 px-1.5 py-0.5 uppercase">Systemic Only</span>
+                                                            )}
+                                                        </div>
+                                                        <p className="font-serif text-sm font-bold text-black">{obligation.title}</p>
+                                                        <p className="font-mono text-[11px] text-[#555] mt-1 leading-relaxed">{obligation.description}</p>
+                                                    </div>
+                                                    <div className="text-right flex-shrink-0">
+                                                        <span className={`font-mono text-[10px] uppercase tracking-wider ${new Date(obligation.deadline) < new Date() ? 'text-red-500' : 'text-emerald-600'
+                                                            }`}>
+                                                            {new Date(obligation.deadline) < new Date() ? 'ACTIVE' : `Due ${new Date(obligation.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                                                        </span>
+                                                        <br />
+                                                        <span className="font-mono text-[10px] text-[#999] uppercase">{obligation.applies_to}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Transparency Requirements */}
+                            {assessment.gpai_classification.transparency_requirements.length > 0 && (
+                                <div className="border-t border-black/10 pt-4">
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Article_50_Transparency</h3>
+                                    <div className="bg-[#FFFCE6] border border-[#E6D95E] p-4">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Eye className="w-4 h-4 text-[#8B7E00]" />
+                                            <span className="font-mono text-[10px] text-[#8B7E00] uppercase tracking-widest font-bold">Effective: 2 August 2026</span>
+                                        </div>
+                                        <ul className="space-y-1.5">
+                                            {assessment.gpai_classification.transparency_requirements.map((req, i) => (
+                                                <li key={i} className="font-mono text-[11px] text-[#555] flex items-start gap-2">
+                                                    <span className="text-[#FF4F00] mt-0.5">→</span>
+                                                    {req}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Summary */}
+                            <div className="border-t border-black/10 pt-4">
+                                <p className="font-mono text-xs text-[#555] leading-relaxed">
+                                    {assessment.gpai_classification.summary}
+                                </p>
+                            </div>
+
+                            {/* Article References */}
+                            {assessment.gpai_classification.article_references.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {assessment.gpai_classification.article_references.map((ref, i) => (
+                                        <span key={i} className="font-mono text-[9px] text-[#999] bg-[#F5F5F5] border border-[#E5E5E5] px-2 py-0.5">{ref}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

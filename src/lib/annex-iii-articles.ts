@@ -759,6 +759,143 @@ export const LIMITED_RISK_CONSTRAINTS: EUAIConstraint[] = [
 ];
 
 // =============================================================================
+// GPAI CONSTRAINTS (Chapter V: Articles 51-55)
+// Source: Regulation (EU) 2024/1689, Chapter V
+// Entry into force: 2 August 2025
+// =============================================================================
+
+export const GPAI_CONSTRAINTS: EUAIConstraint[] = [
+    {
+        constraint_id: "art53_tech_docs",
+        regulation_source: "Article 53(1)(a)",
+        official_text: "draw up and keep up-to-date the technical documentation of the model, including its training and testing process and the results of its evaluation, which shall contain, at a minimum, the information set out in Annex XI for the purpose of providing it, upon request, to the AI Office and the national competent authorities",
+        risk_level: "LIMITED_RISK",
+        category: "GPAI Technical Documentation",
+        description: "GPAI model providers must maintain technical documentation per Annex XI",
+        code_indicators: [
+            "openai", "anthropic", "langchain", "llm", "gpt", "claude",
+            "generative_ai", "foundation_model", "text_generation"
+        ],
+        detection_method: "library",
+        requirements: [
+            "Technical documentation per Annex XI",
+            "Training and testing process documentation",
+            "Evaluation results documentation",
+            "Available to AI Office upon request"
+        ],
+        examples: [
+            "OpenAI GPT model training documentation",
+            "Anthropic Claude model card",
+            "Model evaluation benchmark results"
+        ]
+    },
+    {
+        constraint_id: "art53_downstream_info",
+        regulation_source: "Article 53(1)(b)",
+        official_text: "draw up, keep up-to-date and make available information and documentation to providers of AI systems who intend to integrate the general-purpose AI model into their AI systems, containing at a minimum the elements set out in Annex XII",
+        risk_level: "LIMITED_RISK",
+        category: "GPAI Downstream Provider Information",
+        description: "GPAI providers must provide integration documentation to downstream AI system providers per Annex XII",
+        code_indicators: [
+            "openai", "anthropic", "langchain", "llm_api", "model_api"
+        ],
+        detection_method: "library",
+        requirements: [
+            "Capabilities and limitations documentation per Annex XII",
+            "Integration guidance for downstream providers",
+            "Intellectual property protections maintained"
+        ],
+        examples: [
+            "API documentation for GPT integration",
+            "Model capabilities and limitations guides"
+        ]
+    },
+    {
+        constraint_id: "art53_copyright",
+        regulation_source: "Article 53(1)(c)",
+        official_text: "put in place a policy to comply with Union law on copyright and related rights, and in particular to identify and comply with, including through state-of-the-art technologies, a reservation of rights expressed pursuant to Article 4(3) of Directive (EU) 2019/790",
+        risk_level: "LIMITED_RISK",
+        category: "GPAI Copyright Compliance",
+        description: "GPAI providers must have copyright compliance policy respecting reservations of rights",
+        code_indicators: [
+            "training_data", "web_scraping", "data_collection", "corpus"
+        ],
+        detection_method: "context",
+        requirements: [
+            "Copyright compliance policy",
+            "State-of-the-art technology for rights identification",
+            "Respect for reservations of rights under Directive 2019/790"
+        ],
+        examples: [
+            "Training data sourcing with copyright checks",
+            "Opt-out mechanism for content creators"
+        ]
+    },
+    {
+        constraint_id: "art53_training_summary",
+        regulation_source: "Article 53(1)(d)",
+        official_text: "draw up and make publicly available a sufficiently detailed summary about the content used for training of the general-purpose AI model, according to a template provided by the AI Office",
+        risk_level: "LIMITED_RISK",
+        category: "GPAI Training Data Summary",
+        description: "GPAI providers must publish training data summary using AI Office template",
+        code_indicators: [
+            "training_data", "dataset", "model_training"
+        ],
+        detection_method: "context",
+        requirements: [
+            "Publicly available training data summary",
+            "Follows AI Office template format"
+        ],
+        examples: [
+            "Published training data summary document",
+            "Publicly accessible model data card"
+        ]
+    },
+    {
+        constraint_id: "art55_adversarial_testing",
+        regulation_source: "Article 55(1)(a)",
+        official_text: "perform model evaluation in accordance with standardised protocols and tools reflecting the state of the art, including conducting and documenting adversarial testing of the model with a view to identifying and mitigating systemic risks",
+        risk_level: "HIGH_RISK",
+        category: "GPAI Systemic Risk - Adversarial Testing",
+        description: "Systemic risk GPAI providers must conduct adversarial testing using standardised protocols",
+        code_indicators: [
+            "gpt-4", "claude-3-opus", "gemini-ultra", "systemic_risk"
+        ],
+        detection_method: "context",
+        requirements: [
+            "Model evaluation per standardised protocols",
+            "Adversarial testing documentation",
+            "Systemic risk identification and mitigation"
+        ],
+        examples: [
+            "Red-teaming of large language models",
+            "Safety evaluation of foundation models"
+        ]
+    },
+    {
+        constraint_id: "art55_incident_reporting",
+        regulation_source: "Article 55(1)(c)",
+        official_text: "keep track of, document, and report, without undue delay, to the AI Office and, as appropriate, to national competent authorities, relevant information about serious incidents and possible corrective measures to address them",
+        risk_level: "HIGH_RISK",
+        category: "GPAI Systemic Risk - Incident Reporting",
+        description: "Systemic risk GPAI providers must report serious incidents to AI Office without undue delay",
+        code_indicators: [
+            "incident_report", "safety_incident", "systemic_risk"
+        ],
+        detection_method: "context",
+        requirements: [
+            "Incident tracking and documentation",
+            "Reporting to AI Office without undue delay",
+            "Corrective measures documentation"
+        ],
+        examples: [
+            "Model safety incident log",
+            "AI Office incident notification"
+        ]
+    }
+];
+
+// =============================================================================
 // COMBINED EXPORTS
 // =============================================================================
 
@@ -766,7 +903,8 @@ export const LIMITED_RISK_CONSTRAINTS: EUAIConstraint[] = [
 export const ALL_CONSTRAINTS: EUAIConstraint[] = [
     ...ARTICLE_5_CONSTRAINTS,
     ...ANNEX_III_CONSTRAINTS,
-    ...LIMITED_RISK_CONSTRAINTS
+    ...LIMITED_RISK_CONSTRAINTS,
+    ...GPAI_CONSTRAINTS
 ];
 
 /** Get all UNACCEPTABLE (banned) constraints */

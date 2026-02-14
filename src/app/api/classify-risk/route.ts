@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
-import { classifyRiskWithConstraintValidation } from '@/lib/risk-classifier';
+import { classifyRiskFull } from '@/lib/risk-classifier';
 import { generateTailoredQuestions } from '@/lib/groq';
 
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         console.log(`🎯 [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
 
         // 7. Run risk classification with Constraint Engine validation
-        const result = classifyRiskWithConstraintValidation(llmAnalysis);
+        const result = classifyRiskFull(llmAnalysis);
 
         console.log(`✅ [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
         console.log(`   Articles matched: ${result.matched_annex_iii_articles.length}`);
@@ -270,6 +270,8 @@ export async function POST(request: NextRequest) {
             rate_limit_remaining: rateLimit.remaining,
             // Constraint Engine validation data
             constraint_validation: result.constraint_validation,
+            // GPAI Classification (Chapter V, Articles 51-55)
+            gpai_classification: result.gpai_classification,
         });
 
     } catch (error) {
