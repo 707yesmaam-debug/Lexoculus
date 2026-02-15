@@ -60,8 +60,8 @@ export interface UsageStatus {
 // =============================================================================
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     free: {
-        repos_limit: 2, // Matches scans limit
-        scans_limit: 2,
+        repos_limit: 1, // Matches scans limit
+        scans_limit: 1,
         pr_scans_limit: 0,
         reports_limit: 0, // No PDF reports
         features: {

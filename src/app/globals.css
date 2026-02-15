@@ -107,3 +107,14 @@ h6 {
 .animate-glitch {
     animation: glitch 0.2s cubic-bezier(.25, .46, .45, .94) both infinite;
 }
+
+/* Scan Line Sweep Animation */
+@keyframes scanSweep {
+    0% {
+        left: -2px;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
