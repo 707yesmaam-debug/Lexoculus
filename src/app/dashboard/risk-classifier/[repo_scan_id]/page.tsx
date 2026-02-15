@@ -365,25 +365,33 @@ export default function RiskClassifierPage() {
                             </div>
                         </div>
 
+                        {/* Plain-language explainer */}
+                        <div className="px-6 py-3 bg-blue-50 border-b border-blue-100">
+                            <p className="font-mono text-[11px] text-blue-800 leading-relaxed">
+                                <strong>What is GPAI?</strong> General-Purpose AI (GPAI) models are AI systems like ChatGPT, Claude, or Gemini that can perform a wide range of tasks.
+                                If your code calls these models via API, you are a <strong>GPAI Deployer</strong> and must follow specific EU AI Act rules starting August 2025.
+                            </p>
+                        </div>
+
                         <div className="p-6 space-y-6">
                             {/* Role Badge */}
                             <div className="flex flex-wrap gap-3">
                                 {assessment.gpai_classification.is_gpai_deployer && (
-                                    <div className="border-2 border-[#FF4F00] bg-[#FFF5F0] px-4 py-2">
+                                    <div className="border-2 border-[#FF4F00] bg-[#FFF5F0] px-4 py-3">
                                         <span className="font-mono text-xs font-bold text-[#FF4F00] tracking-widest uppercase">GPAI Deployer</span>
-                                        <p className="font-mono text-[10px] text-[#555] mt-0.5">Integrates GPAI models via API</p>
+                                        <p className="font-mono text-[10px] text-[#555] mt-1 leading-relaxed max-w-xs">Your app calls an external AI model (e.g. via API). You must inform users they&apos;re interacting with AI and comply with transparency rules.</p>
                                     </div>
                                 )}
                                 {assessment.gpai_classification.is_gpai_provider && (
-                                    <div className="border-2 border-black bg-[#F5F5F5] px-4 py-2">
+                                    <div className="border-2 border-black bg-[#F5F5F5] px-4 py-3">
                                         <span className="font-mono text-xs font-bold text-black tracking-widest uppercase">GPAI Provider</span>
-                                        <p className="font-mono text-[10px] text-[#555] mt-0.5">Trains/hosts GPAI models</p>
+                                        <p className="font-mono text-[10px] text-[#555] mt-1 leading-relaxed max-w-xs">You train or host your own AI models. You must provide technical documentation and a training data summary.</p>
                                     </div>
                                 )}
                                 {assessment.gpai_classification.open_source_exception && (
-                                    <div className="border-2 border-emerald-600 bg-emerald-50 px-4 py-2">
+                                    <div className="border-2 border-emerald-600 bg-emerald-50 px-4 py-3">
                                         <span className="font-mono text-xs font-bold text-emerald-700 tracking-widest uppercase">Open-Source Exception</span>
-                                        <p className="font-mono text-[10px] text-emerald-600 mt-0.5">Article 53(2) may apply</p>
+                                        <p className="font-mono text-[10px] text-emerald-600 mt-1 leading-relaxed max-w-xs">The GPAI models you use are open-source. This may reduce your compliance burden under Article 53(2), but transparency rules still apply.</p>
                                     </div>
                                 )}
                             </div>
@@ -394,21 +402,31 @@ export default function RiskClassifierPage() {
                                     <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Detected_Providers</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {assessment.gpai_classification.detected_providers.map((provider, i) => (
-                                            <div key={i} className="border border-black/20 bg-[#FAFAFA] p-3 flex items-center justify-between">
-                                                <div>
-                                                    <span className="font-serif text-sm font-bold text-black">{provider.provider_name}</span>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="font-mono text-[10px] text-[#999] uppercase">{provider.matched_by}</span>
-                                                        <span className="font-mono text-[10px] text-[#999]">{Math.round(provider.confidence * 100)}% conf</span>
+                                            <div key={i} className="border border-black/20 bg-[#FAFAFA] p-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <span className="font-serif text-sm font-bold text-black">{provider.provider_name}</span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="font-mono text-[10px] text-[#999] uppercase">{provider.matched_by}</span>
+                                                            <span className="font-mono text-[10px] text-[#999]">{Math.round(provider.confidence * 100)}% conf</span>
+                                                        </div>
                                                     </div>
+                                                    {provider.systemic_risk ? (
+                                                        <span className="font-mono text-[8px] bg-red-100 text-red-600 px-2 py-1 uppercase tracking-wider">⚠ High Impact</span>
+                                                    ) : provider.open_source ? (
+                                                        <span className="font-mono text-[8px] bg-emerald-100 text-emerald-600 px-2 py-1 uppercase tracking-wider">✓ Open Source</span>
+                                                    ) : (
+                                                        <span className="font-mono text-[8px] bg-gray-100 text-gray-500 px-2 py-1 uppercase tracking-wider">Standard</span>
+                                                    )}
                                                 </div>
-                                                {provider.systemic_risk ? (
-                                                    <AlertTriangle className="w-4 h-4 text-red-500" />
-                                                ) : provider.open_source ? (
-                                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                                                ) : (
-                                                    <Info className="w-4 h-4 text-[#999]" />
-                                                )}
+                                                <p className="font-mono text-[10px] text-[#777] mt-2 leading-relaxed">
+                                                    {provider.systemic_risk
+                                                        ? `${provider.provider_name} is classified as having systemic risk — extra obligations apply (model evaluation, incident reporting).`
+                                                        : provider.open_source
+                                                            ? `${provider.provider_name} provides open-source models. Some obligations may be reduced, but transparency rules still apply.`
+                                                            : `${provider.provider_name} was detected via ${provider.matched_by} analysis. Standard GPAI deployer obligations apply.`
+                                                    }
+                                                </p>
                                             </div>
                                         ))}
                                     </div>
@@ -430,12 +448,13 @@ export default function RiskClassifierPage() {
                             {/* Obligations */}
                             {assessment.gpai_classification.obligations.length > 0 && (
                                 <div>
-                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">GPAI_Obligations</h3>
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-1">GPAI_Obligations</h3>
+                                    <p className="font-mono text-[10px] text-[#999] mb-3">These are the specific rules your app must follow. Each one links to an EU AI Act article.</p>
                                     <div className="space-y-2">
                                         {assessment.gpai_classification.obligations.map((obligation, i) => (
                                             <div key={i} className={`border p-3 ${obligation.systemic_risk_only
-                                                    ? 'border-red-200 bg-red-50'
-                                                    : 'border-black/10 bg-[#FAFAFA]'
+                                                ? 'border-red-200 bg-red-50'
+                                                : 'border-black/10 bg-[#FAFAFA]'
                                                 }`}>
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex-1">
@@ -469,7 +488,8 @@ export default function RiskClassifierPage() {
                             {/* Transparency Requirements */}
                             {assessment.gpai_classification.transparency_requirements.length > 0 && (
                                 <div className="border-t border-black/10 pt-4">
-                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Article_50_Transparency</h3>
+                                    <h3 className="font-mono text-xs text-[#555] uppercase tracking-widest mb-1">Article_50_Transparency</h3>
+                                    <p className="font-mono text-[10px] text-[#999] mb-3">Users must know they are interacting with AI. These rules apply to chatbots, AI-generated content, and deepfakes.</p>
                                     <div className="bg-[#FFFCE6] border border-[#E6D95E] p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Eye className="w-4 h-4 text-[#8B7E00]" />

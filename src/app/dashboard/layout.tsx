@@ -135,6 +135,13 @@ export default function DashboardLayout({
             status: '[PRO]',
             isActive: pathname === '/dashboard/integrations'
         },
+        {
+            name: '06_TIMELINE',
+            href: '/dashboard/timeline',
+            status: activeScanId ? '[LOCKED]' : '[VIEW]',
+            disabled: !!activeScanId,
+            isActive: pathname === '/dashboard/timeline'
+        },
     ];
 
 
