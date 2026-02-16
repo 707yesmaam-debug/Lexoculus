@@ -122,7 +122,7 @@ export async function sendDemoRequestNotification(data: DemoRequestData): Promis
 
     try {
         await mailer.sendMail({
-            from: `"LexOculus Leads" <${process.env.SMTP_USER}>`,
+            from: `"LexOculus Leads" <${process.env.SMTP_FROM || 'onboarding@lexoculus.com'}>`,
             to: FOUNDER_EMAIL,
             subject: `🔔 New Demo Request — ${data.full_name} (${data.company_name})`,
             html,
