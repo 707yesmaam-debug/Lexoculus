@@ -151,7 +151,9 @@ function PricingContent() {
                     <h1 className="font-serif text-5xl md:text-6xl font-bold mb-6 tracking-tight">
                         Predictable pricing for <br /> <span className="text-[#FF4F00]">compliance at scale.</span>
                     </h1>
-                    Start your compliance journey. Upgrade for unlimited analysis and context verification.
+                    <p className="text-[#555] mb-8 max-w-2xl mx-auto">
+                        Start your compliance journey. Upgrade for unlimited analysis and context verification.
+                    </p>
 
                     {/* Billing Toggle */}
                     <div className="inline-flex items-center justify-center p-1 border border-black bg-white">
