@@ -806,3 +806,38 @@ model ConformityAssessment {
   @@index([status])
   @@map("conformity_assessments")
 }
+
+// =============================================================================
+// Demo Requests — Lead Capture from Request Demo page
+// =============================================================================
+
+model DemoRequest {
+  id            String   @id @default(cuid())
+  
+  // Contact Info
+  full_name     String
+  work_email    String
+  company_name  String
+  company_size  String   // 1-10, 11-50, 51-200, 201-1000, 1000+
+  
+  // Optional Qualification
+  role          String?  // CTO/VP Engineering, Engineering Lead, Compliance/Legal, Product Manager, Other
+  use_case      String?  // preparing_for_eu_ai_act, already_under_audit, evaluating_tools, other
+  
+  // Internal Management
+  status        String   @default("new")  // new, contacted, qualified, converted
+  notes         String?  // Admin notes
+  
+  // Metadata
+  ip_address    String?
+  user_agent    String?
+  referrer      String?
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@index([work_email])
+  @@index([status])
+  @@index([created_at])
+  @@map("demo_requests")
+}

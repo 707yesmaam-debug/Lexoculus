@@ -36,7 +36,7 @@ function HeroCTA() {
         <div className="mb-8">
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
                 <Link
-                    href="/auth/signup"
+                    href="/request-demo"
                     className="bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-black transition-colors border-2 border-black text-center"
                 >
                     Request_Demo →
