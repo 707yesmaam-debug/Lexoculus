@@ -46,28 +46,12 @@ export default function DocumentsPage() {
     const [docContent, setDocContent] = useState<string>('');
     const [openingDocId, setOpeningDocId] = useState<string | null>(null);
 
-    const [isPro, setIsPro] = useState(false);
-    const [checkingSubscription, setCheckingSubscription] = useState(true);
 
     useEffect(() => {
         fetchAiSystem();
         fetchDocuments();
-        fetchSubscription();
     }, [aiSystemId]);
 
-    const fetchSubscription = async () => {
-        try {
-            const res = await fetch('/api/subscription/status');
-            if (res.ok) {
-                const data = await res.json();
-                setIsPro(data.tier !== 'free');
-            }
-        } catch (error) {
-            console.error('Failed to fetch subscription:', error);
-        } finally {
-            setCheckingSubscription(false);
-        }
-    };
 
     const fetchAiSystem = async () => {
         try {
@@ -285,61 +269,40 @@ export default function DocumentsPage() {
                                                     </Button>
 
                                                     {/* Export Button */}
-                                                    {isPro ? (
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => exportPdf(doc.id)}
-                                                            disabled={exporting === doc.id}
-                                                            className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs"
-                                                        >
-                                                            {exporting === doc.id ? (
-                                                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                                            ) : (
-                                                                <>
-                                                                    <Download className="w-4 h-4 mr-1" />
-                                                                    PDF
-                                                                </>
-                                                            )}
-                                                        </Button>
-                                                    ) : (
-                                                        <Link href="/pricing">
-                                                            <Button
-                                                                size="sm"
-                                                                className="bg-white text-[#999] border border-[#E5E5E5] hover:border-black hover:text-black rounded-none font-mono text-xs"
-                                                            >
-                                                                <Lock className="w-3 h-3 mr-1" /> PDF
-                                                            </Button>
-                                                        </Link>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                isPro ? (
                                                     <Button
-                                                        onClick={() => generateDocument(docType)}
-                                                        disabled={isGenerating}
+                                                        size="sm"
+                                                        onClick={() => exportPdf(doc.id)}
+                                                        disabled={exporting === doc.id}
                                                         className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs"
                                                     >
-                                                        {isGenerating ? (
-                                                            <>
-                                                                <RefreshCw className="w-4 h-4 animate-spin mr-1" />
-                                                                GENERATING...
-                                                            </>
+                                                        {exporting === doc.id ? (
+                                                            <RefreshCw className="w-4 h-4 animate-spin" />
                                                         ) : (
                                                             <>
-                                                                <Plus className="w-4 h-4 mr-1" />
-                                                                GENERATE
+                                                                <Download className="w-4 h-4 mr-1" />
+                                                                PDF
                                                             </>
                                                         )}
                                                     </Button>
-                                                ) : (
-                                                    <Link href="/pricing">
-                                                        <Button
-                                                            className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs"
-                                                        >
-                                                            UPGRADE_TO_PRO
-                                                        </Button>
-                                                    </Link>
-                                                )
+                                                </>
+                                            ) : (
+                                                <Button
+                                                    onClick={() => generateDocument(docType)}
+                                                    disabled={isGenerating}
+                                                    className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs"
+                                                >
+                                                    {isGenerating ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 animate-spin mr-1" />
+                                                            GENERATING...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Plus className="w-4 h-4 mr-1" />
+                                                            GENERATE
+                                                        </>
+                                                    )}
+                                                </Button>
                                             )}
                                         </div>
                                     </div>

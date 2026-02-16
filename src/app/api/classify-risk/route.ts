@@ -15,37 +15,20 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
  */
 export async function POST(request: NextRequest) {
     try {
-        // 1. Authenticate user (or validate scan_token for anonymous flow)
+        // 1. Authenticate user
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        // 2. Parse request body
-        const body = await request.json();
-        const { repo_scan_id, scan_token } = body;
-
-        // 3. Determine auth mode
-        let isAnonymous = false;
         if (!user) {
-            // Anonymous flow: validate scan_token
-            if (!scan_token || !repo_scan_id) {
-                return NextResponse.json(
-                    { error: 'Unauthorized' },
-                    { status: 401 }
-                );
-            }
-            const scan = await prisma.repoScan.findFirst({
-                where: { id: repo_scan_id, scan_token },
-            });
-            if (!scan) {
-                return NextResponse.json(
-                    { error: 'Invalid scan token' },
-                    { status: 401 }
-                );
-            }
-            isAnonymous = true;
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
         }
 
-        const effectiveUserId = user?.id || 'anonymous-system-user-0000';
+        // 2. Parse request body
+        const body = await request.json();
+        const { repo_scan_id } = body;
 
         if (!repo_scan_id) {
             return NextResponse.json(
@@ -54,9 +37,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. Check rate limit
-        const rateLimitKey = user?.id || 'anonymous';
-        const rateLimit = await checkRateLimit(rateLimitKey, 'LLM_ANALYSIS');
+        // 3. Check rate limit
+        const rateLimit = await checkRateLimit(user.id, 'LLM_ANALYSIS');
         if (!rateLimit.allowed) {
             return rateLimitResponse(rateLimit.resetAt);
         }
@@ -111,8 +93,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 6. Verify ownership (skip for anonymous scans)
-        if (!isAnonymous && llmAnalysis.user_id !== user!.id) {
+        // 6. Verify ownership
+        if (llmAnalysis.user_id !== user.id) {
             return NextResponse.json(
                 { error: 'Unauthorized - you do not own this analysis' },
                 { status: 401 }
@@ -167,7 +149,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     repo_scan_id,
                     llm_analysis_id: llmAnalysis.id,
-                    user_id: effectiveUserId,
+                    user_id: user.id,
                     risk_classification: result.risk_classification,
                     risk_score: result.risk_score,
                     risk_narrative: result.risk_narrative,
@@ -191,7 +173,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     repo_scan_id,
                     llm_analysis_id: llmAnalysis.id,
-                    user_id: effectiveUserId,
+                    user_id: user.id,
                     risk_classification: result.risk_classification,
                     risk_score: result.risk_score,
                     risk_narrative: result.risk_narrative,
@@ -221,7 +203,7 @@ export async function POST(request: NextRequest) {
                 // Find and update the AI System
                 const aiSystem = await prisma.aiSystem.findFirst({
                     where: {
-                        user_id: effectiveUserId,
+                        user_id: user.id,
                         name: repoScan.repo_name
                     }
                 });

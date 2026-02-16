@@ -30,26 +30,8 @@ function ScannerPageContent() {
         setScanData(null);
         setIsCheckingSubscription(true);
 
-        // FEATURE GATING: Check subscription status
-        const checkSubscription = async () => {
-            try {
-                const res = await fetch('/api/subscription/usage');
-                const data = await res.json();
-
-                if (data.tier === 'pro' || data.tier === 'enterprise') {
-                    // Allowed: Pro/Enterprise users stay here
-                    setIsCheckingSubscription(false);
-                    checkConnection();
-                } else {
-                    // Default / Free / Error -> Redirect to Free Scanner
-                    console.log('Redirecting to Free Scanner (Tier:', data.tier, ')');
-                    router.replace('/dashboard/free-scanner');
-                }
-            } catch (error) {
-                console.error('Subscription check failed, defaulting to Free Scanner:', error);
-                router.replace('/dashboard/free-scanner');
-            }
-        };
+        // All authenticated users have full scanner access
+        setIsCheckingSubscription(false);
 
         const checkConnection = async () => {
             try {
@@ -91,7 +73,7 @@ function ScannerPageContent() {
             }
         };
 
-        checkSubscription();
+        checkConnection();
     }, [searchParams, router]);
 
     const handleRepoSelect = async (repoUrl: string) => {

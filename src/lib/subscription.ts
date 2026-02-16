@@ -2,7 +2,7 @@
  * Subscription Service
  * 
  * Manages user subscriptions, tier gating, and usage limits.
- * Stripe-ready: includes fields for Stripe integration when credentials are available.
+ * Payment-ready: includes fields for payment integration when credentials are available.
  */
 
 import prisma from './prisma';
@@ -12,7 +12,7 @@ import logger from './logger';
 // TYPES
 // =============================================================================
 
-export type SubscriptionTier = 'free' | 'pro' | 'enterprise';
+export type SubscriptionTier = 'pro' | 'enterprise';
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
 
 export interface TierLimits {
@@ -27,12 +27,9 @@ export interface TierLimits {
         api_access: boolean;
         priority_support: boolean;
         custom_constraints: boolean;
-        public_only: boolean;
         team_size: number;
     };
 }
-
-// ... (UsageStatus interface restore) ...
 
 export interface UsageStatus {
     tier: SubscriptionTier;
@@ -59,22 +56,6 @@ export interface UsageStatus {
 // TIER LIMITS CONFIGURATION
 // =============================================================================
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
-    free: {
-        repos_limit: 1, // Matches scans limit
-        scans_limit: 1,
-        pr_scans_limit: 0,
-        reports_limit: 0, // No PDF reports
-        features: {
-            github_action: false,
-            slack_notifications: false,
-            pdf_reports: false,
-            api_access: false,
-            priority_support: false,
-            custom_constraints: false,
-            public_only: true, // Only public repos
-            team_size: 1,
-        },
-    },
     pro: {
         repos_limit: 999999, // Unlimited
         scans_limit: 999999, // Unlimited
@@ -87,7 +68,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
             api_access: true,
             priority_support: true,
             custom_constraints: true,
-            public_only: false, // Private & Public
             team_size: 10,
         },
     },
@@ -103,7 +83,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
             api_access: true,
             priority_support: true,
             custom_constraints: true,
-            public_only: false,
             team_size: 999,
         },
     },
@@ -114,15 +93,6 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
 // =============================================================================
 
 export const PRICING = {
-    free: {
-        name: 'Free',
-        price: 0,
-        currency: 'EUR',
-        period: 'forever',
-        description: 'For trying out ComplianceAI',
-        cta: 'Get Started',
-        highlighted: false,
-    },
     pro: {
         name: 'Pro',
         price: 99,        // Base reference (USD)
@@ -134,7 +104,7 @@ export const PRICING = {
         description: 'For teams building AI products',
         cta: 'Upgrade to Pro',
         highlighted: true,
-        stripe_price_id: process.env.STRIPE_PRO_PRICE_ID || 'price_pro_placeholder',
+        payment_price_id: process.env.PAYMENT_PRO_PRICE_ID || 'price_pro_placeholder',
     },
     enterprise: {
         name: 'Enterprise',
@@ -178,16 +148,16 @@ export async function getOrCreateSubscription(userId: string, email?: string, fu
     });
 
     if (!subscription) {
-        // Create free subscription
+        // Create default pro subscription
         subscription = await prisma.subscription.create({
             data: {
                 user_id: userId,
-                tier: 'free',
+                tier: 'pro',
                 status: 'active',
-                repos_limit: TIER_LIMITS.free.repos_limit,
-                scans_limit: TIER_LIMITS.free.scans_limit,
-                pr_scans_limit: TIER_LIMITS.free.pr_scans_limit,
-                reports_limit: TIER_LIMITS.free.reports_limit,
+                repos_limit: TIER_LIMITS.pro.repos_limit,
+                scans_limit: TIER_LIMITS.pro.scans_limit,
+                pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
+                reports_limit: TIER_LIMITS.pro.reports_limit,
             },
         });
     }
@@ -278,7 +248,7 @@ export async function checkUsageLimit(
         allowed,
         remaining,
         limit,
-        reason: allowed ? undefined : `Monthly limit of ${limit} ${name} reached. Upgrade to Pro for more.`,
+        reason: allowed ? undefined : `Monthly limit of ${limit} ${name} reached. Contact support for more.`,
     };
 }
 
@@ -356,28 +326,25 @@ export async function grantProSubscription(
 }
 
 /**
- * Revoke Pro subscription (revert to free)
+ * Revoke elevated subscription (reset to default pro limits)
  */
-export async function revokeProSubscription(userId: string): Promise<void> {
+export async function revokeElevatedSubscription(userId: string): Promise<void> {
     await prisma.subscription.update({
         where: { user_id: userId },
         data: {
-            tier: 'free',
+            tier: 'pro',
             status: 'active',
-            repos_limit: TIER_LIMITS.free.repos_limit,
-            scans_limit: TIER_LIMITS.free.scans_limit,
-            pr_scans_limit: TIER_LIMITS.free.pr_scans_limit,
-            reports_limit: TIER_LIMITS.free.reports_limit,
+            repos_limit: TIER_LIMITS.pro.repos_limit,
+            scans_limit: TIER_LIMITS.pro.scans_limit,
+            pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
+            reports_limit: TIER_LIMITS.pro.reports_limit,
             is_manual_grant: false,
             manual_grant_reason: null,
             granted_by: null,
-            stripe_customer_id: null,
-            stripe_subscription_id: null,
-            stripe_price_id: null,
         },
     });
 
-    logger.info({ event: 'pro_revoke', userId }, `🚫 [SUBSCRIPTION] Revoked Pro from ${userId}`);
+    logger.info({ event: 'subscription_revoke', userId }, `🚫 [SUBSCRIPTION] Revoked elevated subscription from ${userId}`);
 }
 
 // =============================================================================

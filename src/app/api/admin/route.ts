@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAccess } from '@/lib/admin';
 import prisma from '@/lib/prisma';
-import { grantProSubscription, revokeProSubscription, TIER_LIMITS } from '@/lib/subscription';
+import { grantProSubscription, revokeElevatedSubscription, TIER_LIMITS } from '@/lib/subscription';
 import logger from '@/lib/logger';
 
 /**
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
                 target: user_email || targetUserId
             }, `🟠 [ADMIN AUDIT] Pro revoked by ${adminUser?.email}`);
 
-            await revokeProSubscription(targetUserId);
+            await revokeElevatedSubscription(targetUserId);
 
             return NextResponse.json({
                 success: true,

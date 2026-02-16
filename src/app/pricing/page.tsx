@@ -117,30 +117,7 @@ export default function PricingPage() {
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8 items-start">
-                    {/* Free Tier */}
-                    <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
-                        <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">STARTER</div>
-                        <h3 className="font-serif text-3xl font-bold mb-2">Free</h3>
-                        <div className="text-4xl font-mono font-bold mb-6">
-                            {pricing.symbol}0 <span className="text-base font-normal text-[#999]">/mo</span>
-                        </div>
-                        <p className="text-sm text-[#555] mb-8 min-h-[40px]">
-                            Perfect for individuals auditing public repositories.
-                        </p>
-                        <Link href="/dashboard/free-scanner" className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors">
-                            START_AUDIT
-                        </Link>
-
-                        <div className="mt-8 space-y-4">
-                            <FeatureItem included>2 Public Scans / Month</FeatureItem>
-                            <FeatureItem included>Full Scan Pipeline</FeatureItem>
-                            <FeatureItem included>Risk Classification</FeatureItem>
-                            <FeatureItem included={false}>Private Repositories</FeatureItem>
-                            <FeatureItem included={false}>PDF Reports</FeatureItem>
-                            <FeatureItem included={false}>Verification Engine</FeatureItem>
-                        </div>
-                    </div>
+                <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
 
                     {/* Pro Tier */}
                     <div className="border border-black bg-black text-white p-8 relative transform md:-translate-y-4 shadow-2xl">

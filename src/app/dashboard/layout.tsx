@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
-import UpgradePrompt from '@/components/UpgradePrompt';
+
 
 export default function DashboardLayout({
     children,
@@ -103,7 +103,7 @@ export default function DashboardLayout({
             // This forces the user to complete the lifecycle or terminate explicitly
             status: activeScanId ? '[LOCKED]' : '[START]',
             disabled: !!activeScanId,
-            isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard/free-scanner' || pathname === '/dashboard'
+            isActive: pathname === '/dashboard/scanner' || pathname === '/dashboard'
         },
         {
             name: '02_ANALYSIS',
@@ -116,9 +116,9 @@ export default function DashboardLayout({
         },
         {
             name: '03_REPORTS',
-            href: '#',
-            status: '[PRO]',
-            disabled: true,
+            href: activeScanId ? `/dashboard/report/${activeScanId}` : '#',
+            status: activeScanId ? '[READY]' : '[LOCKED]',
+            disabled: !activeScanId,
             isActive: pathname.includes('/report/')
         },
         {
@@ -132,7 +132,8 @@ export default function DashboardLayout({
         {
             name: '05_INTEGRATIONS',
             href: '/dashboard/integrations',
-            status: '[PRO]',
+            status: activeScanId ? '[LOCKED]' : '[VIEW]',
+            disabled: !!activeScanId,
             isActive: pathname === '/dashboard/integrations'
         },
         {
@@ -184,13 +185,7 @@ export default function DashboardLayout({
                                             {item.name}
                                         </span>
                                         <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
-                                            {['03_REPORTS', '05_SETTINGS', '04_INTEGRATIONS'].includes(item.name) ? (
-                                                <span className="inline-flex items-center gap-1">
-                                                    [PRO]
-                                                </span>
-                                            ) : (
-                                                item.status
-                                            )}
+                                            {item.status}
                                         </span>
                                     </Link>
                                 );
@@ -198,46 +193,41 @@ export default function DashboardLayout({
                         </nav>
                     </div>
 
-                    <div className="mt-8 md:mt-0">
-                        {/* Upgrade Prompt Footer */}
-                        <div className="p-4 border-t border-[#E5E5E5] -mx-6 md:mx-0">
-                            <UpgradePrompt variant="sidebar" />
+
+                    <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
+                        <div className="flex justify-between mb-2">
+                            <span>OPERATOR:</span>
+                            <span className="truncate max-w-[150px]">{email}</span>
                         </div>
-                        <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
-                            <div className="flex justify-between mb-2">
-                                <span>OPERATOR:</span>
-                                <span className="truncate max-w-[150px]">{email}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span>SESSION:</span>
-                                <span className="text-[#FF4F00]">SECURE</span>
-                            </div>
+                        <div className="flex justify-between">
+                            <span>SESSION:</span>
+                            <span className="text-[#FF4F00]">SECURE</span>
                         </div>
-                        {activeScanId && (
-                            <div className="mb-4">
-                                <button
-                                    onClick={() => {
-                                        if (window.confirm('WARNING: Aborting this scan will not refund your scan credit. Are you sure you want to proceed?')) {
-                                            localStorage.removeItem('last_active_scan_id');
-                                            window.location.href = '/dashboard/scanner';
-                                        }
-                                    }}
-                                    className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors text-center mb-1"
-                                >
-                                    ABORT_SCAN
-                                </button>
-                                <div className="text-[10px] text-red-600 font-mono text-center leading-tight">
-                                    [!] CREDIT_WILL_BE_LOST
-                                </div>
-                            </div>
-                        )}
-                        <button
-                            onClick={handleLogout}
-                            className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
-                        >
-                            Terminate_Session
-                        </button>
                     </div>
+                    {activeScanId && (
+                        <div className="mb-4">
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('WARNING: Aborting this scan will not refund your scan credit. Are you sure you want to proceed?')) {
+                                        localStorage.removeItem('last_active_scan_id');
+                                        window.location.href = '/dashboard/scanner';
+                                    }
+                                }}
+                                className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors text-center mb-1"
+                            >
+                                ABORT_SCAN
+                            </button>
+                            <div className="text-[10px] text-red-600 font-mono text-center leading-tight">
+                                [!] CREDIT_WILL_BE_LOST
+                            </div>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
+                    >
+                        Terminate_Session
+                    </button>
                 </div>
             </aside>
 

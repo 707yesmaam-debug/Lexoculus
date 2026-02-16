@@ -58,17 +58,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // MRR GATING: Check subscription
-        const subscription = document.ai_system.user?.subscription;
-        const hasActiveProSubscription = (subscription?.status === 'active' || subscription?.status === 'trialing') &&
-            subscription?.tier !== 'free';
 
-        if (!hasActiveProSubscription) {
-            return NextResponse.json(
-                { error: 'Pro subscription required to export PDF' },
-                { status: 403 }
-            );
-        }
 
         // Get markdown content
         let contentMarkdown = (document.content as { markdown?: string })?.markdown || '';

@@ -42,7 +42,7 @@ export default function ReportGeneratorPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState(0);
-    const [isFreeTier, setIsFreeTier] = useState(false);
+
 
     // Fetch assessment and existing report
     useEffect(() => {
@@ -51,12 +51,7 @@ export default function ReportGeneratorPage() {
                 setIsLoading(true);
                 setError(null);
 
-                // Check subscription status
-                const subRes = await fetch('/api/subscription/usage');
-                if (subRes.ok) {
-                    const subData = await subRes.json();
-                    setIsFreeTier(subData.tier === 'free');
-                }
+
 
                 // Get final assessment
                 const assessmentRes = await fetch(`/api/final-risk-assessment/${repo_scan_id}`);
@@ -94,11 +89,7 @@ export default function ReportGeneratorPage() {
     const handleGenerate = async () => {
         if (!assessment) return;
 
-        // Double check for free tier
-        if (isFreeTier) {
-            window.location.href = '/pricing';
-            return;
-        }
+
 
         try {
             setIsGenerating(true);
@@ -274,32 +265,7 @@ export default function ReportGeneratorPage() {
                         Compile all verification data into a comprehensive signed PDF report suitable for regulatory auditing.
                     </p>
 
-                    {isFreeTier ? (
-                        <div className="flex flex-col items-center">
-                            <div className="bg-[#F5F5F5] border border-black p-6 max-w-md w-full mb-6">
-                                <div className="flex items-center justify-between mb-4 border-b border-[#E5E5E5] pb-2">
-                                    <span className="font-mono text-xs uppercase tracking-widest text-black">Feature_Lock</span>
-                                    <span className="font-mono text-xs uppercase tracking-widest text-[#FF4F00]">[PRO_ONLY]</span>
-                                </div>
-                                <p className="font-mono text-xs text-[#555] mb-4 text-left">
-                                    Official PDF documentation generation is restricted to Pro Plan subscribers.
-                                </p>
-                                <button
-                                    onClick={() => router.push('/pricing')}
-                                    className="w-full bg-black text-white py-3 font-mono text-xs uppercase tracking-widest hover:bg-[#FF4F00] transition-colors"
-                                >
-                                    Upgrade_To_Unlock
-                                </button>
-                            </div>
-                            <button
-                                disabled
-                                className="inline-flex items-center gap-3 px-8 py-4 bg-[#E5E5E5] text-[#999] font-mono text-sm uppercase tracking-widest cursor-not-allowed opacity-50"
-                            >
-                                <FileText className="w-5 h-5" />
-                                Generate_PDF_Report
-                            </button>
-                        </div>
-                    ) : isGenerating ? (
+                    {isGenerating ? (
                         <div className="max-w-xs mx-auto">
                             <div className="flex items-center justify-center gap-3 mb-4 font-mono text-xs uppercase tracking-widest text-[#555]">
                                 <Loader2 className="w-4 h-4 text-[#FF4F00] animate-spin" />
