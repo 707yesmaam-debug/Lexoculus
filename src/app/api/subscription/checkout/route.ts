@@ -15,13 +15,22 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get user details from our database
-        const user = await prisma.user.findUnique({
+        // Get user details from our database, or create if missing (self-healing)
+        let user = await prisma.user.findUnique({
             where: { id: authUser.id },
         });
 
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            // User exists in Supabase Auth but not in public.users table
+            // This can happen if the handle_new_user trigger failed or doesn't exist
+            console.warn(`[CHECKOUT] User ${authUser.id} missing from public.users, creating fallback record`);
+            user = await prisma.user.create({
+                data: {
+                    id: authUser.id,
+                    email: authUser.email!,
+                    full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+                },
+            });
         }
 
         // Create Checkout Session
