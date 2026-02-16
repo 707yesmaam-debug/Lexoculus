@@ -71,7 +71,7 @@ function PricingContent() {
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                alert('Checkout initialization failed. Please try again.');
+                alert(data.error || 'Checkout initialization failed. Please try again.');
             }
         } catch (error) {
             console.error('Checkout error:', error);
