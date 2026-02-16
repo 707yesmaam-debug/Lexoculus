@@ -2,14 +2,13 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { dodo } from '@/lib/dodo';
 import { prisma } from '@/lib/prisma';
-import { WebhookEventType } from 'dodopayments';
 
 // Disable next.js body parsing (not needed in app router, just read text)
 // But we need the raw body for signature verification.
 export async function POST(req: Request) {
     try {
         const bodyText = await req.text();
-        const headerPayload = headers();
+        const headerPayload = await headers();
 
         // Convert headers to Record<string, string> for Dodo SDK
         const headerObj: Record<string, string> = {};
@@ -80,9 +79,9 @@ async function handleSubscriptionUpdate(data: any) {
 
     // Upsert subscription
     await prisma.subscription.upsert({
-        where: { userId: user.id },
+        where: { user_id: user.id },
         create: {
-            userId: user.id,
+            user_id: user.id,
             tier: 'pro', // Assuming only Pro plan for now
             status: 'active',
             payment_provider: 'dodo',
@@ -115,7 +114,7 @@ async function handleSubscriptionCancellation(data: any) {
     if (!user) return;
 
     await prisma.subscription.update({
-        where: { userId: user.id },
+        where: { user_id: user.id },
         data: {
             status: 'canceled', // or whatever status passed
             cancel_at_period_end: true,

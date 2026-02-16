@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { createServerClient } from '@/lib/supabase-server';
 import { createCheckoutSession } from '@/lib/subscription';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
     try {
-        const session = await getServerSession(authOptions);
+        const supabase = await createServerClient();
+        const {
+            data: { user: authUser },
+            error: authError,
+        } = await supabase.auth.getUser();
 
-        if (!session?.user?.email) {
+        if (authError || !authUser || !authUser.email) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get user from DB to check if they already have a customer ID
-        // (Optional: reusing customer ID if we stored it, but for now we'll let Dodo handle it)
+        // Get user details from our database
         const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
+            where: { id: authUser.id },
         });
 
         if (!user) {
@@ -23,11 +25,12 @@ export async function POST(req: Request) {
         }
 
         // Create Checkout Session
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
         const { url, error } = await createCheckoutSession(
             user.id,
             user.email,
             user.full_name || undefined,
-            `${process.env.NEXTAUTH_URL}/dashboard?checkout=success`
+            `${baseUrl}/dashboard?checkout=success`
         );
 
         if (error || !url) {

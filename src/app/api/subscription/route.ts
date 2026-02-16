@@ -102,37 +102,37 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(result);
         }
 
-        // Create Stripe checkout (placeholder)
+        // Create Checkout (Dodo)
         if (action === 'checkout') {
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-            const result = await createCheckoutSession(
+            const { url, error } = await createCheckoutSession(
                 user.id,
-                tier || 'pro',
-                `${appUrl}/dashboard?upgrade=success`,
-                `${appUrl}/pricing?upgrade=canceled`
+                user.email || '',
+                undefined, // name not available in this context easily without DB fetch, but generic is fine
+                // Actually we should fetch user name if possible, or let Dodo handle it.
+                // But wait, we used supabase.auth.getUser() which doesn't have name.
+                // We should get it from DB if we want it.
+                // But Dodo just needs email primarily.
+                `${appUrl}/dashboard?upgrade=success`
             );
 
-            if (result.error) {
+            if (error || !url) {
                 return NextResponse.json({
                     success: false,
-                    error: result.error,
+                    error: error || 'Failed to initiate checkout',
                     fallback: 'Contact support@complianceai.eu for Pro access',
                 });
             }
 
             return NextResponse.json({
                 success: true,
-                checkout_url: result.url,
+                checkout_url: url,
             });
         }
 
-        // Get customer portal (placeholder)
+        // Get customer portal (Dodo)
         if (action === 'portal') {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-            const result = await getCustomerPortalUrl(
-                user.id,
-                `${appUrl}/dashboard`
-            );
+            const result = await getCustomerPortalUrl(user.id);
 
             if (result.error) {
                 return NextResponse.json({
