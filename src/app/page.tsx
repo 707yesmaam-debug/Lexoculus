@@ -372,7 +372,7 @@ export default function LandingPage() {
                     {/* Pipeline CTA */}
                     <div className="p-8 md:p-16 border-t-2 border-black flex flex-col sm:flex-row items-center justify-between gap-6">
                         <p className="font-mono text-sm text-[#555]">
-                            Full pipeline takes under 5 minutes. Free tier includes 1 scan/month.
+                            Full pipeline takes under 5 minutes.
                         </p>
                         <Link
                             href="/auth/signup"
@@ -733,7 +733,7 @@ export default function LandingPage() {
                             <div className="space-y-4">
                                 {[
                                     { label: 'Timeline', value: 'Under 5 minutes' },
-                                    { label: 'Cost', value: 'Free to start' },
+                                    { label: 'Cost', value: 'Flexible plans' },
                                     { label: 'Output', value: 'SHA-256 signed PDF report' },
                                     { label: 'Method', value: 'Automated code analysis' },
                                     { label: 'Maintenance', value: 'Re-scan on every PR' },

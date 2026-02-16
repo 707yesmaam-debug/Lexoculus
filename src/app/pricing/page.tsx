@@ -93,9 +93,7 @@ export default function PricingPage() {
                     <h1 className="font-serif text-5xl md:text-6xl font-bold mb-6 tracking-tight">
                         Predictable pricing for <br /> <span className="text-[#FF4F00]">compliance at scale.</span>
                     </h1>
-                    <p className="font-mono text-[#555] max-w-xl mx-auto mb-10">
-                        Start for free. Upgrade for unlimited analysis and context verification.
-                    </p>
+                    Start your compliance journey. Upgrade for unlimited analysis and context verification.
 
                     {/* Billing Toggle */}
                     <div className="inline-flex items-center justify-center p-1 border border-black bg-white">

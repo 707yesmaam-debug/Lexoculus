@@ -401,7 +401,7 @@ export default function AdminPage() {
                                                     ? 'bg-cyan-500/20 text-cyan-400'
                                                     : 'bg-gray-700 text-gray-400'
                                                     }`}>
-                                                    {user.subscription?.tier || 'free'}
+                                                    {user.subscription?.tier || 'unknown'}
                                                 </span>
                                             </td>
                                             <td className="py-3 text-gray-400">{user.usage.repo_scans}</td>
