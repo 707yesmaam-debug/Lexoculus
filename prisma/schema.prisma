@@ -99,6 +99,9 @@ model RepoScan {
   forks_count      Int     @default(0)
   watchers_count   Int     @default(0)
 
+  // Anonymous scan support
+  scan_token String?  @unique  // UUID token for anonymous scan ownership
+
   scanned_at DateTime @default(now())
   expires_at DateTime @default(dbgenerated("(now() + interval '30 days')"))
 

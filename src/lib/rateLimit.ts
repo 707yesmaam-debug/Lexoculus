@@ -9,6 +9,8 @@ export const RATE_LIMITS = {
     REPO_LIST: { windowMs: 60 * 60 * 1000, maxRequests: 30, name: 'repo_list' },
     // Lower limits for expensive operations
     LLM_ANALYSIS: { windowMs: 60 * 60 * 1000, maxRequests: 20, name: 'llm_analysis' },
+    // Anonymous scan: 1 per IP per day (24h window)
+    ANONYMOUS_SCAN: { windowMs: 24 * 60 * 60 * 1000, maxRequests: 1, name: 'anonymous_scan' },
 } as const;
 
 // =============================================================================

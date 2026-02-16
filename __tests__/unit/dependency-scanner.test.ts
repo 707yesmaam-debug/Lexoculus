@@ -38,6 +38,7 @@ const createMockRepoScan = (overrides: Record<string, unknown> = {}) => ({
     watchers_count: 0,
     scanned_at: new Date(),
     expires_at: new Date(),
+    scan_token: null,
     ...overrides,
 });
 

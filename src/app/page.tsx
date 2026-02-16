@@ -3,6 +3,7 @@
 import OpticalLogo from '@/components/OpticalLogo';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 // ─── SCAN LINE ANIMATION ─────────────────────────────────────────────────────
 function ScanLine() {
@@ -27,6 +28,110 @@ function StatusBlinker({ label }: { label: string }) {
         <span className="text-[#FF4F00]">
             {label}{on ? '█' : ' '}
         </span>
+    );
+}
+
+// ─── HERO SCAN FORM ──────────────────────────────────────────────────────────
+function HeroScanForm() {
+    const router = useRouter();
+    const [repoUrl, setRepoUrl] = useState('');
+    const [scanning, setScanning] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleScan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (!repoUrl.trim()) {
+            setError('Please enter a GitHub repository URL');
+            return;
+        }
+
+        // Basic URL validation
+        if (!repoUrl.match(/github\.com\/[\w.-]+\/[\w.-]+/)) {
+            setError('Please enter a valid GitHub URL (e.g., https://github.com/owner/repo)');
+            return;
+        }
+
+        setScanning(true);
+        try {
+            const res = await fetch('/api/anonymous-scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo_url: repoUrl.trim() }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 429) {
+                    setError('You\'ve already used your free scan today. Create an account for more scans.');
+                } else {
+                    setError(data.message || 'Scan failed. Please try again.');
+                }
+                return;
+            }
+
+            // Store scan token in localStorage for later claim
+            localStorage.setItem('anon_scan_token', data.scan_token);
+            localStorage.setItem('anon_scan_id', data.repo_scan_id);
+            localStorage.setItem('anon_scan_expires', data.expires_at);
+
+            // Redirect to public results page
+            router.push(`/scan/${data.repo_scan_id}`);
+        } catch {
+            setError('Network error. Please check your connection and try again.');
+        } finally {
+            setScanning(false);
+        }
+    };
+
+    return (
+        <div className="mb-8">
+            <form onSubmit={handleScan} className="flex flex-col sm:flex-row gap-0 mb-3">
+                <input
+                    type="text"
+                    value={repoUrl}
+                    onChange={(e) => { setRepoUrl(e.target.value); setError(''); }}
+                    placeholder="https://github.com/org/repo"
+                    className="flex-1 font-mono text-sm border-2 border-black px-4 py-4 bg-white placeholder:text-[#AAA] focus:outline-none focus:border-[#FF4F00] transition-colors"
+                    disabled={scanning}
+                />
+                <button
+                    type="submit"
+                    disabled={scanning}
+                    className="bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-black transition-colors border-2 border-black sm:border-l-0 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                    {scanning ? (
+                        <span className="flex items-center gap-2 justify-center">
+                            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Scanning...
+                        </span>
+                    ) : (
+                        'Scan_Now →'
+                    )}
+                </button>
+            </form>
+
+            {error && (
+                <div className="font-mono text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2">
+                    {error}
+                </div>
+            )}
+
+            <div className="flex items-center gap-4 mt-3">
+                <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">
+                    No account required
+                </span>
+                <span className="text-[#CCC]">·</span>
+                <Link
+                    href="/pricing"
+                    className="font-mono text-[10px] uppercase tracking-widest text-[#999] hover:text-[#FF4F00] transition-colors"
+                >
+                    View_Plans →
+                </Link>
+            </div>
+        </div>
     );
 }
 
@@ -94,23 +199,10 @@ export default function LandingPage() {
                             a signed compliance report. In minutes, not months.
                         </p>
 
-                        <div className="flex flex-col sm:flex-row gap-3 mb-8">
-                            <Link
-                                href="/auth/signup"
-                                className="text-center bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-black transition-colors"
-                            >
-                                Start_Free_Audit
-                            </Link>
-                            <Link
-                                href="/pricing"
-                                className="text-center border-2 border-black font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-black hover:text-white transition-colors"
-                            >
-                                View_Plans
-                            </Link>
-                        </div>
+                        <HeroScanForm />
 
                         <div className="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-[#999]">
-                            <span>GitHub_Connected</span>
+                            <span>Public_Repos_Only</span>
                             <span>SHA-256_Signed</span>
                             <span>Annex_III_Mapped</span>
                         </div>
