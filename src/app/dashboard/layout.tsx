@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
+import SubscriptionGate from '@/components/SubscriptionGate';
 
 
 export default function DashboardLayout({
@@ -147,94 +148,95 @@ export default function DashboardLayout({
 
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
+        <SubscriptionGate>
+            <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
 
-            {/* LEFT SIDEBAR: Navigation */}
-            {/* LEFT SIDEBAR: Navigation */}
-            <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col bg-[#F5F5F5] z-50">
-                <div className="p-6 md:p-0 flex items-center justify-between md:block">
-                    <div className="md:p-6 md:pb-0">
-                        <Link href="/dashboard/scanner">
-                            <OpticalLogo />
-                        </Link>
-                    </div>
-                    <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 border border-black hover:bg-black hover:text-white transition-colors">
-                        {isMobileMenuOpen ? 'CLOSE' : 'MENU'}
-                    </button>
-                </div>
-
-                <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col justify-between flex-1 p-6 pt-0`}>
-                    <div className="mt-6 md:mt-12">
-                        <nav className="flex flex-col gap-2 font-mono text-sm">
-                            {navItems.map((item) => {
-                                return (
-                                    <Link
-                                        key={item.name}
-                                        href={item.disabled ? '#' : item.href}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className={`
-                                            group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
-                                            ${item.isActive
-                                                ? 'bg-black text-white'
-                                                : 'text-gray-600 hover:bg-gray-50 hover:text-black'
-                                            }
-                                            ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                                        `}
-                                    >
-                                        <span className="flex items-center gap-3">
-                                            {item.name}
-                                        </span>
-                                        <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
-                                            {item.status}
-                                        </span>
-                                    </Link>
-                                );
-                            })}
-                        </nav>
-                    </div>
-
-
-                    <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
-                        <div className="flex justify-between mb-2">
-                            <span>OPERATOR:</span>
-                            <span className="truncate max-w-[150px]">{email}</span>
+                {/* LEFT SIDEBAR: Navigation */}
+                <aside className="w-full md:w-[350px] md:h-screen md:sticky md:top-0 border-b-2 md:border-b-0 md:border-r-2 border-black flex flex-col bg-[#F5F5F5] z-50">
+                    <div className="p-6 md:p-0 flex items-center justify-between md:block">
+                        <div className="md:p-6 md:pb-0">
+                            <Link href="/dashboard/scanner">
+                                <OpticalLogo />
+                            </Link>
                         </div>
-                        <div className="flex justify-between">
-                            <span>SESSION:</span>
-                            <span className="text-[#FF4F00]">SECURE</span>
-                        </div>
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 border border-black hover:bg-black hover:text-white transition-colors">
+                            {isMobileMenuOpen ? 'CLOSE' : 'MENU'}
+                        </button>
                     </div>
-                    {activeScanId && (
-                        <div className="mb-4">
-                            <button
-                                onClick={() => {
-                                    if (window.confirm('WARNING: Aborting this scan will not refund your scan credit. Are you sure you want to proceed?')) {
-                                        localStorage.removeItem('last_active_scan_id');
-                                        window.location.href = '/dashboard/scanner';
-                                    }
-                                }}
-                                className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors text-center mb-1"
-                            >
-                                ABORT_SCAN
-                            </button>
-                            <div className="text-[10px] text-red-600 font-mono text-center leading-tight">
-                                [!] CREDIT_WILL_BE_LOST
+
+                    <div className={`${isMobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col justify-between flex-1 p-6 pt-0`}>
+                        <div className="mt-6 md:mt-12">
+                            <nav className="flex flex-col gap-2 font-mono text-sm">
+                                {navItems.map((item) => {
+                                    return (
+                                        <Link
+                                            key={item.name}
+                                            href={item.disabled ? '#' : item.href}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={`
+                                                group flex items-center justify-between px-2 py-2 text-sm font-medium font-mono
+                                                ${item.isActive
+                                                    ? 'bg-black text-white'
+                                                    : 'text-gray-600 hover:bg-gray-50 hover:text-black'
+                                                }
+                                                ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                                            `}
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                {item.name}
+                                            </span>
+                                            <span className={`text-[10px] tracking-wider ${item.isActive ? 'text-gray-400' : 'text-gray-400 group-hover:text-black'}`}>
+                                                {item.status}
+                                            </span>
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+
+
+                        <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
+                            <div className="flex justify-between mb-2">
+                                <span>OPERATOR:</span>
+                                <span className="truncate max-w-[150px]">{email}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>SESSION:</span>
+                                <span className="text-[#FF4F00]">SECURE</span>
                             </div>
                         </div>
-                    )}
-                    <button
-                        onClick={handleLogout}
-                        className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
-                    >
-                        Terminate_Session
-                    </button>
-                </div>
-            </aside>
+                        {activeScanId && (
+                            <div className="mb-4">
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('WARNING: Aborting this scan will not refund your scan credit. Are you sure you want to proceed?')) {
+                                            localStorage.removeItem('last_active_scan_id');
+                                            window.location.href = '/dashboard/scanner';
+                                        }
+                                    }}
+                                    className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors text-center mb-1"
+                                >
+                                    ABORT_SCAN
+                                </button>
+                                <div className="text-[10px] text-red-600 font-mono text-center leading-tight">
+                                    [!] CREDIT_WILL_BE_LOST
+                                </div>
+                            </div>
+                        )}
+                        <button
+                            onClick={handleLogout}
+                            className="w-full border border-black p-3 font-mono text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors text-center"
+                        >
+                            Terminate_Session
+                        </button>
+                    </div>
+                </aside>
 
-            {/* MAIN CONTENT AREA */}
-            <main className="flex-1 bg-white min-h-screen">
-                {children}
-            </main>
-        </div>
+                {/* MAIN CONTENT AREA */}
+                <main className="flex-1 bg-white min-h-screen">
+                    {children}
+                </main>
+            </div>
+        </SubscriptionGate>
     );
 }

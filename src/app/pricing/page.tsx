@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, X, ArrowRight, Globe } from 'lucide-react';
+import { Check, X, ArrowRight, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import { REGIONAL_PRICING, Region, PricingTier, DEFAULT_REGION } from '@/lib/pricing-config';
 import OpticalLogo from '@/components/OpticalLogo';
 
@@ -15,12 +15,20 @@ function getCookie(name: string): string | null {
     return null;
 }
 
+import { useSearchParams } from 'next/navigation';
+
+// ... imports
+
 export default function PricingPage() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [region, setRegion] = useState<Region>(DEFAULT_REGION);
     const [pricing, setPricing] = useState<PricingTier>(REGIONAL_PRICING[DEFAULT_REGION]);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const searchParams = useSearchParams();
+    const reason = searchParams.get('reason');
+    const error = searchParams.get('error');
+    const [showAlert, setShowAlert] = useState(!!reason || !!error);
 
     useEffect(() => {
         // Hydrate region from cookie or default
@@ -117,6 +125,28 @@ export default function PricingPage() {
             </header>
 
             <main className="pt-32 pb-24 px-6 md:px-12 max-w-7xl mx-auto">
+
+                {/* Alert Banner */}
+                {showAlert && (
+                    <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
+                        <div className="bg-[#FF4F00] text-white px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4 border border-black min-w-[320px]">
+                            <AlertCircle className="w-5 h-5 shrink-0" />
+                            <div className="font-mono text-xs">
+                                <div className="font-bold uppercase mb-1">ACCESS_DENIED</div>
+                                {reason === 'subscription_required'
+                                    ? 'ACTIVE_SUBSCRIPTION_REQUIRED_FOR_ENTRY'
+                                    : 'AUTHENTICATION_SEQUENCE_FAILED'}
+                            </div>
+                            <button
+                                onClick={() => setShowAlert(false)}
+                                className="ml-auto hover:bg-black/20 p-1 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 <div className="text-center mb-16">
                     <h1 className="font-serif text-5xl md:text-6xl font-bold mb-6 tracking-tight">
                         Predictable pricing for <br /> <span className="text-[#FF4F00]">compliance at scale.</span>
