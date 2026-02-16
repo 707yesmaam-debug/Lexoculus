@@ -104,7 +104,7 @@ export const PRICING = {
         description: 'For teams building AI products',
         cta: 'Upgrade to Pro',
         highlighted: true,
-        payment_price_id: process.env.PAYMENT_PRO_PRICE_ID || 'price_pro_placeholder',
+        payment_price_id: process.env.DODO_PAYMENTS_PRODUCT_ID_PRO || 'price_pro_placeholder',
     },
     enterprise: {
         name: 'Enterprise',
@@ -348,86 +348,70 @@ export async function revokeElevatedSubscription(userId: string): Promise<void> 
 }
 
 // =============================================================================
-// STRIPE-READY PLACEHOLDERS
+// DODO PAYMENTS IMPLEMENTATION
 // =============================================================================
 
+import { dodo, DODO_PRODUCT_ID_PRO } from './dodo';
+
 /**
- * Create Stripe checkout session (placeholder - needs STRIPE_SECRET_KEY)
+ * Create Dodo checkout session for Pro subscription
  */
 export async function createCheckoutSession(
     userId: string,
-    tier: 'pro' | 'enterprise',
-    successUrl: string,
-    cancelUrl: string
+    userEmail: string,
+    userName?: string,
+    returnUrl: string = `${process.env.NEXTAUTH_URL}/dashboard?checkout=success`
 ): Promise<{ url: string | null; error?: string }> {
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    try {
+        if (!DODO_PRODUCT_ID_PRO) {
+            logger.warn(`⚠️ [DODO] No DODO_PRODUCT_ID_PRO configured`);
+            return { url: null, error: 'Payment is not configured yet.' };
+        }
 
-    if (!stripeKey) {
-        // Return placeholder for demo
-        logger.warn(`⚠️ [STRIPE] No STRIPE_SECRET_KEY - returning placeholder`);
-        return {
-            url: null,
-            error: 'Stripe is not configured yet. Please contact support for Pro access.',
-        };
+        const session = await dodo.checkoutSessions.create({
+            product_cart: [{
+                product_id: DODO_PRODUCT_ID_PRO,
+                quantity: 1,
+            }],
+            customer: {
+                email: userEmail,
+                name: userName,
+            },
+            billing_address: {
+                country: 'US', // Default, Dodo handles this
+            },
+            return_url: returnUrl,
+            metadata: {
+                userId: userId,
+            },
+        });
+
+        return { url: session.checkout_url ?? null };
+    } catch (error: any) {
+        logger.error({ error: error.message, userId }, '❌ [DODO] Failed to create checkout session');
+        return { url: null, error: 'Failed to initiate checkout.' };
     }
-
-    // TODO: Implement actual Stripe checkout when credentials are available
-    // const stripe = new Stripe(stripeKey);
-    // const session = await stripe.checkout.sessions.create({...});
-    // return { url: session.url };
-
-    return {
-        url: null,
-        error: 'Stripe checkout not implemented yet.',
-    };
 }
 
 /**
- * Handle Stripe webhook (placeholder - needs STRIPE_WEBHOOK_SECRET)
- */
-export async function handleStripeWebhook(
-    payload: string,
-    signature: string
-): Promise<{ success: boolean; error?: string }> {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    if (!webhookSecret) {
-        logger.warn(`⚠️ [STRIPE] No STRIPE_WEBHOOK_SECRET configured`);
-        return { success: false, error: 'Stripe webhooks not configured' };
-    }
-
-    // TODO: Implement actual Stripe webhook handling when credentials are available
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    // const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-    // switch (event.type) {...}
-
-    return { success: false, error: 'Stripe webhook handling not implemented yet.' };
-}
-
-/**
- * Get Stripe customer portal URL (placeholder)
+ * Get Dodo customer portal URL
  */
 export async function getCustomerPortalUrl(
-    userId: string,
-    returnUrl: string
+    userId: string
 ): Promise<{ url: string | null; error?: string }> {
     const subscription = await prisma.subscription.findUnique({
         where: { user_id: userId },
     });
 
-    if (!subscription?.stripe_customer_id) {
-        return { url: null, error: 'No Stripe customer found' };
+    if (!subscription?.payment_customer_id) {
+        return { url: null, error: 'No payment record found' };
     }
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-        return { url: null, error: 'Stripe not configured' };
+    try {
+        const session = await dodo.customers.customerPortal.create(subscription.payment_customer_id);
+        return { url: session.link };
+    } catch (error: any) {
+        logger.error({ error: error.message, userId }, '❌ [DODO] Failed to create portal session');
+        return { url: null, error: 'Failed to access billing portal.' };
     }
-
-    // TODO: Implement actual Stripe portal when credentials are available
-    // const stripe = new Stripe(stripeKey);
-    // const session = await stripe.billingPortal.sessions.create({...});
-    // return { url: session.url };
-
-    return { url: null, error: 'Stripe portal not implemented yet.' };
 }

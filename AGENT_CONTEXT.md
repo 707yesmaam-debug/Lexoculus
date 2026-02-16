@@ -34,6 +34,7 @@
 | Rate Limiting | Upstash Redis (with in-memory fallback) |
 | PDF | PDFKit 0.17 |
 | Logging | Pino |
+| Payments | Dodo Payments (Subscription & One-time) |
 | Deployment | Vercel + Vercel Analytics |
 
 ### Design System: "Optical Legality" (System 3.0)
@@ -100,7 +101,8 @@ Landing Page → /api/anonymous-scan → /scan/[id] (auto-triggers analyze + cla
 | `audit-logger.ts` | Structured audit logging |
 | `encryption.ts` | AES-256-GCM encryption for tokens |
 | `storage.ts` | Supabase Storage operations |
-| `subscription.ts` | Subscription tier management |
+| `subscription.ts` | Subscription tier management (Dodo Payments integration) |
+| `dodo.ts` | Dodo Payments SDK client |
 | `pricing-config.ts` | Pricing tier configuration |
 | `tripwire.ts` | Security tripwire detection |
 | `admin.ts` | Admin operations |
@@ -132,7 +134,7 @@ Landing Page → /api/anonymous-scan → /scan/[id] (auto-triggers analyze + cla
 | `ComplianceReport` | Generated PDF reports |
 | `GitHubActionInstall` | GitHub Action CI integration |
 | `PRScan` | Individual PR scan results |
-| `Subscription` | Pro/Free tier + Stripe-ready fields |
+| `Subscription` | Pro/Free tier + generic payment fields (`payment_provider`, `payment_customer_id`) |
 | `Feedback` | User feedback (1-5 rating) |
 | `AiSystem` | AI System Registry entry (links to scans) |
 | `AiSystemScan` | Scan history per AI system |
@@ -209,6 +211,8 @@ A dedicated system user `anonymous-system-user-0000` (email: `system@lexoculus.c
 | Endpoint | Purpose |
 |----------|---------|
 | `/api/auth/` | Auth operations |
+| `/api/subscription/checkout` | Dodo Payments checkout session creation |
+| `/api/webhooks/dodo` | Dodo Payments webhook handler |
 | `/api/subscription/` | Subscription management |
 | `/api/admin` | Admin operations |
 | `/api/alerts` | Alert management |
@@ -381,6 +385,9 @@ GITHUB_APP_CLIENT_SECRET=
 ADMIN_EMAIL=               # Admin panel access
 UPSTASH_REDIS_REST_URL=    # Rate limiting (optional — falls back to in-memory)
 UPSTASH_REDIS_REST_TOKEN=  # Rate limiting token
+DODO_PAYMENTS_API_KEY=     # Dodo Payments API Key (Test/Live)
+DODO_PAYMENTS_PRODUCT_ID_PRO= # Product ID for Pro tier
+DODO_PAYMENTS_WEBHOOK_SECRET= # Webhook signing secret
 ```
 
 ---

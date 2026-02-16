@@ -417,10 +417,11 @@ model Subscription {
   reports_used       Int @default(0)
   usage_reset_at     DateTime @default(now())
   
-  // Stripe Integration (ready for later)
-  stripe_customer_id     String?  @unique
-  stripe_subscription_id String?  @unique
-  stripe_price_id        String?
+  // Payment Integration (Dodo Payments)
+  payment_customer_id     String?  @unique @map("stripe_customer_id") // Keep map for backward compat if needed, or just rename col
+  payment_subscription_id String?  @unique @map("stripe_subscription_id")
+  payment_product_id      String?  @map("stripe_price_id")
+  payment_provider        String   @default("dodo") // dodo, stripe
   
   // Billing Cycle
   current_period_start  DateTime?
@@ -441,7 +442,7 @@ model Subscription {
 
   @@index([tier])
   @@index([status])
-  @@index([stripe_customer_id])
+  @@index([payment_customer_id])
   @@map("subscriptions")
 }
 

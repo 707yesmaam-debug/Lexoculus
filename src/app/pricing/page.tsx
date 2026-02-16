@@ -39,10 +39,38 @@ export default function PricingPage() {
         });
     }, []);
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const handleRegionChange = (newRegion: Region) => {
         setRegion(newRegion);
         setPricing(REGIONAL_PRICING[newRegion]);
         document.cookie = `pricing_region=${newRegion}; path=/; max-age=604800`; // 1 week
+    };
+
+    const handleUpgrade = async () => {
+        if (!isLoggedIn) {
+            window.location.href = '/auth/signup';
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/subscription/checkout', {
+                method: 'POST',
+            });
+            const data = await res.json();
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Checkout initialization failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const price = billingCycle === 'monthly' ? pricing.monthly : Math.round(pricing.yearly / 12);
@@ -130,8 +158,12 @@ export default function PricingPage() {
                         <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
                             For teams building compliant AI products at scale.
                         </p>
-                        <button disabled className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs opacity-75 cursor-not-allowed">
-                            COMING_SOON
+                        <button
+                            onClick={handleUpgrade}
+                            disabled={isLoading}
+                            className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-[#CC4000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? 'PROCESSING...' : 'UPGRADE_NOW'}
                         </button>
 
                         <div className="mt-8 space-y-4">
