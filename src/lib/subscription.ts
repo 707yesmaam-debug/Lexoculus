@@ -388,7 +388,7 @@ export async function createCheckoutSession(
         return { url: session.checkout_url ?? null };
     } catch (error: any) {
         logger.error({ error: error.message, userId }, '❌ [DODO] Failed to create checkout session');
-        return { url: null, error: 'Failed to initiate checkout.' };
+        return { url: null, error: error.message || 'Failed to initiate checkout.' };
     }
 }
 
