@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { Check, X, ArrowRight, Globe, AlertCircle, Loader2 } from 'lucide-react';
 import { REGIONAL_PRICING, Region, PricingTier, DEFAULT_REGION } from '@/lib/pricing-config';
@@ -19,7 +19,7 @@ import { useSearchParams } from 'next/navigation';
 
 // ... imports
 
-export default function PricingPage() {
+function PricingContent() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [region, setRegion] = useState<Region>(DEFAULT_REGION);
     const [pricing, setPricing] = useState<PricingTier>(REGIONAL_PRICING[DEFAULT_REGION]);
@@ -244,6 +244,14 @@ export default function PricingPage() {
                 </div>
             </footer>
         </div>
+    );
+}
+
+export default function PricingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#F5F5F5]" />}>
+            <PricingContent />
+        </Suspense>
     );
 }
 
