@@ -376,9 +376,9 @@ export async function createCheckoutSession(
                 email: userEmail,
                 name: userName,
             },
-            billing_address: {
-                country: 'US', // Default, Dodo handles this
-            },
+            // billing_address: {
+            //     country: 'US', // Removed to allow user selection
+            // },
             return_url: returnUrl,
             metadata: {
                 userId: userId,
