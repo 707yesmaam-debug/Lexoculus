@@ -12,8 +12,8 @@ import logger from './logger';
 // TYPES
 // =============================================================================
 
-export type SubscriptionTier = 'pro' | 'enterprise';
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing';
+export type SubscriptionTier = 'pro' | 'enterprise' | 'unpaid';
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'unpaid';
 
 export interface TierLimits {
     repos_limit: number;
@@ -55,7 +55,7 @@ export interface UsageStatus {
 // =============================================================================
 // TIER LIMITS CONFIGURATION
 // =============================================================================
-export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
+export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
     pro: {
         repos_limit: 999999, // Unlimited
         scans_limit: 999999, // Unlimited
@@ -122,56 +122,55 @@ export const PRICING = {
 // =============================================================================
 
 /**
- * Get or create subscription for a user
+ * Get existing subscription for a user.
+ * Returns null if no subscription exists (user hasn't paid yet).
+ * Subscriptions are only created by:
+ *   1. Dodo Payments webhook (after successful payment)
+ *   2. Manual grant via grantProSubscription()
  */
-export async function getOrCreateSubscription(userId: string, email?: string, fullName?: string) {
-    // 1. Ensure User exists in public schema (fallback for missing trigger)
-    const userExists = await prisma.user.findUnique({ where: { id: userId } });
-
-    if (!userExists) {
-        if (!email) {
-            throw new Error('User record missing and no email provided for fallback creation');
-        }
-        logger.info({ userId }, `[SUBSCRIPTION] User ${userId} missing in public table. Creating fallback record.`);
-        await prisma.user.create({
-            data: {
-                id: userId,
-                email: email,
-                full_name: fullName,
-            }
-        });
-    }
-
-    // 2. Get or Create Subscription
-    let subscription = await prisma.subscription.findUnique({
+export async function getSubscription(userId: string) {
+    return await prisma.subscription.findUnique({
         where: { user_id: userId },
     });
-
-    if (!subscription) {
-        // Create default pro subscription
-        subscription = await prisma.subscription.create({
-            data: {
-                user_id: userId,
-                tier: 'pro',
-                status: 'active',
-                repos_limit: TIER_LIMITS.pro.repos_limit,
-                scans_limit: TIER_LIMITS.pro.scans_limit,
-                pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
-                reports_limit: TIER_LIMITS.pro.reports_limit,
-            },
-        });
-    }
-
-    return subscription;
 }
 
 /**
- * Get user's current usage status
+ * @deprecated Use getSubscription() instead. Kept for backward compatibility.
+ */
+export async function getOrCreateSubscription(userId: string, email?: string, fullName?: string) {
+    return await getSubscription(userId);
+}
+
+/**
+ * Get user's current usage status.
+ * Returns 'unpaid' status if no subscription exists.
  */
 export async function getUsageStatus(userId: string, email?: string): Promise<UsageStatus> {
-    const subscription = await getOrCreateSubscription(userId, email);
+    const subscription = await getSubscription(userId);
+
+    // No subscription = user hasn't paid yet
+    if (!subscription) {
+        const zeroLimits: TierLimits = {
+            repos_limit: 0, scans_limit: 0, pr_scans_limit: 0, reports_limit: 0,
+            features: {
+                github_action: false, slack_notifications: false, pdf_reports: false,
+                api_access: false, priority_support: false, custom_constraints: false, team_size: 0,
+            },
+        };
+        return {
+            tier: 'unpaid' as SubscriptionTier,
+            status: 'unpaid' as SubscriptionStatus,
+            limits: zeroLimits,
+            usage: { repos_used: 0, scans_used: 0, pr_scans_used: 0, reports_used: 0 },
+            remaining: { repos: 0, scans: 0, pr_scans: 0, reports: 0 },
+            reset_at: new Date(),
+            is_pro: false,
+            can_use_github_action: false,
+        };
+    }
+
     const tier = subscription.tier as SubscriptionTier;
-    const limits = { ...TIER_LIMITS[tier] };
+    const limits = { ...TIER_LIMITS[tier as 'pro' | 'enterprise'] };
 
     // Override limits with actual DB values (handles manual grants/overrides)
     limits.repos_limit = subscription.repos_limit;

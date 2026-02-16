@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         // 2. Check Subscription Tier
         const { getOrCreateSubscription } = await import('@/lib/subscription');
         const subscription = await getOrCreateSubscription(user.id);
-        const isPro = subscription.tier === 'pro' || subscription.tier === 'enterprise';
+        const isPro = subscription && (subscription.tier === 'pro' || subscription.tier === 'enterprise');
 
         if (!isPro) {
             return NextResponse.json(
