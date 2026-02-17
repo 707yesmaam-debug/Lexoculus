@@ -157,6 +157,48 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
         algo_logic_placeholder: instructionalDefaults.algo_logic,
         accuracy_results_placeholder: instructionalDefaults.accuracy_results,
 
+        // --- Risk Management (Article 9) ---
+        rms_methodology_placeholder: '> [ACTION REQUIRED: Describe risk management methodology (ISO 31000/14971) and acceptance criteria.]',
+        rms_frequency_placeholder: '> [ACTION REQUIRED: Define frequency of risk reviews (e.g., Quarterly, Post-Release).]',
+        high_priority_risks_table: '> [ACTION REQUIRED: Insert table of high-priority risks identified during automated scanning.]',
+        foreseeable_misuse_placeholder: '> [ACTION REQUIRED: Analyze reasonably foreseeable misuse scenarios.]',
+        risk_matrix_placeholder: '> [ACTION REQUIRED: Insert Risk Matrix (Probability vs Severity).]',
+        post_market_risk_placeholder: '> [ACTION REQUIRED: Analyze risks emerging from post-market monitoring data.]',
+        mitigation_table_placeholder: '> [ACTION REQUIRED: Detailed table of mitigation measures and their verification results.]',
+        residual_risk_statement_placeholder: '> [ACTION REQUIRED: Statement accepting overall residual risk.]',
+        vulnerable_groups_placeholder: '> [ACTION REQUIRED: Assessment of impact on children and vulnerable groups.]',
+
+        // --- Data Governance (Article 10) ---
+        data_strategy_placeholder: '> [ACTION REQUIRED: Explain design choices and data collection strategy.]',
+        data_provenance_table: '> [ACTION REQUIRED: Table listing all datasets, sources, and provenance info.]',
+        training_data_stats: '> [ACTION REQUIRED: Statistical characteristics of the training dataset.]',
+        validation_data_stats: '> [ACTION REQUIRED: Statistical characteristics of validation/testing datasets.]',
+        data_preparation_placeholder: '> [ACTION REQUIRED: Details on cleaning, filtration, and normalization.]',
+        data_labeling_placeholder: '> [ACTION REQUIRED: Labeling procedures and quality control measures.]',
+        bias_analysis_placeholder: '> [ACTION REQUIRED: Methodology for detecting bias (gender, race, etc.).]',
+        bias_mitigation_placeholder: '> [ACTION REQUIRED: Strategy for mitigating identified biases.]',
+        gdpr_compliance_statement: '> [ACTION REQUIRED: Justification for processing personal data (GDPR Art. 6/9).]',
+        privacy_measures_placeholder: '> [ACTION REQUIRED: Privacy-preserving techniques (anonymization, encryption).]',
+
+        // --- Instructions for Use (Article 13) ---
+        performance_metrics_placeholder: '> [ACTION REQUIRED: Accuracy, Robustness, and Cybersecurity metrics.]',
+        misuse_warning_placeholder: '> [ACTION REQUIRED: Warnings against reasonably foreseeable misuse.]',
+        hardware_requirements_placeholder: '> [ACTION REQUIRED: Required hardware (CPU/GPU, RAM, Disk).]',
+        expected_lifetime_placeholder: '> [ACTION REQUIRED: Expected lifetime and end-of-life procedure.]',
+        output_interpretation_placeholder: '> [ACTION REQUIRED: Guide on interpreting system outputs and confidence scores.]',
+        human_override_placeholder: '> [ACTION REQUIRED: Instructions for human override/intervention.]',
+        logging_instructions_placeholder: '> [ACTION REQUIRED: How to access and interpret system logs.]',
+
+        // --- Declaration of Conformity (Annex V) ---
+        other_legislation_placeholder: '> [Itemize other applicable Union legislation (e.g., Machinery Directive).]',
+        standards_placeholder: '> [List harmonised standards or common specifications applied.]',
+        notified_body_name: '[Notified Body Name - if applicable]',
+        notified_body_number: '[NB Number]',
+        conformity_assessment_procedure: 'Annex VII (Internal Control) OR Annex VII (Assessment of QMS)',
+        certificate_number: '[Certificate Number - if applicable]',
+        place_of_issue: '[City, Country]',
+        date_of_issue: new Date().toLocaleDateString(),
+
         // --- Hardware/Software ---
         hardware_requirements: '> [ACTION REQUIRED: Specify computing resources required (GPU/CPU/RAM).]',
         software_dependencies: '> [ACTION REQUIRED: List OS, libraries, and runtime dependencies.]',

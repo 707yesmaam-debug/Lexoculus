@@ -9,7 +9,8 @@ export async function generatePdfBuffer(buildContent: (doc: typeof PDFDocument.p
         try {
             const doc = new PDFDocument({
                 size: 'A4',
-                margins: { top: 60, bottom: 60, left: 60, right: 60 }
+                margins: { top: 60, bottom: 60, left: 60, right: 60 },
+                bufferPages: true
             });
 
             const buffers: Buffer[] = [];
