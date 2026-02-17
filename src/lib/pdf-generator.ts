@@ -293,35 +293,24 @@ export async function generateDocumentPDF(documentData: {
         const LIGHT_GRAY = '#999999';
         const BORDER = '#E5E5E5';
 
-        // Helper to draw the standard page header
-        const drawHeader = (doc: typeof PDFDocument.prototype, title?: string, subtitle?: string) => {
-            // Logo
-            doc.fontSize(20)
-                .font('Times-Bold')
-                .fillColor(PRIMARY)
-                .text('LEX', 60, 60, { continued: true })
-                .fillColor(ACCENT)
-                .text('OCULUS');
-
-            // Top Line
-            doc.moveTo(60, 85)
-                .lineTo(535, 85)
-                .lineWidth(2)
-                .stroke(PRIMARY);
-
-            // Optional Sub-header for subsequent pages
-            if (title) {
-                doc.fontSize(8)
-                    .font('Courier')
-                    .fillColor(GRAY)
-                    .text(title.toUpperCase(), 60, 95, { align: 'right', width: 475 });
-            }
-        };
-
         // Add first page explicitly
         doc.addPage();
 
         // Metadata on Page 1
+        // Logo
+        doc.fontSize(20)
+            .font('Times-Bold')
+            .fillColor(PRIMARY)
+            .text('LEX', 60, 60, { continued: true })
+            .fillColor(ACCENT)
+            .text('OCULUS');
+
+        // Top Line
+        doc.moveTo(60, 85)
+            .lineTo(535, 85)
+            .lineWidth(2)
+            .stroke(PRIMARY);
+
         doc.fontSize(8)
             .font('Courier')
             .fillColor(GRAY)
@@ -342,11 +331,8 @@ export async function generateDocumentPDF(documentData: {
         // === MARKDOWN RENDERER ===
         const tokens = marked.lexer(documentData.markdown);
 
-        // Handle page headers automatically for subsequent pages
-        doc.on('pageAdded', () => {
-            drawHeader(doc, documentData.title);
-            doc.y = 110; // Ensure content starts below header
-        });
+        // USER REQUEST: Only branding on First Page.
+        // We REMOVED the `doc.on('pageAdded', ...)` listener entirely.
 
         tokens.forEach((token) => {
             switch (token.type) {
@@ -392,27 +378,17 @@ export async function generateDocumentPDF(documentData: {
                 case 'blockquote': {
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
 
-                    // Check if this is an instructional placeholder
-                    // e.g., "[ACTION REQUIRED: ...]" or "**[INSTRUCTION]**"
-                    const isInstruction = text.trim().startsWith('[ACTION REQUIRED') ||
-                        text.trim().includes('[INSTRUCTION]') ||
-                        text.trim().includes('[NOTE]');
+                    // USER REQUEST: The orange bar was good for aesthetics.
+                    // Reverted logic to ALWAYS show orange bar.
 
                     doc.moveDown(0.5);
                     const startY = doc.y;
 
-                    if (isInstruction) {
-                        // Softer styling for instructions (No orange bar)
-                        doc.fontSize(10).font('Helvetica-Oblique').fillColor(GRAY)
-                            .text(text, 60, doc.y, { width: 475, align: 'left' });
-                    } else {
-                        // Standard blockquote (With orange accent bar)
-                        doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
-                            .text(text, 75, doc.y, { width: 460, align: 'left' });
-                        const endY = doc.y;
+                    doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
+                        .text(text, 75, doc.y, { width: 460, align: 'left' });
+                    const endY = doc.y;
 
-                        doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
-                    }
+                    doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
 
                     doc.moveDown(1);
                     doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
