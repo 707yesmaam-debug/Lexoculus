@@ -176,7 +176,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             title: document.title,
             documentType: document.document_type,
             aiSystemName: document.ai_system.name,
-            bodyHtml: bodyHtml
+            markdown: contentMarkdown
         });
 
         // Mark document as exported

@@ -271,17 +271,24 @@ export async function generateTrustPackPDF(data: any): Promise<Buffer> {
  * Generates a compliance document PDF from HTML content
  * Editorial document style
  */
+import { marked } from 'marked';
+
+/**
+ * Generates a compliance document PDF from Markdown content
+ * Renders Markdown structure directly to PDFKit for precise layout control
+ */
 export async function generateDocumentPDF(documentData: {
     title: string;
     documentType: string;
     aiSystemName: string;
-    bodyHtml: string;
+    markdown: string;
 }): Promise<Buffer> {
     return generatePdfBuffer((doc) => {
         const PRIMARY = '#000000';
         const ACCENT = '#FF4F00';
         const GRAY = '#555555';
         const LIGHT_GRAY = '#999999';
+        const BORDER = '#E5E5E5';
 
         // === HEADER ===
         doc.fontSize(20)
@@ -312,36 +319,139 @@ export async function generateDocumentPDF(documentData: {
             .fillColor(PRIMARY)
             .text(documentData.title, 60, 140, { width: 475 });
 
-        // === BODY ===
-        // Strip HTML and clean text
-        const plainText = documentData.bodyHtml
-            .replace(/<[^>]*>/g, '')
-            .replace(/&nbsp;/g, ' ')
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .trim();
+        doc.moveDown(1.5);
 
-        doc.fontSize(11)
-            .font('Helvetica')
-            .fillColor(PRIMARY)
-            .text(plainText, 60, 200, {
-                width: 475,
-                align: 'left',
-                lineGap: 6
-            });
+        // === MARKDOWN RENDERER ===
+        const tokens = marked.lexer(documentData.markdown);
+
+        // State for rendering
+        let currentY = doc.y;
+
+        tokens.forEach((token) => {
+            // Check for page break if close to bottom
+            if (doc.y > 700) {
+                doc.addPage();
+                currentY = 60;
+            }
+
+            switch (token.type) {
+                case 'heading': {
+                    const level = token.depth;
+                    const text = token.text;
+
+                    // Smart Page Break: If header is near bottom, force new page
+                    if (doc.y > 650) doc.addPage();
+
+                    doc.fillColor(PRIMARY).font('Times-Bold');
+
+                    if (level === 1) {
+                        doc.fontSize(24).text(text).moveDown(0.5);
+                    } else if (level === 2) {
+                        doc.fontSize(18).text(text).moveDown(0.5);
+                        // Underline H2
+                        doc.moveTo(60, doc.y - 5).lineTo(535, doc.y - 5).lineWidth(0.5).stroke(BORDER).moveDown(0.5);
+                    } else if (level === 3) {
+                        doc.fontSize(14).text(text).moveDown(0.5);
+                    } else {
+                        doc.fontSize(12).text(text).moveDown(0.5);
+                    }
+                    doc.font('Helvetica'); // Reset font
+                    break;
+                }
+
+                case 'paragraph': {
+                    const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1'); // Simple bold stripping for now, could enhance
+                    doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
+                        .text(text, { width: 475, align: 'justify' });
+                    doc.moveDown(0.8);
+                    break;
+                }
+
+                case 'list': {
+                    token.items.forEach((item: any) => {
+                        doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
+                            .text('• ' + item.text, { indent: 20, width: 455 });
+                    });
+                    doc.moveDown(0.8);
+                    break;
+                }
+
+                case 'blockquote': {
+                    // Blockquote styling (italic, indented, gray bar)
+                    const text = token.text;
+                    doc.moveDown(0.5);
+                    const startY = doc.y;
+                    doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
+                        .text(text, 75, doc.y, { width: 460, align: 'left' });
+                    const endY = doc.y;
+
+                    // Vertical bar
+                    doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
+
+                    doc.moveDown(1);
+                    doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
+                    break;
+                }
+
+                case 'table': {
+                    // Basic Table Renderer
+                    const headers = token.header.map((h: any) => h.text);
+                    const rows = token.rows.map((r: any) => r.map((c: any) => c.text));
+                    const colWidth = 475 / headers.length;
+                    const startX = 60;
+
+                    // Draw Header
+                    doc.rect(startX, doc.y, 475, 20).fill('#F3F4F6');
+                    doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10);
+
+                    headers.forEach((header: string, i: number) => {
+                        doc.text(header, startX + (i * colWidth) + 5, doc.y - 14, { width: colWidth - 10, align: 'left' });
+                    });
+                    doc.moveDown(0.5);
+
+                    // Draw Rows
+                    doc.font('Helvetica').fontSize(10).fillColor(PRIMARY);
+                    rows.forEach((row: string[], i: number) => {
+                        const rowY = doc.y;
+                        // Background for zebra striping
+                        if (i % 2 !== 0) {
+                            doc.rect(startX, rowY, 475, 20).fill('#F9FAFB');
+                            doc.fillColor(PRIMARY); // Reset fill after rect
+                        }
+
+                        // Draw cells
+                        row.forEach((cell: string, j: number) => {
+                            doc.text(cell, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
+                        });
+
+                        // Move down based on height (approximated for single line)
+                        // Ideally measure height of tallest cell
+                        doc.y = rowY + 25;
+
+                        // Border line
+                        doc.moveTo(startX, doc.y - 5).lineTo(535, doc.y - 5).lineWidth(0.5).stroke(BORDER);
+                    });
+                    doc.moveDown(1);
+                    break;
+                }
+
+                case 'hr': {
+                    doc.moveDown(1);
+                    doc.moveTo(60, doc.y).lineTo(535, doc.y).lineWidth(0.5).stroke(BORDER);
+                    doc.moveDown(1);
+                    break;
+                }
+            }
+        });
 
         // === FOOTER ===
-        doc.moveTo(60, 780)
-            .lineTo(535, 780)
-            .lineWidth(1)
-            .stroke('#E5E5E5');
-
-        doc.fontSize(8)
-            .font('Courier')
-            .fillColor(LIGHT_GRAY)
-            .text('Generated by LexOculus EU AI Act Compliance Platform', 60, 790, { width: 475, align: 'center' })
-            .text(new Date().toISOString(), 60, 802, { width: 475, align: 'center' });
+        const pageCount = doc.bufferedPageRange().count;
+        for (let i = 0; i < pageCount; i++) {
+            doc.switchToPage(i);
+            doc.moveTo(60, 780).lineTo(535, 780).lineWidth(1).stroke(BORDER);
+            doc.fontSize(8).font('Courier').fillColor(LIGHT_GRAY)
+                .text('Generated by LexOculus EU AI Act Compliance Platform', 60, 790, { width: 475, align: 'center' })
+                .text(new Date().toISOString(), 60, 802, { width: 475, align: 'center' });
+        }
     });
 }
