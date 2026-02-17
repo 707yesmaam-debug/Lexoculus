@@ -117,10 +117,10 @@ export default function DashboardLayout({
         },
         {
             name: '03_REPORTS',
-            href: activeScanId ? `/dashboard/report/${activeScanId}` : '#',
-            status: activeScanId ? '[READY]' : '[LOCKED]',
-            disabled: !activeScanId,
-            isActive: pathname.includes('/report/')
+            href: '/dashboard/report',
+            status: '[VIEW]',
+            disabled: false,
+            isActive: pathname === '/dashboard/report' || pathname.startsWith('/dashboard/report/')
         },
         {
             name: '04_REGISTRY',
