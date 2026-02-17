@@ -329,12 +329,16 @@ export async function generateDocumentPDF(documentData: {
         doc.moveDown(1.5);
 
         // === MARKDOWN RENDERER ===
-        const tokens = marked.lexer(documentData.markdown);
+        // TRIM input to prevent trailing newlines from creating new pages
+        const tokens = marked.lexer(documentData.markdown.trim());
 
         // USER REQUEST: Only branding on First Page.
         // We REMOVED the `doc.on('pageAdded', ...)` listener entirely.
 
-        tokens.forEach((token) => {
+        tokens.forEach((token, index) => {
+            // Check if this is the last token to avoid trailing moveDown
+            const isLast = index === tokens.length - 1;
+
             switch (token.type) {
                 case 'heading': {
                     const level = token.depth;
@@ -343,16 +347,18 @@ export async function generateDocumentPDF(documentData: {
                     doc.fillColor(PRIMARY).font('Times-Bold');
 
                     if (level === 1) {
-                        doc.fontSize(24).text(text).moveDown(0.5);
+                        doc.fontSize(24).text(text);
                     } else if (level === 2) {
-                        doc.fontSize(18).text(text).moveDown(0.5);
+                        doc.fontSize(18).text(text);
                         // Underline H2
-                        doc.moveTo(60, doc.y - 5).lineTo(535, doc.y - 5).lineWidth(0.5).stroke(BORDER).moveDown(0.5);
+                        doc.moveTo(60, doc.y + 2).lineTo(535, doc.y + 2).lineWidth(0.5).stroke(BORDER);
                     } else if (level === 3) {
-                        doc.fontSize(14).text(text).moveDown(0.5);
+                        doc.fontSize(14).text(text);
                     } else {
-                        doc.fontSize(12).text(text).moveDown(0.5);
+                        doc.fontSize(12).text(text);
                     }
+
+                    if (!isLast) doc.moveDown(0.5);
                     doc.font('Helvetica'); // Reset font
                     break;
                 }
@@ -361,7 +367,8 @@ export async function generateDocumentPDF(documentData: {
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
                     doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
                         .text(text, { width: 475, align: 'justify' });
-                    doc.moveDown(0.8);
+
+                    if (!isLast) doc.moveDown(0.8);
                     break;
                 }
 
@@ -371,17 +378,15 @@ export async function generateDocumentPDF(documentData: {
                         doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
                             .text('• ' + text, { indent: 20, width: 455 });
                     });
-                    doc.moveDown(0.8);
+
+                    if (!isLast) doc.moveDown(0.8);
                     break;
                 }
 
                 case 'blockquote': {
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
 
-                    // USER REQUEST: The orange bar was good for aesthetics.
-                    // Reverted logic to ALWAYS show orange bar.
-
-                    doc.moveDown(0.5);
+                    if (!isLast) doc.moveDown(0.5);
                     const startY = doc.y;
 
                     doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
@@ -390,15 +395,15 @@ export async function generateDocumentPDF(documentData: {
 
                     doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
 
-                    doc.moveDown(1);
+                    if (!isLast) doc.moveDown(1);
                     doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
                     break;
                 }
 
                 case 'hr': {
-                    doc.moveDown(1);
+                    if (!isLast) doc.moveDown(1);
                     doc.moveTo(60, doc.y).lineTo(535, doc.y).lineWidth(0.5).stroke(BORDER);
-                    doc.moveDown(1);
+                    if (!isLast) doc.moveDown(1);
                     break;
                 }
 
