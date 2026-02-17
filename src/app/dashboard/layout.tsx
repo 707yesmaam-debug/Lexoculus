@@ -131,11 +131,11 @@ export default function DashboardLayout({
             isActive: pathname === '/dashboard/registry'
         },
         {
-            name: '05_INTEGRATIONS',
-            href: '/dashboard/integrations',
+            name: '05_COMPLIANCE_GUARDIAN',
+            href: '/dashboard/guardian',
             status: activeScanId ? '[LOCKED]' : '[VIEW]',
             disabled: !!activeScanId,
-            isActive: pathname === '/dashboard/integrations'
+            isActive: pathname === '/dashboard/guardian'
         },
         {
             name: '06_TIMELINE',

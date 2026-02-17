@@ -1,4 +1,10 @@
-import { RiskTier } from './annex-iii-articles';
+import {
+    RiskTier,
+    ARTICLE_5_CONSTRAINTS,
+    ANNEX_III_CONSTRAINTS,
+    LIMITED_RISK_CONSTRAINTS,
+    EUAIConstraint
+} from './annex-iii-articles';
 
 // =============================================================================
 // TRIPWIRE CONFIGURATION
@@ -59,44 +65,12 @@ export const IGNORED_EXTENSIONS = [
     '.lock', // We check package.json, lockfiles are too noisy for diffs usually
 ];
 
-/**
- * "Poor Man's Moat" - Weighted Heuristics for Risk Detection.
- * If these keywords appear in a Tripwire file or a code diff, they trigger a risk flag.
- */
-export const RISK_HEURISTICS: Record<string, { risk: RiskTier; category: string; weight: number }> = {
-    // UNACCEPTABLE RISKS (Banned)
-    'social_scoring': { risk: 'UNACCEPTABLE', category: 'Social Scoring', weight: 100 },
-    'subliminal': { risk: 'UNACCEPTABLE', category: 'Cognitive Manipulation', weight: 100 },
-    'biometric_categorization': { risk: 'UNACCEPTABLE', category: 'Biometric Categorization', weight: 100 },
-    'emotion_recognition': { risk: 'UNACCEPTABLE', category: 'Emotion Recognition', weight: 90 }, // Context dependent, but flags high
-    'real_time_biometric': { risk: 'UNACCEPTABLE', category: 'Real-time Biometric', weight: 100 },
-    'predictive_policing': { risk: 'UNACCEPTABLE', category: 'Predictive Policing', weight: 100 },
-
-    // HIGH RISK (Annex III)
-    'biometric': { risk: 'HIGH_RISK', category: 'Biometrics', weight: 80 },
-    'face_recognition': { risk: 'HIGH_RISK', category: 'Biometrics', weight: 90 },
-    'dlib': { risk: 'HIGH_RISK', category: 'Biometrics (Library)', weight: 60 },
-    'deepface': { risk: 'HIGH_RISK', category: 'Biometrics (Library)', weight: 90 },
-    'credit_score': { risk: 'HIGH_RISK', category: 'Critical Services (Finance)', weight: 80 },
-    'loan_application': { risk: 'HIGH_RISK', category: 'Critical Services (Finance)', weight: 70 },
-    'hiring_algorithm': { risk: 'HIGH_RISK', category: 'Employment', weight: 80 },
-    'resume_screening': { risk: 'HIGH_RISK', category: 'Employment', weight: 80 },
-    'surveillance': { risk: 'HIGH_RISK', category: 'Surveillance', weight: 70 },
-    'critical_infrastructure': { risk: 'HIGH_RISK', category: 'Critical Infrastructure', weight: 90 },
-
-    // LIMITED RISK (Generative AI / Chatbots)
-    'openai': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 50 },
-    'anthropic': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 50 },
-    'cohere': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 50 },
-    'huggingface': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 40 },
-    'transformers': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 40 },
-    'gpt-4': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 50 },
-    'claude': { risk: 'LIMITED_RISK', category: 'Generative AI', weight: 50 },
-    'stable_diffusion': { risk: 'LIMITED_RISK', category: 'Generative AI (Image)', weight: 50 },
-    'midjourney': { risk: 'LIMITED_RISK', category: 'Generative AI (Image)', weight: 50 },
-    'deepfake': { risk: 'LIMITED_RISK', category: 'Generative AI (Synthetic Content)', weight: 60 },
-    'chatbot': { risk: 'LIMITED_RISK', category: 'Conversational AI', weight: 30 },
-};
+// Combine all constraints into a single "Rulebook"
+const ALL_CONSTRAINTS = [
+    ...ARTICLE_5_CONSTRAINTS,
+    ...ANNEX_III_CONSTRAINTS,
+    ...LIMITED_RISK_CONSTRAINTS
+];
 
 // =============================================================================
 // TYPES
@@ -112,6 +86,7 @@ export interface TripwireResult {
         risk: RiskTier;
         category: string;
         heuristic_match: string;
+        constraint_id: string; // Added to trace back to specific rule
         snippet?: string;
     }[];
 }
@@ -143,7 +118,7 @@ export function scanDiffs(
         result.triggered = true;
         result.files_analyzed.push(change.filename);
 
-        // 2. Scan the diff content for keywords
+        // 2. Scan the diff content for keywords defined in our Rulebook
         const scanResult = scanContent(change.diff, change.filename);
         if (scanResult.length > 0) {
             result.risk_found = true;
@@ -185,33 +160,55 @@ function shouldSkipFile(filename: string): boolean {
 }
 
 /**
- * Helper: Scan a string for risk heuristics
+ * Helper: Scan a string for risk heuristics dynamically from Rulebook
  */
 function scanContent(content: string, filename: string) {
-    const detections = [];
+    const detections: TripwireResult['detections'] = [];
     const lowerContent = content.toLowerCase();
 
-    for (const [keyword, info] of Object.entries(RISK_HEURISTICS)) {
-        if (lowerContent.includes(keyword)) {
-            detections.push({
-                file: filename,
-                risk: info.risk,
-                category: info.category,
-                heuristic_match: keyword,
-                // Simple snippet extraction could go here
-            });
+    // Iterate through EVERY defined legal constraint
+    for (const constraint of ALL_CONSTRAINTS) {
+        // Check if any of the code indicators for this constraint are present
+        for (const indicator of constraint.code_indicators) {
+            const lowerIndicator = indicator.toLowerCase();
+            const matchIndex = lowerContent.indexOf(lowerIndicator);
+
+            if (matchIndex !== -1) {
+                // Extract snippet (context around the match)
+                const start = Math.max(0, matchIndex - 50);
+                const end = Math.min(content.length, matchIndex + indicator.length + 50);
+                const snippet = content.slice(start, end).trim();
+
+                // Found a match!
+                detections.push({
+                    file: filename,
+                    risk: constraint.risk_level,
+                    category: constraint.category,
+                    heuristic_match: indicator,
+                    constraint_id: constraint.constraint_id,
+                    snippet: snippet ? `...${snippet}...` : undefined
+                });
+
+                // Optimization: Stop checking indicators for this specific constraint on this file
+                // once we find a match, to avoid duplicates.
+                break;
+            }
         }
     }
+
     return detections;
 }
 
 /**
  * Helper: Rank risk tiers
  */
-function getHighestRisk(risks: RiskTier[]): RiskTier {
+export function getHighestRisk(risks: RiskTier[]): RiskTier {
     const order: RiskTier[] = ['UNACCEPTABLE', 'HIGH_RISK', 'LIMITED_RISK', 'MINIMAL_RISK'];
-    for (const tier of order) {
-        if (risks.includes(tier)) return tier;
-    }
+
+    // Explicitly check for each tier in order of severity
+    if (risks.includes('UNACCEPTABLE')) return 'UNACCEPTABLE';
+    if (risks.includes('HIGH_RISK')) return 'HIGH_RISK';
+    if (risks.includes('LIMITED_RISK')) return 'LIMITED_RISK';
+
     return 'MINIMAL_RISK';
 }
