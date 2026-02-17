@@ -18,6 +18,7 @@ interface SubscriptionSectionProps {
             scans: number | null;
             repos: number | null;
         };
+        has_payment_method?: boolean;
     } | null;
 }
 
@@ -89,7 +90,8 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                 </div>
             </div>
 
-            {isPro && (
+            {/* BILLING PORTAL */}
+            {isPro && subscription?.has_payment_method && (
                 <div className="flex justify-end">
                     <Button
                         variant="outline"
@@ -101,7 +103,7 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                                 if (data.url) {
                                     window.location.href = data.url;
                                 } else {
-                                    alert('Failed to load billing portal');
+                                    alert('Failed to load billing portal. Please contact support.');
                                 }
                             } catch (e) {
                                 console.error(e);
@@ -112,6 +114,14 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                         <ExternalLink className="w-3 h-3 mr-2" />
                         MANAGE_BILLING
                     </Button>
+                </div>
+            )}
+
+            {isPro && !subscription?.has_payment_method && (
+                <div className="flex justify-end">
+                    <div className="text-xs font-mono text-gray-500 bg-gray-100 px-3 py-2 border border-gray-200">
+                        MANAGED_BY_ADMIN
+                    </div>
                 </div>
             )}
 

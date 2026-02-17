@@ -49,7 +49,8 @@ export default async function SettingsPage() {
         usage: {
             scans: dbUser.subscription.scans_used,
             repos: dbUser.subscription.repos_used,
-        }
+        },
+        has_payment_method: !!dbUser.subscription.payment_customer_id,
     } : null;
 
     return (
