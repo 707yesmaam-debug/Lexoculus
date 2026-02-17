@@ -291,28 +291,59 @@ export async function generateDocumentPDF(documentData: {
         const LIGHT_GRAY = '#999999';
         const BORDER = '#E5E5E5';
 
-        // === HEADER ===
-        doc.fontSize(20)
-            .font('Times-Bold')
-            .fillColor(PRIMARY)
-            .text('LEX', 60, 60, { continued: true })
-            .fillColor(ACCENT)
-            .text('OCULUS');
+        // Helper to draw the standard page header
+        const drawHeader = (doc: typeof PDFDocument.prototype, title?: string, subtitle?: string) => {
+            // Logo
+            doc.fontSize(20)
+                .font('Times-Bold')
+                .fillColor(PRIMARY)
+                .text('LEX', 60, 60, { continued: true })
+                .fillColor(ACCENT)
+                .text('OCULUS');
 
-        // Metadata
+            // Top Line
+            doc.moveTo(60, 85)
+                .lineTo(535, 85)
+                .lineWidth(2)
+                .stroke(PRIMARY);
+
+            // Optional Sub-header for subsequent pages
+            if (title) {
+                doc.fontSize(8)
+                    .font('Courier')
+                    .fillColor(GRAY)
+                    .text(title.toUpperCase(), 60, 95, { align: 'right', width: 475 });
+            }
+        };
+
+        // Helper to parse and draw text with simple markdown (bold only for now)
+        const drawStyledCell = (text: string, x: number, y: number, width: number) => {
+            // Check for bold **text**
+            const parts = text.split(/(\*\*.*?\*\*)/g);
+            let currentX = x;
+
+            parts.forEach(part => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    const content = part.slice(2, -2);
+                    doc.font('Helvetica-Bold').text(content, currentX, y, { width: width, continued: true });
+                } else {
+                    doc.font('Helvetica').text(part, currentX, y, { width: width, continued: true });
+                }
+            });
+            doc.text('', currentX, y, { continued: false }); // Reset lines
+        };
+
+        // Initial Header (Page 1)
+        drawHeader(doc);
+
+        // Metadata on Page 1
         doc.fontSize(8)
             .font('Courier')
             .fillColor(GRAY)
-            .text(`AI SYSTEM: ${documentData.aiSystemName.toUpperCase()}`, 60, 85);
+            .text(`AI SYSTEM: ${documentData.aiSystemName.toUpperCase()}`, 60, 100);
 
         doc.fontSize(8)
-            .text(`DOCUMENT TYPE: ${documentData.documentType.toUpperCase()}`, 60, 97);
-
-        // Top divider
-        doc.moveTo(60, 120)
-            .lineTo(535, 120)
-            .lineWidth(2)
-            .stroke(PRIMARY);
+            .text(`DOCUMENT TYPE: ${documentData.documentType.toUpperCase()}`, 60, 112);
 
         // === TITLE ===
         doc.fontSize(28)
@@ -332,7 +363,8 @@ export async function generateDocumentPDF(documentData: {
             // Check for page break if close to bottom
             if (doc.y > 700) {
                 doc.addPage();
-                currentY = 60;
+                drawHeader(doc, documentData.title); // Consistent Header
+                doc.y = 110; // Start content lower
             }
 
             switch (token.type) {
@@ -341,7 +373,11 @@ export async function generateDocumentPDF(documentData: {
                     const text = token.text;
 
                     // Smart Page Break: If header is near bottom, force new page
-                    if (doc.y > 650) doc.addPage();
+                    if (doc.y > 650) {
+                        doc.addPage();
+                        drawHeader(doc, documentData.title);
+                        doc.y = 110;
+                    }
 
                     doc.fillColor(PRIMARY).font('Times-Bold');
 
@@ -361,7 +397,9 @@ export async function generateDocumentPDF(documentData: {
                 }
 
                 case 'paragraph': {
-                    const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1'); // Simple bold stripping for now, could enhance
+                    // Strip bold for paragraph for simplicity, OR rely on a more complex styled text drawer 
+                    // For now, strict 'clean' text is better than broken text
+                    const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
                     doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
                         .text(text, { width: 475, align: 'justify' });
                     doc.moveDown(0.8);
@@ -370,8 +408,9 @@ export async function generateDocumentPDF(documentData: {
 
                 case 'list': {
                     token.items.forEach((item: any) => {
+                        const text = item.text.replace(/\*\*(.*?)\*\*/g, '$1');
                         doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
-                            .text('• ' + item.text, { indent: 20, width: 455 });
+                            .text('• ' + text, { indent: 20, width: 455 });
                     });
                     doc.moveDown(0.8);
                     break;
@@ -379,7 +418,7 @@ export async function generateDocumentPDF(documentData: {
 
                 case 'blockquote': {
                     // Blockquote styling (italic, indented, gray bar)
-                    const text = token.text;
+                    const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
                     doc.moveDown(0.5);
                     const startY = doc.y;
                     doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
@@ -406,7 +445,8 @@ export async function generateDocumentPDF(documentData: {
                     doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10);
 
                     headers.forEach((header: string, i: number) => {
-                        doc.text(header, startX + (i * colWidth) + 5, doc.y - 14, { width: colWidth - 10, align: 'left' });
+                        const text = header.replace(/\*\*(.*?)\*\*/g, '$1');
+                        doc.text(text, startX + (i * colWidth) + 5, doc.y - 14, { width: colWidth - 10, align: 'left' });
                     });
                     doc.moveDown(0.5);
 
@@ -422,7 +462,19 @@ export async function generateDocumentPDF(documentData: {
 
                         // Draw cells
                         row.forEach((cell: string, j: number) => {
-                            doc.text(cell, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
+                            // Use bold replacement to clean up the look
+                            // For true bold rendering in PDFKit cells, we need x/y measurement which is complex in loop
+                            // For now, stripping the ** is the safest fix for "Audit Ready" clean look
+                            const cleanText = cell.replace(/\*\*(.*?)\*\*/g, '$1');
+
+                            // If cell starts with ** and ends with ** (common for Key column), maybe bold it?
+                            if (cell.startsWith('**') && cell.endsWith('**')) {
+                                doc.font('Helvetica-Bold');
+                                doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
+                                doc.font('Helvetica');
+                            } else {
+                                doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
+                            }
                         });
 
                         // Move down based on height (approximated for single line)
@@ -452,7 +504,8 @@ export async function generateDocumentPDF(documentData: {
             doc.moveTo(60, 780).lineTo(535, 780).lineWidth(1).stroke(BORDER);
             doc.fontSize(8).font('Courier').fillColor(LIGHT_GRAY)
                 .text('Generated by LexOculus EU AI Act Compliance Platform', 60, 790, { width: 475, align: 'center' })
-                .text(new Date().toISOString(), 60, 802, { width: 475, align: 'center' });
+                .text(new Date().toISOString(), 60, 802, { width: 475, align: 'center' })
+                .text(`Page ${i + 1} of ${pageCount}`, 60, 790, { width: 475, align: 'right' }); // Right aligned page num
         }
     });
 }
