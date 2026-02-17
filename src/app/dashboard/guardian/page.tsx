@@ -94,6 +94,19 @@ export default function ComplianceGuardianPage() {
     };
 
     const handleSetupComplete = async () => {
+        if (selectedRepo) {
+            try {
+                // Register the installation in the database
+                await fetch('/api/github/action-install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repo_full_name: selectedRepo })
+                });
+            } catch (error) {
+                console.error('Failed to register installation', error);
+            }
+        }
+
         setModalOpen(false);
         // Refresh installations
         const installsRes = await fetch('/api/github/action-install');
