@@ -377,13 +377,10 @@ export async function generateDocumentPDF(documentData: {
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
 
                     if (!isLast) doc.moveDown(0.5);
-                    const startY = doc.y;
 
+                    // USER REQUEST: Removed orange vertical line. Just text.
                     doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
                         .text(text, 75, doc.y, { width: 460, align: 'left' });
-                    const endY = doc.y;
-
-                    doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
 
                     if (!isLast) doc.moveDown(1);
                     doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
