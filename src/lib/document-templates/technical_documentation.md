@@ -1,129 +1,138 @@
 # Technical Documentation
-## EU AI Act Article 11 Compliance
+## EU AI Act Annex IV Compliance
+
+**System Name:** {{system_name}}
+**System ID:** {{system_id}}
+**Version:** {{version}}
+**Date:** {{created_at}}
+**Confidentiality:** {{confidentiality_level}}
 
 ---
 
-### 1. System Identification
+> **[INSTRUCTION]**
+> This document serves as the technical documentation required under Annex IV of the EU AI Act. Sections marked with `[ACTION REQUIRED]` must be completed by the provider to fully demonstrate conformity.
 
-| Field | Value |
-|-------|-------|
-| **System Name** | {{system_name}} |
-| **Version** | {{version}} |
-| **Risk Classification** | {{risk_classification}} |
-| **Risk Score** | {{risk_score}}/100 |
-| **Last Assessment Date** | {{last_scanned_at}} |
+## 1. Executive Summary
 
----
-
-### 2. Provider Information
-
-| Field | Value |
-|-------|-------|
+| Attribute | Detail |
+| :--- | :--- |
 | **Provider Name** | {{provider_name}} |
-| **Address** | {{provider_address}} |
-| **Contact Person** | {{contact_person}} |
-| **Contact Email** | {{contact_email}} |
+| **Provider Address** | {{provider_address}} |
+| **Authorized Rep** | {{contact_person}} ({{contact_email}}) |
+| **Risk Classification** | {{risk_classification}} |
+| **Intended Purpose** | {{intended_purpose}} |
 
----
-
-### 3. Intended Purpose
-
-{{intended_purpose}}
-
----
-
-### 4. General Description
-
+### 1.1 System Overview
 {{system_description}}
 
 ---
 
-### 5. Technical Capabilities
+## 2. System Description (Annex IV, Point 1)
 
-The system has been analyzed and demonstrates the following AI capabilities:
+### 2.1 Solution Architecture
+> [ACTION REQUIRED: Insert a high-level diagram or description of the system architecture, including software capability, hardware, and integration points.]
+{{architecture_diagram_placeholder}}
 
+### 2.2 Components and Logic
+The system consists of the following key AI components and logic:
 {{capabilities_list}}
 
----
-
-### 6. Libraries and Frameworks
-
-The following AI/ML libraries were detected in the codebase:
-
+**Libraries & Dependencies:**
 {{libraries_list}}
 
----
+### 2.3 User Interface
+> [ACTION REQUIRED: Describe the user interface (UI) provided to the deployer/user. Include screenshots if available.]
+{{ui_description_placeholder}}
 
-### 7. Data Requirements
-
-#### 7.1 Training Data
-{{training_data_description}}
-
-#### 7.2 Input Data Specifications
-{{input_data_specs}}
-
-#### 7.3 Output Data Specifications
-{{output_data_specs}}
+### 2.4 Interoperability
+> [ACTION REQUIRED: List other systems or hardware that this AI system interacts with.]
+{{interoperability_placeholder}}
 
 ---
 
-### 8. Hardware and Software Requirements
+## 3. Development Process (Annex IV, Point 2)
 
-#### 8.1 Minimum Hardware
-{{hardware_requirements}}
+### 3.1 Algo Design & Specification
+> [ACTION REQUIRED: Describe the logic of the algorithms used and the design choices made.]
+{{algo_logic_placeholder}}
 
-#### 8.2 Software Dependencies
-{{software_dependencies}}
+### 3.2 Data Governance & Provenance
+**Training Data Source:**
+{{training_data_sources}}
+
+**Data Pre-processing:**
+{{preprocessing_steps}}
+
+**Data Labeling:**
+{{data_labeling_procedures}}
+
+**Bias Mitigation:**
+{{bias_mitigation}}
+
+### 3.3 Validation & Testing
+**Validation Metrics:**
+{{validation_metrics}}
+
+**Accuracy Results:**
+> [ACTION REQUIRED: Provide the final accuracy/performance metrics.]
+{{accuracy_results_placeholder}}
 
 ---
 
-### 9. Accuracy and Performance Metrics
+## 4. Monitoring & Control (Annex IV, Point 3)
 
-| Metric | Value | Benchmark |
-|--------|-------|-----------|
-| {{metric_name}} | {{metric_value}} | {{metric_benchmark}} |
-
----
-
-### 10. Known Limitations
-
+### 4.1 Capabilities & Limitations
+**Known Limitations:**
 {{known_limitations}}
 
----
+**Hardware Specs:**
+{{hardware_requirements}}
 
-### 11. Relevant Annex III Articles
-
-Based on the risk assessment, the following EU AI Act articles apply:
-
-{{matched_articles}}
-
----
-
-### 12. Human Oversight Measures
-
+### 4.2 Human Oversight (Article 14)
+The system is designed to be overseen by natural persons. The following measures are in place:
 {{human_oversight_measures}}
 
----
+### 4.3 Risk Management (Article 9)
+The following risks have been identified and mitigated:
 
-### 13. Security Measures
+**High Priority Risks:**
+{{high_priority_risks}}
 
+**Residual Risks:**
+{{residual_risk_assessment}}
+
+### 4.4 Cybersecurity & Logging
+**Security Measures:**
 {{security_measures}}
 
----
-
-### 14. Logging and Monitoring
-
+**Logging Capabilities:**
 {{logging_description}}
 
 ---
 
-### 15. Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | {{created_at}} | Initial documentation |
+## 5. Modifications & Updates (Annex IV, Point 5)
+> [ACTION REQUIRED: Describe the procedure for handling changes to the system.]
+{{update_procedures}}
 
 ---
 
-*Document generated by LexOculus EU AI Act Compliance Platform*
-*Template Version: 1.0*
+## 6. EU Declaration of Conformity (Annex IV, Point 7)
+A draft EU Declaration of Conformity follows:
+
+I, **{{signatory_name}}**, hereby declare that the AI system **{{system_name}}** is in conformity with the requirements of the EU AI Act.
+
+**Signed:** __________________________
+**Date:** {{declaration_date}}
+**Place:** {{declaration_place}}
+
+---
+
+## Document Control
+
+| Version | Date | Author | Changes |
+| :--- | :--- | :--- | :--- |
+| 1.0 | {{created_at}} | {{contact_person}} | Initial Generation |
+
+---
+*Generated by LexOculus Compliance Platform*
+*Ref: {{system_id}}-TD-v1.0*

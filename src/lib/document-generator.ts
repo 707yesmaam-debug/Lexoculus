@@ -107,93 +107,81 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
             .join('\n')
         : '{{MISSING: matched_articles}}';
 
+    // Instructional Placeholders for "Audit-Ready Scaffolding"
+    // These guide the user to fill in the data rather than showing "MISSING" errors.
+
+    const instructionalDefaults = {
+        architecture_diagram: '> [ACTION REQUIRED: Insert system architecture diagram here. Reference internal design doc ID.]',
+        ui_description: '> [ACTION REQUIRED: Describe the UI presented to the user. Include key screens/inputs.]',
+        interoperability: '> [ACTION REQUIRED: List APIs, hardware, or software this system connects to.]',
+        algo_logic: '> [ACTION REQUIRED: Explain the algorithmic approach (e.g., Transformer-based LLM, Random Forest).]',
+        accuracy_results: '> [ACTION REQUIRED: Insert final validation metrics (e.g., F1 Score, Accuracy %).] -- See Test Report TR-001.',
+    };
+
     return {
-        // System identification
+        // --- Header / Component Data ---
         system_name: aiSystem.name,
         system_id: aiSystem.id,
-        version: '1.0',
-        risk_classification: aiSystem.risk_classification || '{{MISSING: risk_classification}}',
-        risk_score: aiSystem.risk_score?.toString() || '{{MISSING: risk_score}}',
+        version: '1.0 (Draft)',
+        confidentiality_level: 'Internal Use Only', // Default for generated docs
+        risk_classification: aiSystem.risk_classification || 'Assessment Pending',
+        risk_score: aiSystem.risk_score?.toString() || 'N/A',
         last_scanned_at: aiSystem.last_scanned_at
             ? new Date(aiSystem.last_scanned_at).toLocaleDateString()
-            : '{{MISSING: last_scanned_at}}',
-        system_description: aiSystem.description || '{{MISSING: system_description}}',
+            : new Date().toLocaleDateString(),
+        system_description: aiSystem.description || '> [ACTION REQUIRED: Provide a detailed description of the AI system and its intended use case.]',
 
-        // Provider info (from user or context)
-        provider_name: contextAnswers?.provider_name || user?.full_name || '{{MISSING: provider_name}}',
-        provider_address: contextAnswers?.provider_address || '{{MISSING: provider_address}}',
-        contact_person: user?.full_name || '{{MISSING: contact_person}}',
-        contact_email: user?.email || '{{MISSING: contact_email}}',
+        // --- Provider Info ---
+        provider_name: contextAnswers?.provider_name || user?.full_name || '[Provider Name]',
+        provider_address: contextAnswers?.provider_address || '[Provider Address]',
+        contact_person: user?.full_name || '[Authorized Representative]',
+        contact_email: user?.email || '[Email Address]',
 
-        // Capabilities and technical
+        // --- Technical Capabilities ---
         capabilities_list: capabilitiesList,
         libraries_list: librariesList,
-        intended_purpose: llmAnalysis?.intended_purpose || contextAnswers?.intended_purpose || '{{MISSING: intended_purpose}}',
+        intended_purpose: llmAnalysis?.intended_purpose || contextAnswers?.intended_purpose || '> [ACTION REQUIRED: Define the exact intended purpose of the system.]',
 
-        // Risk assessment
-        risk_narrative: riskAssessment?.risk_narrative || '{{MISSING: risk_narrative}}',
+        // --- Development & Data (Annex IV) ---
+        // Using "Instructional Defaults" instead of "MISSING"
+        training_data_sources: contextAnswers?.training_data || '> [ACTION REQUIRED: Describe training data sources, provenance, and scope. Reference Data Governance Policy.]',
+        preprocessing_steps: '> [ACTION REQUIRED: Describe data cleaning, normalization, and pre-processing steps.]',
+        data_labeling_procedures: '> [ACTION REQUIRED: Describe how data was labeled and quality controlled.]',
+        bias_mitigation: '> [ACTION REQUIRED: Describe measures taken to identify and mitigate bias in the dataset.]',
+        validation_metrics: '> [ACTION REQUIRED: List the metrics used for validation (e.g., Robustness, Fairness).]',
+
+        // --- Instructional Placeholders (New) ---
+        architecture_diagram_placeholder: instructionalDefaults.architecture_diagram,
+        ui_description_placeholder: instructionalDefaults.ui_description,
+        interoperability_placeholder: instructionalDefaults.interoperability,
+        algo_logic_placeholder: instructionalDefaults.algo_logic,
+        accuracy_results_placeholder: instructionalDefaults.accuracy_results,
+
+        // --- Hardware/Software ---
+        hardware_requirements: '> [ACTION REQUIRED: Specify computing resources required (GPU/CPU/RAM).]',
+        software_dependencies: '> [ACTION REQUIRED: List OS, libraries, and runtime dependencies.]',
+
+        // --- Risk & Oversight ---
+        known_limitations: contextAnswers?.limitations || '> [ACTION REQUIRED: List known limitations, edge cases, and areas where performance may degrade.]',
+        human_oversight_measures: contextAnswers?.human_oversight || '> [ACTION REQUIRED: Describe Article 14 measures (e.g., "Human-in-the-loop" for critical decisions).]',
+        security_measures: '> [ACTION REQUIRED: Describe cybersecurity measures (encryption, access control, etc.).]',
+        logging_description: '> [ACTION REQUIRED: Describe logging for traceability (Article 12).]',
+
+        // --- Risk Assessment ---
+        risk_narrative: riskAssessment?.risk_narrative || '> [ACTION REQUIRED: Summarize the risk assessment findings.]',
         matched_articles: matchedArticles,
+        high_priority_risks: '> [ACTION REQUIRED: List high-priority risks identified in the Risk Assessment.]',
+        residual_risk_assessment: '> [ACTION REQUIRED: Confirm that residual risks are acceptable.]',
 
-        // Dates
+        // --- Maintenance ---
+        update_procedures: '> [ACTION REQUIRED: Describe the post-market monitoring and update process.]',
+
+        // --- Dates & Legal ---
         created_at: new Date().toLocaleDateString(),
-        declaration_date: new Date().toLocaleDateString(),
-
-        // Default placeholders that need user input
-        training_data_description: contextAnswers?.training_data || '{{MISSING: training_data_description}}',
-        input_data_specs: '{{MISSING: input_data_specs}}',
-        output_data_specs: '{{MISSING: output_data_specs}}',
-        hardware_requirements: '{{MISSING: hardware_requirements}}',
-        software_dependencies: '{{MISSING: software_dependencies}}',
-        known_limitations: contextAnswers?.limitations || '{{MISSING: known_limitations}}',
-        human_oversight_measures: contextAnswers?.human_oversight || '{{MISSING: human_oversight_measures}}',
-        security_measures: '{{MISSING: security_measures}}',
-        logging_description: '{{MISSING: logging_description}}',
-
-        // Risk management
-        high_priority_risks: '{{MISSING: high_priority_risks}}',
-        medium_priority_risks: '{{MISSING: medium_priority_risks}}',
-        low_priority_risks: '{{MISSING: low_priority_risks}}',
-        residual_risk_assessment: '{{MISSING: residual_risk_assessment}}',
-        monitoring_approach: '{{MISSING: monitoring_approach}}',
-        review_schedule: '{{MISSING: review_schedule}}',
-        incident_response_plan: '{{MISSING: incident_response_plan}}',
-        escalation_procedures: '{{MISSING: escalation_procedures}}',
-
-        // Data governance
-        training_data_sources: '{{MISSING: training_data_sources}}',
-        data_collection_methods: '{{MISSING: data_collection_methods}}',
-        data_quality_requirements: '{{MISSING: data_quality_requirements}}',
-        preprocessing_steps: '{{MISSING: preprocessing_steps}}',
-        data_labeling_procedures: '{{MISSING: data_labeling_procedures}}',
-        bias_mitigation: '{{MISSING: bias_mitigation}}',
-        validation_dataset_description: '{{MISSING: validation_dataset_description}}',
-        validation_metrics: '{{MISSING: validation_metrics}}',
-        gdpr_compliance_status: '{{MISSING: gdpr_compliance_status}}',
-        data_subject_rights: '{{MISSING: data_subject_rights}}',
-        data_retention_policy: '{{MISSING: data_retention_policy}}',
-        data_access_controls: '{{MISSING: data_access_controls}}',
-        encryption_standards: '{{MISSING: encryption_standards}}',
-        data_breach_procedures: '{{MISSING: data_breach_procedures}}',
-
-        // Instructions for use
-        required_competencies: '{{MISSING: required_competencies}}',
-        training_requirements: '{{MISSING: training_requirements}}',
-        operating_environment: '{{MISSING: operating_environment}}',
-        prohibited_uses: '{{MISSING: prohibited_uses}}',
-        monitoring_requirements: '{{MISSING: monitoring_requirements}}',
-        override_capabilities: '{{MISSING: override_capabilities}}',
-        decision_review_process: '{{MISSING: decision_review_process}}',
-        update_procedures: '{{MISSING: update_procedures}}',
-        support_email: user?.email || '{{MISSING: support_email}}',
-        documentation_url: '{{MISSING: documentation_url}}',
-
-        // Declaration
-        registration_number: '{{MISSING: registration_number}}',
-        conformity_procedure: 'Internal Conformity Assessment (Annex VI)',
-        notified_body: 'N/A',
-        signatory_name: user?.full_name || '{{MISSING: signatory_name}}',
-        signatory_title: '{{MISSING: signatory_title}}',
-        declaration_place: '{{MISSING: declaration_place}}',
+        declaration_date: '[Date of Signature]',
+        declaration_place: '[Place of Signature]',
+        signatory_name: user?.full_name || '[Signatory Name]',
+        signatory_title: '[Title]',
     };
 }
 
