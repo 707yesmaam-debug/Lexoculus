@@ -59,7 +59,7 @@ jobs:
       - name: Optical Audit Scan
         id: scan
         env:
-          LEXOCULUS_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai-omega.vercel.app'}'
+          LEXOCULUS_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://lexoculus.com'}'
           WEBHOOK_SECRET: \${{ secrets.LEXOCULUS_WEBHOOK_SECRET }}
           WEBHOOK_PAYLOAD: \${{ toJson(github.event) }}
         run: |

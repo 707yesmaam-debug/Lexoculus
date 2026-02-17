@@ -47,8 +47,8 @@ jobs:
       - name: Scan for EU AI Act compliance
         id: scan
         env:
-          COMPLIANCEAI_API_URL: ${{ vars.COMPLIANCEAI_API_URL || 'https://compliance-ai-omega.vercel.app' }}
-          WEBHOOK_SECRET: ${{ secrets.COMPLIANCEAI_WEBHOOK_SECRET }}
+          LEXOCULUS_API_URL: ${{ vars.LEXOCULUS_API_URL || 'https://lexoculus.com' }}
+          WEBHOOK_SECRET: ${{ secrets.LEXOCULUS_WEBHOOK_SECRET }}
           WEBHOOK_PAYLOAD: ${{ toJson(github.event) }}
         run: |
           # Write payload to file to avoid shell quoting issues with large JSON
@@ -57,9 +57,9 @@ jobs:
           # Calculate signature safely
           SIGNATURE=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" payload.json | cut -d' ' -f2)
 
-          # Send PR diff to ComplianceAI webhook for scanning
+          # Send PR diff to LexOculus for optical analysis
           RESPONSE=$(curl -s -X POST \
-            "${COMPLIANCEAI_API_URL}/api/webhooks/github" \
+            "${LEXOCULUS_API_URL}/api/webhooks/github" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: pull_request" \
             -H "X-Hub-Signature-256: $SIGNATURE" \
