@@ -120,7 +120,7 @@ export default function ReportsDashboard() {
                     {filteredSystems.map((system) => (
                         <div
                             key={system.id}
-                            onClick={() => router.push(`/dashboard/report/${system.latest_scan_id}`)}
+                            onClick={() => router.push(`/dashboard/documents/${system.id}`)}
                             className="border-2 border-black bg-white p-6 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group"
                         >
                             <div className="flex justify-between items-start mb-4">
