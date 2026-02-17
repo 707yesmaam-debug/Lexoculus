@@ -37,7 +37,7 @@ export default function ComplianceGuardianPage() {
     const [loading, setLoading] = useState(true);
     const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [isPro, setIsPro] = useState(false); // Assume false initially, will check via API
+    const [isPro, setIsPro] = useState(true); // Default to true to avoid flicker, let API override if needed
 
     // Load Data
     useEffect(() => {
@@ -116,17 +116,7 @@ export default function ComplianceGuardianPage() {
                             Deploy the Guardian to your repositories to prevent non-compliant code from merging.
                         </p>
                     </div>
-                    {!isPro && (
-                        <div className="bg-gray-100 border border-black p-4 max-w-xs">
-                            <p className="font-bold text-xs uppercase mb-2">Pro Plan Required</p>
-                            <p className="font-mono text-[10px] text-gray-500 mb-3">
-                                Automated Guardian enforcement is available on the Pro plan.
-                            </p>
-                            <Link href="/pricing" className="text-xs underline font-bold hover:text-blue-600">
-                                Upgrade Profile -&gt;
-                            </Link>
-                        </div>
-                    )}
+
                 </div>
             </header>
 
