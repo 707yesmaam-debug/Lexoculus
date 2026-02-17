@@ -89,13 +89,25 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                 </div>
             </div>
 
-            {/* BILLING PORTAL */}
             {isPro && (
                 <div className="flex justify-end">
                     <Button
                         variant="outline"
                         className="border-black text-black hover:bg-black hover:text-white font-mono text-xs uppercase tracking-widest"
-                        onClick={() => window.open('https://billing.dodopayments.com/portal', '_blank')}
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/user/billing');
+                                const data = await res.json();
+                                if (data.url) {
+                                    window.location.href = data.url;
+                                } else {
+                                    alert('Failed to load billing portal');
+                                }
+                            } catch (e) {
+                                console.error(e);
+                                alert('Error loading billing portal');
+                            }
+                        }}
                     >
                         <ExternalLink className="w-3 h-3 mr-2" />
                         MANAGE_BILLING
