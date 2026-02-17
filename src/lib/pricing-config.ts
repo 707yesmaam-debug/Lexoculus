@@ -7,8 +7,8 @@ export interface PricingTier {
 
 // Default to single global pricing (EU-based)
 export const PRICING_CONFIG: PricingTier = {
-    monthly: 91,
-    yearly: 917,
+    monthly: 99,
+    yearly: 999,
     currency: 'EUR',
     symbol: '€'
 };

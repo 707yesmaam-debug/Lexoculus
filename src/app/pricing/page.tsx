@@ -21,6 +21,14 @@ function PricingContent() {
     const [showAlert, setShowAlert] = useState(!!reason || !!error);
 
     useEffect(() => {
+        // Auto-dismiss alert
+        if (showAlert) {
+            const timer = setTimeout(() => setShowAlert(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [showAlert]);
+
+    useEffect(() => {
         // Check session
         import('@/lib/supabase').then(({ createClient }) => {
             const supabase = createClient();
@@ -80,7 +88,7 @@ function PricingContent() {
                                     Login
                                 </Link>
                                 <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">
-                                    Get Started
+                                    Purchase
                                 </Link>
                             </>
                         )}
@@ -93,17 +101,17 @@ function PricingContent() {
                 {/* Alert Banner */}
                 {showAlert && (
                     <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4">
-                        <div className="bg-[#FF4F00] text-white px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4 border border-black min-w-[320px]">
-                            <AlertCircle className="w-5 h-5 shrink-0" />
+                        <div className="bg-black text-white px-6 py-4 shadow-lg flex items-center gap-4 border border-white/20 min-w-[320px]">
+                            <AlertCircle className="w-5 h-5 shrink-0 text-[#FF4F00]" />
                             <div className="font-mono text-xs">
-                                <div className="font-bold uppercase mb-1">ACCESS_DENIED</div>
+                                <div className="font-bold uppercase mb-1 text-[#FF4F00]">ACCESS_DENIED</div>
                                 {reason === 'subscription_required'
                                     ? 'ACTIVE_SUBSCRIPTION_REQUIRED_FOR_ENTRY'
                                     : 'AUTHENTICATION_SEQUENCE_FAILED'}
                             </div>
                             <button
                                 onClick={() => setShowAlert(false)}
-                                className="ml-auto hover:bg-black/20 p-1 transition-colors"
+                                className="ml-auto hover:bg-white/20 p-1 transition-colors rounded-full"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -159,7 +167,7 @@ function PricingContent() {
                             disabled={isLoading}
                             className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-[#CC4000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? 'PROCESSING...' : 'UPGRADE_NOW'}
+                            {isLoading ? 'PROCESSING...' : 'PURCHASE_LICENSE'}
                         </button>
 
                         <div className="mt-8 space-y-4">

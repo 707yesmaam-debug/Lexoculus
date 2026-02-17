@@ -95,8 +95,8 @@ export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
 export const PRICING = {
     pro: {
         name: 'Pro',
-        price: 91,        // Base reference (EUR)
-        yearly_price: 917,// EU Yearly
+        price: 99,        // Base reference (EUR)
+        yearly_price: 999,// EU Yearly
         currency: 'EUR',  // Default display
         period: 'month',
         description: 'For teams building AI products',
@@ -171,14 +171,14 @@ export async function getUsageStatus(userId: string, email?: string): Promise<Us
     const limits = { ...TIER_LIMITS[tier as 'pro' | 'enterprise'] };
 
     // Override limits with actual DB values (handles manual grants/overrides)
-    limits.repos_limit = subscription.repos_limit;
-    limits.scans_limit = subscription.scans_limit;
-    limits.pr_scans_limit = subscription.pr_scans_limit;
-    limits.reports_limit = subscription.reports_limit;
+    limits.repos_limit = subscription.repos_limit ?? TIER_LIMITS[tier as 'pro' | 'enterprise'].repos_limit;
+    limits.scans_limit = subscription.scans_limit ?? TIER_LIMITS[tier as 'pro' | 'enterprise'].scans_limit;
+    limits.pr_scans_limit = subscription.pr_scans_limit ?? TIER_LIMITS[tier as 'pro' | 'enterprise'].pr_scans_limit;
+    limits.reports_limit = subscription.reports_limit ?? TIER_LIMITS[tier as 'pro' | 'enterprise'].reports_limit;
 
     // Check if usage needs reset (monthly)
     const now = new Date();
-    const resetDate = new Date(subscription.usage_reset_at);
+    const resetDate = subscription.usage_reset_at ? new Date(subscription.usage_reset_at) : new Date();
     const shouldReset = now.getMonth() !== resetDate.getMonth() ||
         now.getFullYear() !== resetDate.getFullYear();
 
@@ -204,16 +204,16 @@ export async function getUsageStatus(userId: string, email?: string): Promise<Us
         status: subscription.status as SubscriptionStatus,
         limits,
         usage: {
-            repos_used: subscription.repos_used,
-            scans_used: subscription.scans_used,
-            pr_scans_used: subscription.pr_scans_used,
-            reports_used: subscription.reports_used,
+            repos_used: subscription.repos_used ?? 0,
+            scans_used: subscription.scans_used ?? 0,
+            pr_scans_used: subscription.pr_scans_used ?? 0,
+            reports_used: subscription.reports_used ?? 0,
         },
         remaining: {
-            repos: Math.max(0, subscription.repos_limit - subscription.repos_used),
-            scans: Math.max(0, subscription.scans_limit - subscription.scans_used),
-            pr_scans: Math.max(0, subscription.pr_scans_limit - subscription.pr_scans_used),
-            reports: Math.max(0, subscription.reports_limit - subscription.reports_used),
+            repos: Math.max(0, limits.repos_limit - (subscription.repos_used ?? 0)),
+            scans: Math.max(0, limits.scans_limit - (subscription.scans_used ?? 0)),
+            pr_scans: Math.max(0, limits.pr_scans_limit - (subscription.pr_scans_used ?? 0)),
+            reports: Math.max(0, limits.reports_limit - (subscription.reports_used ?? 0)),
         },
         reset_at: subscription.usage_reset_at,
         is_pro: tier === 'pro' || tier === 'enterprise',
