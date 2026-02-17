@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { marked } from 'marked';
 
 /**
  * Core function to generate PDF from structured data using PDFKit
@@ -10,7 +11,8 @@ export async function generatePdfBuffer(buildContent: (doc: typeof PDFDocument.p
             const doc = new PDFDocument({
                 size: 'A4',
                 margins: { top: 60, bottom: 60, left: 60, right: 60 },
-                bufferPages: true
+                bufferPages: true,
+                autoFirstPage: false // Explicitly control first page
             });
 
             const buffers: Buffer[] = [];
@@ -40,6 +42,9 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
         const GRAY = '#555555';
         const LIGHT_GRAY = '#999999';
         const BORDER = '#E5E5E5';
+
+        // Add first page explicitly
+        doc.addPage();
 
         // === HEADER SECTION ===
         // Logo/Brand (Editorial style)
@@ -204,6 +209,9 @@ export async function generateTrustPackPDF(data: any): Promise<Buffer> {
         const ACCENT = '#FF4F00';
         const GRAY = '#555555';
 
+        // Add first page explicitly
+        doc.addPage();
+
         // === HEADER ===
         doc.fontSize(20)
             .font('Times-Bold')
@@ -269,12 +277,6 @@ export async function generateTrustPackPDF(data: any): Promise<Buffer> {
 }
 
 /**
- * Generates a compliance document PDF from HTML content
- * Editorial document style
- */
-import { marked } from 'marked';
-
-/**
  * Generates a compliance document PDF from Markdown content
  * Renders Markdown structure directly to PDFKit for precise layout control
  */
@@ -316,25 +318,8 @@ export async function generateDocumentPDF(documentData: {
             }
         };
 
-        // Helper to parse and draw text with simple markdown (bold only for now)
-        const drawStyledCell = (text: string, x: number, y: number, width: number) => {
-            // Check for bold **text**
-            const parts = text.split(/(\*\*.*?\*\*)/g);
-            let currentX = x;
-
-            parts.forEach(part => {
-                if (part.startsWith('**') && part.endsWith('**')) {
-                    const content = part.slice(2, -2);
-                    doc.font('Helvetica-Bold').text(content, currentX, y, { width: width, continued: true });
-                } else {
-                    doc.font('Helvetica').text(part, currentX, y, { width: width, continued: true });
-                }
-            });
-            doc.text('', currentX, y, { continued: false }); // Reset lines
-        };
-
-        // Initial Header (Page 1)
-        drawHeader(doc);
+        // Add first page explicitly
+        doc.addPage();
 
         // Metadata on Page 1
         doc.fontSize(8)
@@ -351,12 +336,13 @@ export async function generateDocumentPDF(documentData: {
             .fillColor(PRIMARY)
             .text(documentData.title, 60, 140, { width: 475 });
 
+        // Move down after title
         doc.moveDown(1.5);
 
         // === MARKDOWN RENDERER ===
         const tokens = marked.lexer(documentData.markdown);
 
-        // Handle page headers automatically
+        // Handle page headers automatically for subsequent pages
         doc.on('pageAdded', () => {
             drawHeader(doc, documentData.title);
             doc.y = 110; // Ensure content starts below header
@@ -405,55 +391,31 @@ export async function generateDocumentPDF(documentData: {
 
                 case 'blockquote': {
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
+
+                    // Check if this is an instructional placeholder
+                    // e.g., "[ACTION REQUIRED: ...]" or "**[INSTRUCTION]**"
+                    const isInstruction = text.trim().startsWith('[ACTION REQUIRED') ||
+                        text.trim().includes('[INSTRUCTION]') ||
+                        text.trim().includes('[NOTE]');
+
                     doc.moveDown(0.5);
                     const startY = doc.y;
-                    doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
-                        .text(text, 75, doc.y, { width: 460, align: 'left' });
-                    const endY = doc.y;
 
-                    doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
+                    if (isInstruction) {
+                        // Softer styling for instructions (No orange bar)
+                        doc.fontSize(10).font('Helvetica-Oblique').fillColor(GRAY)
+                            .text(text, 60, doc.y, { width: 475, align: 'left' });
+                    } else {
+                        // Standard blockquote (With orange accent bar)
+                        doc.fontSize(11).font('Helvetica-Oblique').fillColor(GRAY)
+                            .text(text, 75, doc.y, { width: 460, align: 'left' });
+                        const endY = doc.y;
+
+                        doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
+                    }
+
                     doc.moveDown(1);
                     doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
-                    break;
-                }
-
-                case 'table': {
-                    // Basic Table Renderer (Simulated List for safety, or kept as is?)
-                    // User said "remove tables", but we still have this renderer just in case.
-                    // The templates don't use it, but keeping it robust is fine.
-
-                    if (token.header.length === 0) break;
-
-                    const headers = token.header.map((h: any) => h.text);
-                    const rows = token.rows.map((r: any) => r.map((c: any) => c.text));
-                    const colWidth = 475 / headers.length;
-                    const startX = 60;
-
-                    doc.rect(startX, doc.y, 475, 20).fill('#F3F4F6');
-                    doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10);
-
-                    headers.forEach((header: string, i: number) => {
-                        const text = header.replace(/\*\*(.*?)\*\*/g, '$1');
-                        doc.text(text, startX + (i * colWidth) + 5, doc.y - 14, { width: colWidth - 10, align: 'left' });
-                    });
-                    doc.moveDown(0.5);
-
-                    doc.font('Helvetica').fontSize(10).fillColor(PRIMARY);
-                    rows.forEach((row: string[], i: number) => {
-                        const rowY = doc.y;
-                        if (i % 2 !== 0) {
-                            doc.rect(startX, rowY, 475, 20).fill('#F9FAFB');
-                            doc.fillColor(PRIMARY);
-                        }
-
-                        row.forEach((cell: string, j: number) => {
-                            const cleanText = cell.replace(/\*\*(.*?)\*\*/g, '$1');
-                            doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
-                        });
-                        doc.y = rowY + 25;
-                        doc.moveTo(startX, doc.y - 5).lineTo(535, doc.y - 5).lineWidth(0.5).stroke(BORDER);
-                    });
-                    doc.moveDown(1);
                     break;
                 }
 
@@ -463,6 +425,10 @@ export async function generateDocumentPDF(documentData: {
                     doc.moveDown(1);
                     break;
                 }
+
+                case 'table':
+                    // Table renderer disabled (deprecated)
+                    break;
             }
         });
 
