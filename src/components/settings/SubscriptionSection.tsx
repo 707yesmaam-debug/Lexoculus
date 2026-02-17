@@ -48,7 +48,7 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                     </div>
                     {isPro ? (
                         <div className="text-right">
-                            <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">Reneal Date</div>
+                            <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-1">Renewal Date</div>
                             <div className="font-mono text-sm">
                                 {subscription?.current_period_end
                                     ? new Date(subscription.current_period_end).toLocaleDateString()
@@ -109,7 +109,7 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                     <div>
                         <h4 className="font-mono text-xs font-bold text-blue-800 mb-1">NEED_ASSISTANCE?</h4>
                         <p className="text-sm text-blue-700">
-                            For billing inquiries or enterprise licensing, please contact <a href="mailto:billing@lexoculus.com" className="underline hover:text-blue-900">billing@lexoculus.com</a>.
+                            For billing inquiries or enterprise licensing, please contact <a href="mailto:founder@lexoculus.com" className="underline hover:text-blue-900">founder@lexoculus.com</a>.
                         </p>
                     </div>
                 </div>

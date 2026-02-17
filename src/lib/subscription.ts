@@ -57,10 +57,10 @@ export interface UsageStatus {
 // =============================================================================
 export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
     pro: {
-        repos_limit: 999999, // Unlimited
-        scans_limit: 999999, // Unlimited
-        pr_scans_limit: 999999, // Unlimited
-        reports_limit: 999999, // Unlimited
+        repos_limit: 50,
+        scans_limit: 100,
+        pr_scans_limit: 500,
+        reports_limit: 100,
         features: {
             github_action: true,
             slack_notifications: true,

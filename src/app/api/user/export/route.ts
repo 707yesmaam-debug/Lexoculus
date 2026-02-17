@@ -51,6 +51,22 @@ export async function GET() {
             return NextResponse.json({ error: 'User data not found' }, { status: 404 });
         }
 
+        const sanitizedData = {
+            ...userData,
+            repo_scans: userData.repo_scans.map(scan => ({
+                ...scan,
+                // SECURITY: Exclude raw file contents to prevent "internal code level data" leakage
+                file_tree: undefined,
+                readme_content: undefined,
+                package_json_content: undefined,
+                requirements_txt_content: undefined,
+                pyproject_toml_content: undefined,
+                // Keep the metadata about the scan
+                total_files: scan.total_files,
+                primary_language: scan.primary_language,
+            }))
+        };
+
         const exportData = {
             meta: {
                 export_date: new Date().toISOString(),
@@ -58,7 +74,7 @@ export async function GET() {
                 compliance_standard: "EU GDPR Article 20 - Right to Data Portability",
                 user_id: user.id,
             },
-            data: userData
+            data: sanitizedData
         };
 
         return new NextResponse(JSON.stringify(exportData, null, 2), {
