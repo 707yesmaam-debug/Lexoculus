@@ -168,7 +168,13 @@ export default function DocumentsPage() {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `compliance-document-${docId}.pdf`;
+                const doc = documents.find(d => d.id === docId);
+                const systemName = aiSystem?.name || 'System';
+                const docTitle = doc?.title || 'Document';
+                const sanitizedSystem = systemName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const sanitizedTitle = docTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+                a.download = `lexoculus_${sanitizedSystem}_${sanitizedTitle}.pdf`;
                 a.click();
                 window.URL.revokeObjectURL(url);
             } else {
