@@ -78,9 +78,6 @@ jobs:
             -H "X-Hub-Signature-256: $SIGNATURE" \\
             --data @payload.json)
           
-          # Debug: Log response to see errors
-          echo "ComplianceAI Response: $RESPONSE"
-          
           echo "response=$RESPONSE" >> $GITHUB_OUTPUT
           
           # Parse risk from response
