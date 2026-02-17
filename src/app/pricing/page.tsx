@@ -2,27 +2,17 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { Check, X, ArrowRight, Globe, AlertCircle, Loader2 } from 'lucide-react';
-import { REGIONAL_PRICING, Region, PricingTier, DEFAULT_REGION } from '@/lib/pricing-config';
+import { Check, X, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { PRICING_CONFIG } from '@/lib/pricing-config';
 import OpticalLogo from '@/components/OpticalLogo';
-
-// Helper to get cookie by name
-function getCookie(name: string): string | null {
-    if (typeof document === 'undefined') return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
-}
-
 import { useSearchParams } from 'next/navigation';
 
 // ... imports
 
 function PricingContent() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-    const [region, setRegion] = useState<Region>(DEFAULT_REGION);
-    const [pricing, setPricing] = useState<PricingTier>(REGIONAL_PRICING[DEFAULT_REGION]);
+    // Removed region state as strict EUR pricing is enforced
+    const pricing = PRICING_CONFIG;
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const searchParams = useSearchParams();
@@ -31,13 +21,6 @@ function PricingContent() {
     const [showAlert, setShowAlert] = useState(!!reason || !!error);
 
     useEffect(() => {
-        // Hydrate region from cookie or default
-        const regionCookie = getCookie('pricing_region') as Region;
-        if (regionCookie && REGIONAL_PRICING[regionCookie]) {
-            setRegion(regionCookie);
-            setPricing(REGIONAL_PRICING[regionCookie]);
-        }
-
         // Check session
         import('@/lib/supabase').then(({ createClient }) => {
             const supabase = createClient();
@@ -48,12 +31,6 @@ function PricingContent() {
     }, []);
 
     const [isLoading, setIsLoading] = useState(false);
-
-    const handleRegionChange = (newRegion: Region) => {
-        setRegion(newRegion);
-        setPricing(REGIONAL_PRICING[newRegion]);
-        document.cookie = `pricing_region=${newRegion}; path=/; max-age=604800`; // 1 week
-    };
 
     const handleUpgrade = async () => {
         if (!isLoggedIn) {
@@ -93,19 +70,6 @@ function PricingContent() {
                         <OpticalLogo />
                     </Link>
                     <div className="flex items-center gap-2 md:gap-6">
-                        <div className="hidden md:flex items-center gap-2 text-xs font-mono text-[#555]">
-                            <Globe className="w-3 h-3" />
-                            <select
-                                value={region}
-                                onChange={(e) => handleRegionChange(e.target.value as Region)}
-                                className="bg-transparent border-none focus:ring-0 cursor-pointer uppercase"
-                            >
-                                {Object.keys(REGIONAL_PRICING).map(r => (
-                                    <option key={r} value={r}>{r} Region</option>
-                                ))}
-                            </select>
-                        </div>
-
                         {isLoggedIn ? (
                             <Link href="/dashboard" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors flex items-center gap-2">
                                 Dashboard <ArrowRight className="w-4 h-4" />
