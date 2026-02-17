@@ -259,7 +259,7 @@ export async function getRepoTree(
     owner: string,
     repo: string,
     branch: string
-): Promise<{ tree: FileTreeNode; totalFiles: number }> {
+): Promise<{ tree: FileTreeNode; totalFiles: number; dominantExtension?: string | null }> {
     const response = await fetch(
         `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
         {
@@ -282,9 +282,27 @@ export async function getRepoTree(
     const root: FileTreeNode = { name: repo, type: 'dir', children: [] };
     let totalFiles = 0;
 
+    // Count extensions for language inference
+    const extensionCounts: Record<string, number> = {};
+    let maxCount = 0;
+    let dominantExtension: string | null = null;
+
     for (const item of items) {
         if (item.type === 'blob') {
             totalFiles++;
+
+            // Extract extension
+            const parts = item.path.split('.');
+            if (parts.length > 1) {
+                const ext = parts.pop()?.toLowerCase();
+                if (ext) {
+                    extensionCounts[ext] = (extensionCounts[ext] || 0) + 1;
+                    if (extensionCounts[ext] > maxCount) {
+                        maxCount = extensionCounts[ext];
+                        dominantExtension = ext;
+                    }
+                }
+            }
         }
 
         const parts = item.path.split('/');
@@ -315,7 +333,37 @@ export async function getRepoTree(
         }
     }
 
-    return { tree: root, totalFiles };
+    return { tree: root, totalFiles, dominantExtension };
+}
+
+/**
+ * Helper to map extension to language
+ */
+function mapExtensionToLanguage(ext: string | null): string | null {
+    if (!ext) return null;
+    const map: Record<string, string> = {
+        'ts': 'TypeScript', 'tsx': 'TypeScript',
+        'js': 'JavaScript', 'jsx': 'JavaScript', 'mjs': 'JavaScript',
+        'py': 'Python',
+        'java': 'Java',
+        'go': 'Go',
+        'rs': 'Rust',
+        'rb': 'Ruby',
+        'php': 'PHP',
+        'cs': 'C#',
+        'cpp': 'C++', 'c': 'C', 'h': 'C++',
+        'swift': 'Swift',
+        'kt': 'Kotlin',
+        'scala': 'Scala',
+        'html': 'HTML',
+        'css': 'CSS',
+        'sql': 'SQL',
+        'sh': 'Shell',
+        'yaml': 'YAML', 'yml': 'YAML',
+        'json': 'JSON',
+        'md': 'Markdown'
+    };
+    return map[ext] || null;
 }
 
 /**
@@ -360,6 +408,21 @@ export async function scanRepository(
         }
     }
 
+    // Determine primary language with fallback
+    let primaryLanguage = repoDetails.language;
+    if (!primaryLanguage) {
+        // Fallback 1: Check known dependency files
+        if (requirementsTxt || pyprojectToml) primaryLanguage = 'Python';
+        else if (packageJson) primaryLanguage = 'TypeScript'; // Assume modern web dev default
+
+        // Fallback 2: Check dominant extension
+        else {
+            // @ts-ignore - dominantExtension added in getRepoTree
+            const extLang = mapExtensionToLanguage(treeData.dominantExtension);
+            if (extLang) primaryLanguage = extLang;
+        }
+    }
+
     return {
         repo_owner: owner,
         repo_name: repo,
@@ -370,7 +433,7 @@ export async function scanRepository(
         pyproject_toml_content: pyprojectTomlContent,
         file_tree: treeData.tree as unknown as JsonObject,
         total_files: treeData.totalFiles,
-        primary_language: repoDetails.language,
+        primary_language: primaryLanguage,
         license_type: repoDetails.license?.spdx_id || null,
         stars_count: repoDetails.stargazers_count,
         forks_count: repoDetails.forks_count,
