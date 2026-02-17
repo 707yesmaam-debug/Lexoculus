@@ -95,11 +95,9 @@ export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
 export const PRICING = {
     pro: {
         name: 'Pro',
-        price: 99,        // Base reference (USD)
-        price_eur: 91,    // EU Price
-        yearly_price: 999,// USD Yearly
-        yearly_price_eur: 920, // EU Yearly
-        currency: 'USD',  // Default display
+        price: 91,        // Base reference (EUR)
+        yearly_price: 917,// EU Yearly
+        currency: 'EUR',  // Default display
         period: 'month',
         description: 'For teams building AI products',
         cta: 'Upgrade to Pro',

@@ -1,7 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { getPricingForRegion } from './lib/pricing-config';
-
 export async function middleware(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
@@ -35,19 +33,9 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Geo-Location Pricing Logic
+    // Geo-Location Pricing Logic REMOVED - Single Currency (EUR) Enforced
     // Vercel populates 'x-vercel-ip-country' with the 2-letter country code
-    const country = request.headers.get('x-vercel-ip-country');
-
-    // Only set the cookie if it doesn't exist to allow for server-side pricing on first load
-    if (country && !request.cookies.has('pricing_region')) {
-        const { region } = getPricingForRegion(country);
-        supabaseResponse.cookies.set('pricing_region', region, {
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7, // 1 week
-            sameSite: 'lax',
-        });
-    }
+    // const country = request.headers.get('x-vercel-ip-country');
 
     // Protect dashboard routes
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
