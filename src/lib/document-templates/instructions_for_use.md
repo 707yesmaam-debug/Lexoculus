@@ -14,11 +14,9 @@
 
 ## 1. Identity & Contact (Article 13.3a)
 
-| Role | Details |
-| :--- | :--- |
-| **Provider** | {{provider_name}} |
-| **Authorized Rep** | {{contact_person}} ({{contact_email}}) |
-| **Support Contact** | {{support_email}} |
+- **Provider:** {{provider_name}}
+- **Authorized Rep:** {{contact_person}} ({{contact_email}})
+- **Support Contact:** {{support_email}}
 
 ---
 

@@ -18,10 +18,8 @@
 {{data_strategy_placeholder}}
 
 ### 1.2 Data Provenance
-| Dataset Name | Source | Type | Collection Period |
-| :--- | :--- | :--- | :--- |
-| *Example: Customer Support Logs* | *Internal DB* | *Real-world* | *2023-2024* |
-{{data_provenance_table}}
+- *Example: Customer Support Logs* (Source: Internal DB, Type: Real-world, Period: 2023-2024)
+{{data_provenance_list}}
 
 ---
 

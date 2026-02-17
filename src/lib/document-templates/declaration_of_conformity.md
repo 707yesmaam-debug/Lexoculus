@@ -44,6 +44,7 @@ Relevant harmonised standards or common specifications used:
 ## 6. Signatory
 **Signed for and on behalf of:** {{provider_name}}
 
-| Place | Date | Name & Function | Signature |
-| :--- | :--- | :--- | :--- |
-| {{place_of_issue}} | {{date_of_issue}} | {{signatory_name}}, {{signatory_title}} | ________________ |
+- **Place:** {{place_of_issue}}
+- **Date:** {{date_of_issue}}
+- **Name & Function:** {{signatory_name}}, {{signatory_title}}
+- **Signature:** ________________

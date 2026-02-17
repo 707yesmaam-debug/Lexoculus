@@ -29,9 +29,7 @@
 The following risks have been identified based on the system's intended purpose and reasonably foreseeable misuse.
 
 ### 2.1 Automated Risk Scan Results
-| Risk Category | Detected Issue | Severity |
-| :--- | :--- | :--- |
-{{high_priority_risks_table}}
+{{high_priority_risks_list}}
 
 ### 2.2 Reasonably Foreseeable Misuse
 > [ACTION REQUIRED: Analyze potential misuse scenarios (e.g., use of the system for unapproved domains, adversarial attacks).]
@@ -55,11 +53,10 @@ The following risks have been identified based on the system's intended purpose 
 
 Measures adopted to eliminate or reduce identified risks.
 
-| Risk ID | Control Measure | Type | Residual Risk |
-| :--- | :--- | :--- | :--- |
-| **R-001** | *Example: Automated bias filtering* | Design | Low |
-| **R-002** | *Example: User training on limitations* | Instruction | Medium |
-{{mitigation_table_placeholder}}
+- **R-001**: *Example: Automated bias filtering* (Design) - Residual: Low
+- **R-002**: *Example: User training on limitations* (Instruction) - Residual: Medium
+
+{{mitigation_list_placeholder}}
 
 > **[NOTE]** 
 > Control measures must prioritize (in order):

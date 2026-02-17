@@ -160,17 +160,17 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
         // --- Risk Management (Article 9) ---
         rms_methodology_placeholder: '> [ACTION REQUIRED: Describe risk management methodology (ISO 31000/14971) and acceptance criteria.]',
         rms_frequency_placeholder: '> [ACTION REQUIRED: Define frequency of risk reviews (e.g., Quarterly, Post-Release).]',
-        high_priority_risks_table: '> [ACTION REQUIRED: Insert table of high-priority risks identified during automated scanning.]',
+        high_priority_risks_list: '> [ACTION REQUIRED: List high-priority risks identified during automated scanning.]',
         foreseeable_misuse_placeholder: '> [ACTION REQUIRED: Analyze reasonably foreseeable misuse scenarios.]',
         risk_matrix_placeholder: '> [ACTION REQUIRED: Insert Risk Matrix (Probability vs Severity).]',
         post_market_risk_placeholder: '> [ACTION REQUIRED: Analyze risks emerging from post-market monitoring data.]',
-        mitigation_table_placeholder: '> [ACTION REQUIRED: Detailed table of mitigation measures and their verification results.]',
+        mitigation_list_placeholder: '> [ACTION REQUIRED: List mitigation measures and their verification results.]',
         residual_risk_statement_placeholder: '> [ACTION REQUIRED: Statement accepting overall residual risk.]',
         vulnerable_groups_placeholder: '> [ACTION REQUIRED: Assessment of impact on children and vulnerable groups.]',
 
         // --- Data Governance (Article 10) ---
         data_strategy_placeholder: '> [ACTION REQUIRED: Explain design choices and data collection strategy.]',
-        data_provenance_table: '> [ACTION REQUIRED: Table listing all datasets, sources, and provenance info.]',
+        data_provenance_list: '> [ACTION REQUIRED: List all datasets, sources, and provenance info.]',
         training_data_stats: '> [ACTION REQUIRED: Statistical characteristics of the training dataset.]',
         validation_data_stats: '> [ACTION REQUIRED: Statistical characteristics of validation/testing datasets.]',
         data_preparation_placeholder: '> [ACTION REQUIRED: Details on cleaning, filtration, and normalization.]',
