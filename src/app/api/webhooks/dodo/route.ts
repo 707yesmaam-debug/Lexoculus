@@ -33,9 +33,12 @@ export async function POST(req: Request) {
                 break;
 
             case 'subscription.cancelled':
+                await handleSubscriptionCancellation(event.data);
+                break;
+
             case 'subscription.failed':
             case 'subscription.expired':
-                await handleSubscriptionCancellation(event.data);
+                await handleSubscriptionFailure(event.data);
                 break;
 
             default:
@@ -113,15 +116,33 @@ async function handleSubscriptionCancellation(data: any) {
     const user = await prisma.user.findUnique({ where: { email: customerEmail } });
     if (!user) return;
 
+    // Voluntary cancellation: Keep access until period end
     await prisma.subscription.update({
         where: { user_id: user.id },
         data: {
-            status: 'canceled', // or whatever status passed
+            status: 'active', // Keep active until end
             cancel_at_period_end: true,
-            // We usually keep the tier 'pro' until the period ends, 
-            // but standardizing to status update is safer.
         },
     });
 
-    console.log(`Cancelled subscription for user ${user.id}`);
+    console.log(`Scheduled cancellation for user ${user.id}`);
+}
+
+async function handleSubscriptionFailure(data: any) {
+    const customerEmail = data.customer?.email;
+    if (!customerEmail) return;
+
+    const user = await prisma.user.findUnique({ where: { email: customerEmail } });
+    if (!user) return;
+
+    // Payment failed or expired: Revoke access immediately
+    await prisma.subscription.update({
+        where: { user_id: user.id },
+        data: {
+            status: 'past_due',
+            cancel_at_period_end: false,
+        },
+    });
+
+    console.log(`Revoked subscription (failure/expired) for user ${user.id}`);
 }
