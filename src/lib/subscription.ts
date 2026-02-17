@@ -378,7 +378,6 @@ export async function createCheckoutSession(
             //     country: 'US', // Removed to allow user selection
             // },
             return_url: returnUrl,
-            cancel_url: `${process.env.NEXTAUTH_URL}/pricing?reason=checkout_cancelled`,
             metadata: {
                 userId: userId,
             },
