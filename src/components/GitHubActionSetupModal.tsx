@@ -60,14 +60,22 @@ jobs:
         id: scan
         env:
           LEXOCULUS_API_URL: '${process.env.NEXT_PUBLIC_APP_URL || 'https://compliance-ai-omega.vercel.app'}'
+          WEBHOOK_SECRET: \${{ secrets.LEXOCULUS_WEBHOOK_SECRET }}
+          WEBHOOK_PAYLOAD: \${{ toJson(github.event) }}
         run: |
+          # Write payload to file to avoid shell quoting issues with large JSON
+          echo "$WEBHOOK_PAYLOAD" > payload.json
+
+          # Calculate signature safely
+          SIGNATURE=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" payload.json | cut -d' ' -f2)
+
           # Send PR diff to LexOculus for optical analysis
           RESPONSE=$(curl -s -X POST \\
             "$LEXOCULUS_API_URL/api/webhooks/github" \\
             -H "Content-Type: application/json" \\
             -H "X-GitHub-Event: pull_request" \\
-            -H "X-Hub-Signature-256: $(echo -n '\${{ toJson(github.event) }}' | openssl dgst -sha256 -hmac '\${{ secrets.LEXOCULUS_WEBHOOK_SECRET }}' | cut -d' ' -f2)" \\
-            -d '\${{ toJson(github.event) }}')
+            -H "X-Hub-Signature-256: $SIGNATURE" \\
+            --data @payload.json)
           
           echo "response=$RESPONSE" >> $GITHUB_OUTPUT
           
