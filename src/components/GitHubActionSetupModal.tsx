@@ -40,6 +40,7 @@ export default function GitHubActionSetupModal({
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   compliance-scan:
