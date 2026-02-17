@@ -30,12 +30,23 @@ export async function GET() {
         const installations = await prisma.gitHubActionInstall.findMany({
             where: { user_id: user.id },
             orderBy: { installed_at: 'desc' },
-            include: {
-                _count: {
-                    select: { pr_scans: true }
-                }
+        });
+
+        // Get PR scan counts separately since there's no direct relation
+        const repoNames = installations.map(i => i.repo_full_name);
+        const prCounts = await prisma.pRScan.groupBy({
+            by: ['repo_full_name'],
+            where: {
+                user_id: user.id,
+                repo_full_name: { in: repoNames }
+            },
+            _count: {
+                _all: true
             }
         });
+
+        // Create a map for O(1) lookup
+        const countMap = new Map(prCounts.map(c => [c.repo_full_name, c._count._all]));
 
         // Check subscription tier
         const usageStatus = await getUsageStatus(user.id);
@@ -52,7 +63,7 @@ export async function GET() {
                 installed_at: i.installed_at,
                 last_scan_at: i.last_scan_at,
                 total_scans: i.total_scans,
-                pr_scan_count: i._count.pr_scans,
+                pr_scan_count: countMap.get(i.repo_full_name) || 0,
             })),
             count: installations.length,
         });

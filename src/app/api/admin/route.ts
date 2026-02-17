@@ -147,12 +147,28 @@ export async function GET(request: NextRequest) {
                 orderBy: { installed_at: 'desc' },
                 include: {
                     user: { select: { email: true } },
-                    _count: { select: { pr_scans: true } },
                 },
             });
 
+            // Get PR scan counts for these repos
+            const repoNames = installs.map(i => i.repo_full_name);
+            const prCounts = await prisma.pRScan.groupBy({
+                by: ['repo_full_name'],
+                where: {
+                    repo_full_name: { in: repoNames }
+                },
+                _count: {
+                    _all: true
+                }
+            });
+
+            const countMap = new Map(prCounts.map(c => [c.repo_full_name, c._count._all]));
+
             return NextResponse.json({
-                installs,
+                installs: installs.map(i => ({
+                    ...i,
+                    _count: { pr_scans: countMap.get(i.repo_full_name) || 0 }
+                })),
                 count: installs.length,
             });
         }

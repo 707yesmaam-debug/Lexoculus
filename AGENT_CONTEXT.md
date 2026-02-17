@@ -1,6 +1,6 @@
 # LexOculus — Master Agent Context
 
-> **Last updated**: 2026-02-16 by Antigravity agent session `b1b1c43c`
+> **Last updated**: 2026-02-17 by Antigravity agent session `e0f71fad`
 > **Purpose**: Onboarding document for the next AI agent instance. Read this FIRST before making any changes.
 
 ---
@@ -226,6 +226,32 @@ A dedicated system user `anonymous-system-user-0000` (email: `system@lexoculus.c
 ---
 
 ## 6. Recent Changes
+
+### Session `e0f71fad` — Feb 17, 2026: Payment Integration & B2B Gating ✅
+
+**Goal**: Complete the payment flow, enforce single-currency (EUR) B2B pricing, and ensure robust handling of payment success/failure.
+
+#### Key Implementation Details
+- **Single Pricing**: Standardized to **€99/month** (PRO) & **€999/year**. Removed regional pricing/currency switching.
+- **Data Model**: `Subscription` table updated to handle Dodo Payments fields (`payment_customer_id`, `payment_subscription_id`).
+- **Safe Landing Flow**:
+  - `SubscriptionGate.tsx` now handles `?checkout=success`.
+  - Implements **polling (2s interval, max 30s)** to verify subscription activation before redirecting, fixing race conditions.
+  - Shows "Finalizing Setup" loading state.
+- **Failure Handling**:
+  - `src/app/api/webhooks/dodo/route.ts`:
+    - `subscription.failed` / `expired`: **Immediate Revocation** (`status: past_due`).
+    - `subscription.cancelled` (User): **Grace Period** (access until period end).
+  - Checkout Cancellation: Redirects to `/pricing` (NOTE: `cancel_url` removed from SDK call as it is currently unsupported by `dodopayments` node SDK).
+- **UI Updates**:
+  - Pricing Page: "Purchase License" CTAs (B2B focus).
+  - Dashboard Layout: Wrapped `SubscriptionGate` in `Suspense` to fix build error.
+
+#### Modified Files
+- `src/lib/subscription.ts` (Pricing config, polling logic)
+- `src/app/api/webhooks/dodo/route.ts` (Failure logic)
+- `src/components/SubscriptionGate.tsx` (Polling & Suspense)
+- `src/app/pricing/page.tsx` (UI/CTAs)
 
 ### Session `ec2889d3` — Feb 16, 2026: Zero-Signup Scan Flow ✅
 

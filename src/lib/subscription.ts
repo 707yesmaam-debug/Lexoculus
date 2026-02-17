@@ -215,7 +215,7 @@ export async function getUsageStatus(userId: string, email?: string): Promise<Us
             pr_scans: Math.max(0, limits.pr_scans_limit - (subscription.pr_scans_used ?? 0)),
             reports: Math.max(0, limits.reports_limit - (subscription.reports_used ?? 0)),
         },
-        reset_at: subscription.usage_reset_at,
+        reset_at: subscription.usage_reset_at ?? new Date(),
         is_pro: tier === 'pro' || tier === 'enterprise',
         can_use_github_action: limits.features.github_action,
     };

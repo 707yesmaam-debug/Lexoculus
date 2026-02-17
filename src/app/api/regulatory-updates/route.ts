@@ -162,7 +162,11 @@ export async function POST(request: NextRequest) {
         console.log(`📰 [REGULATORY] New ${update_type}: ${title}`);
 
         // Create alerts for users with affected systems
-        await createAlertsForAffectedUsers(update);
+        // cast Update to Expected Type (Prisma returns nullable fields based on schema, but we ensured defaults)
+        await createAlertsForAffectedUsers({
+            ...update,
+            severity: update.severity || 'info',
+        });
 
         return NextResponse.json(update, { status: 201 });
 
@@ -182,7 +186,7 @@ async function createAlertsForAffectedUsers(update: {
     id: string;
     title: string;
     summary: string;
-    severity: string;
+    severity: string | null;
     affected_articles: string[];
     affected_risks: string[];
 }) {

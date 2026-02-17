@@ -144,6 +144,13 @@ export default function DashboardLayout({
             disabled: !!activeScanId,
             isActive: pathname === '/dashboard/timeline'
         },
+        {
+            name: '07_SETTINGS',
+            href: '/dashboard/settings',
+            status: activeScanId ? '[LOCKED]' : '[MANAGE]',
+            disabled: !!activeScanId,
+            isActive: pathname.startsWith('/dashboard/settings')
+        },
     ];
 
 

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,51 +7,27 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  full_name  String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  // Feature 1 relationships
-  github_connections GithubConnection[]
-  repo_scans         RepoScan[]
-  github_repos       UserGithubRepo[]
-
-  // Feature 2 relationships
+  id                      String                  @id @default(cuid())
+  email                   String                  @unique
+  full_name               String?
+  created_at              DateTime                @default(now())
+  updated_at              DateTime                @updatedAt
+  ai_systems              AiSystem[]
+  audit_logs              AuditLog[]
+  evidence                ComplianceEvidence[]
+  compliance_reports      ComplianceReport[]
+  conformity_assessments  ConformityAssessment[]
+  feedback                Feedback[]
+  final_risk_assessments  FinalRiskAssessment[]
+  github_action_installs  GitHubActionInstall[]
+  github_connections      GithubConnection[]
   llm_capability_analyses LlmCapabilityAnalysis[]
-
-  // Feature 3 relationships
-  risk_assessments RiskAssessment[]
-
-  // Feature 4 relationships
-  final_risk_assessments FinalRiskAssessment[]
-
-  // Feature 5 relationships
-  compliance_reports ComplianceReport[]
-
-  // GitHub Action MVP relationships
-  github_action_installs GitHubActionInstall[]
-  pr_scans               PRScan[]
-
-  // Subscription & Billing
-  subscription Subscription?
-  
-  // Feedback
-  feedback     Feedback[]
-
-  // AI System Registry
-  ai_systems   AiSystem[]
-  
-  // Monitoring Alerts (Phase 3.3)
-  monitoring_alerts MonitoringAlert[]
-  
-  // Audit & Evidence (Phase 4)
-  audit_logs        AuditLog[]
-  evidence          ComplianceEvidence[]
-  
-  // Conformity Assessment (Phase 5)
-  conformity_assessments ConformityAssessment[]
+  monitoring_alerts       MonitoringAlert[]
+  pr_scans                PRScan[]
+  repo_scans              RepoScan[]
+  risk_assessments        RiskAssessment[]
+  subscription            Subscription?
+  github_repos            UserGithubRepo[]
 
   @@index([email])
   @@map("users")
@@ -64,12 +37,11 @@ model GithubConnection {
   id                      String    @id @default(cuid())
   user_id                 String
   github_username         String
-  github_oauth_token      String    // Encrypted with AES-256-GCM
+  github_oauth_token      String
   github_token_expires_at DateTime?
   connected_at            DateTime  @default(now())
   last_refreshed_at       DateTime?
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user                    User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, github_username])
   @@index([user_id])
@@ -77,40 +49,32 @@ model GithubConnection {
 }
 
 model RepoScan {
-  id               String  @id @default(cuid())
-  user_id          String
-  github_repo_url  String
-  repo_owner       String
-  repo_name        String
-  repo_description String?
-
-  // Raw data from GitHub - INPUT for Feature 2
+  id                       String                 @id @default(cuid())
+  user_id                  String
+  github_repo_url          String
+  repo_owner               String
+  repo_name                String
+  repo_description         String?
   readme_content           String?
   package_json_content     Json?
   requirements_txt_content String?
   pyproject_toml_content   Json?
-  file_tree                Json    // Directory structure
-
-  // Metadata
-  total_files      Int
-  primary_language String?
-  license_type     String?
-  stars_count      Int     @default(0)
-  forks_count      Int     @default(0)
-  watchers_count   Int     @default(0)
-
-  // Anonymous scan support
-  scan_token String?  @unique  // UUID token for anonymous scan ownership
-
-  scanned_at DateTime @default(now())
-  expires_at DateTime @default(dbgenerated("(now() + interval '30 days')"))
-
-  user                  User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  llm_analysis          LlmCapabilityAnalysis? // One-to-one: each scan has one analysis
-  risk_assessment       RiskAssessment?        // One-to-one: each scan has one risk assessment
-  final_risk_assessment FinalRiskAssessment?   // One-to-one: each scan has one final assessment
-  ai_system             AiSystem?              @relation("AiSystemLatestScan") // Link to AI System Registry
-  scan_history          AiSystemScan[]         @relation("ScanHistory") // Phase 1.2: History tracking
+  file_tree                Json
+  total_files              Int
+  primary_language         String?
+  license_type             String?
+  stars_count              Int                    @default(0)
+  forks_count              Int                    @default(0)
+  watchers_count           Int                    @default(0)
+  scanned_at               DateTime               @default(now())
+  expires_at               DateTime               @default(dbgenerated("(now() + '30 days'::interval)"))
+  scan_token               String?                @unique
+  scan_history             AiSystemScan[]         @relation("ScanHistory")
+  ai_system                AiSystem?              @relation("AiSystemLatestScan")
+  final_risk_assessment    FinalRiskAssessment?
+  llm_analysis             LlmCapabilityAnalysis?
+  user                     User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  risk_assessment          RiskAssessment?
 
   @@index([user_id])
   @@index([github_repo_url])
@@ -123,719 +87,450 @@ model UserGithubRepo {
   user_id         String
   github_repo_url String
   repo_name       String
-  repo_visibility String   // "public" or "private"
+  repo_visibility String
   last_synced_at  DateTime @default(now())
-
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, github_repo_url])
   @@index([user_id])
   @@map("user_github_repos")
 }
 
-// Feature 2: LLM Capability Analysis
 model LlmCapabilityAnalysis {
-  id           String @id @default(cuid())
-  repo_scan_id String @unique
-  user_id      String
+  id                        String          @id @default(dbgenerated("(gen_random_uuid())::text"))
+  repo_scan_id              String          @unique
+  user_id                   String
+  is_ai_system              Boolean
+  capabilities              Json            @default("[]")
+  libraries                 Json            @default("[]")
+  ai_frameworks             Json            @default("[]")
+  programming_languages     Json            @default("[]")
+  detected_model_types      Json            @default("[]")
+  has_ml_pipeline           Boolean         @default(false)
+  has_training_code         Boolean         @default(false)
+  has_inference_code        Boolean         @default(false)
+  has_data_processing       Boolean         @default(false)
+  has_model_serialization   Boolean         @default(false)
+  estimated_risk_indicators Json            @default("{}")
+  llm_model_used            String
+  analysis_duration_ms      Int
+  confidence_score          Float
+  analysis_notes            String?
+  manual_review_needed      Boolean         @default(false)
+  analyzed_at               DateTime        @default(now()) @db.Timestamptz(6)
+  expires_at                DateTime        @default(dbgenerated("(now() + '30 days'::interval)")) @db.Timestamptz(6)
+  repo_scan                 RepoScan        @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                      User            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  risk_assessment           RiskAssessment?
 
-  // Core analysis results
-  is_ai_system          Boolean
-  capabilities          Json // ["Computer Vision", "NLP", "Recommender"]
-  libraries             Json // ["torch", "tensorflow", "scikit-learn"]
-  ai_frameworks         Json // ["PyTorch", "TensorFlow", "Hugging Face"]
-  programming_languages Json // ["Python", "JavaScript"]
-  detected_model_types  Json // ["Neural Network", "Transformer", "Decision Tree"]
-
-  // Code structure indicators
-  has_ml_pipeline         Boolean @default(false)
-  has_training_code       Boolean @default(false)
-  has_inference_code      Boolean @default(false)
-  has_data_processing     Boolean @default(false)
-  has_model_serialization Boolean @default(false)
-
-  // Risk indicators (pre-classified for Feature 3)
-  estimated_risk_indicators Json
-
-  // LLM metadata
-  llm_model_used       String
-  analysis_duration_ms Int
-  confidence_score     Float // 0-1
-  analysis_notes       String?
-  manual_review_needed Boolean @default(false)
-
-  // Timestamps
-  analyzed_at DateTime @default(now())
-  expires_at  DateTime @default(dbgenerated("(now() + interval '30 days')"))
-
-  // Relationships
-  repo_scan       RepoScan        @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
-  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  risk_assessment RiskAssessment? // Link to Feature 3
-
-  @@index([repo_scan_id])
-  @@index([user_id])
-  @@index([analyzed_at])
+  @@index([analyzed_at], map: "idx_llm_capability_analyses_analyzed_at")
+  @@index([repo_scan_id], map: "idx_llm_capability_analyses_repo_scan_id")
+  @@index([user_id], map: "idx_llm_capability_analyses_user_id")
   @@map("llm_capability_analyses")
 }
 
-// Feature 3: Risk Assessment (Annex III Mapping)
 model RiskAssessment {
-  id              String @id @default(cuid())
-  repo_scan_id    String @unique
-  llm_analysis_id String @unique
-  user_id         String
+  id                         String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  repo_scan_id               String                @unique
+  llm_analysis_id            String                @unique
+  user_id                    String
+  risk_classification        String
+  risk_score                 Int
+  risk_narrative             String?
+  matched_annex_iii_articles Json                  @default("[]")
+  unmatched_risk_indicators  Json                  @default("[]")
+  is_unacceptable            Boolean               @default(false)
+  is_high_risk               Boolean               @default(false)
+  is_limited_risk            Boolean               @default(false)
+  is_minimal_risk            Boolean               @default(false)
+  key_findings               Json                  @default("[]")
+  assessed_at                DateTime              @default(now()) @db.Timestamptz(6)
+  assessment_version         Int                   @default(1)
+  manual_review_needed       Boolean               @default(false)
+  manual_review_reason       String?
+  tailored_questions         Json?
+  final_risk_assessment      FinalRiskAssessment?
+  llm_analysis               LlmCapabilityAnalysis @relation(fields: [llm_analysis_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  repo_scan                  RepoScan              @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                       User                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  // Risk Classification
-  risk_classification String // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
-  risk_score          Int    // 0-100
-  risk_narrative      String?
-
-  // Annex III Matching
-  matched_annex_iii_articles Json // Array of matched articles
-  unmatched_risk_indicators  Json // Array of unmatched indicators
-
-  // Preliminary Assessment Flags
-  is_unacceptable Boolean @default(false)
-  is_high_risk    Boolean @default(false)
-  is_limited_risk Boolean @default(false)
-  is_minimal_risk Boolean @default(false)
-
-  // Key Findings
-  key_findings Json // Array of strings
-
-  // Dynamic Questions (Feature 7)
-  tailored_questions Json? // Array of { id, question, type } generated by AI
-
-  // Metadata
-  assessed_at          DateTime @default(now())
-  assessment_version   Int      @default(1)
-  manual_review_needed Boolean  @default(false)
-  manual_review_reason String?
-
-  // Relationships
-  repo_scan             RepoScan              @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
-  llm_analysis          LlmCapabilityAnalysis @relation(fields: [llm_analysis_id], references: [id], onDelete: Cascade)
-  user                  User                  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  final_risk_assessment FinalRiskAssessment?  // Link to Feature 4
-
-  @@index([repo_scan_id])
-  @@index([user_id])
-  @@index([risk_classification])
-  @@index([assessed_at])
+  @@index([assessed_at], map: "idx_risk_assessments_assessed_at")
+  @@index([risk_classification], map: "idx_risk_assessments_classification")
+  @@index([repo_scan_id], map: "idx_risk_assessments_repo_scan_id")
+  @@index([user_id], map: "idx_risk_assessments_user_id")
   @@map("risk_assessments")
 }
 
-// Feature 4: Final Risk Assessment (Context Verified)
 model FinalRiskAssessment {
-  id                 String @id @default(cuid())
-  risk_assessment_id String @unique
-  repo_scan_id       String @unique
-  user_id            String
+  id                         String            @id @default(dbgenerated("(gen_random_uuid())::text"))
+  risk_assessment_id         String            @unique
+  repo_scan_id               String            @unique
+  user_id                    String
+  final_risk_classification  String
+  final_risk_score           Int
+  final_narrative            String?
+  context_verified           Boolean           @default(false)
+  context_summary            Json              @default("{}")
+  context_answers            Json              @default("{}")
+  evidence_items             Json              @default("[]")
+  final_matched_articles     Json              @default("[]")
+  unresolved_risk_indicators Json              @default("[]")
+  escalation_reason          String?
+  compliance_readiness       Json              @default("{}")
+  approved_for_report        Boolean           @default(false)
+  requires_manual_review     Boolean           @default(false)
+  manual_review_notes        String?
+  reviewer_id                String?
+  verified_at                DateTime          @default(now()) @db.Timestamptz(6)
+  verification_version       Int               @default(1)
+  compliance_report          ComplianceReport?
+  repo_scan                  RepoScan          @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  risk_assessment            RiskAssessment    @relation(fields: [risk_assessment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                       User              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  // Final Classification (after context verification)
-  final_risk_classification String // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
-  final_risk_score          Int    // 0-100
-  final_narrative           String?
-
-  // Context Verification
-  context_verified Boolean @default(false)
-  context_summary  Json    // { intended_use, target_users, deployment_region, has_human_oversight, etc. }
-  context_answers  Json    // Full user responses to verification questions
-
-  // Evidence Items (supports final classification)
-  evidence_items Json // Array of { category, description, supports_classification, regulatory_reference, confidence }
-
-  // Final Matched Articles (with verified applicability)
-  final_matched_articles Json // Array of { article, category, verified, requirements, user_confirmed_measures }
-
-  // Unresolved Issues
-  unresolved_risk_indicators Json    // Risk indicators user couldn't address
-  escalation_reason          String? // Why escalated to manual review
-
-  // Compliance Readiness
-  compliance_readiness Json // { overall_readiness, requirements_met, requirements_pending, developer_action_items }
-
-  // Approval Status
-  approved_for_report   Boolean @default(false)
-  requires_manual_review Boolean @default(false)
-  manual_review_notes   String?
-  reviewer_id           String?
-
-  // Metadata
-  verified_at          DateTime @default(now())
-  verification_version Int      @default(1)
-
-  // Relationships
-  risk_assessment RiskAssessment @relation(fields: [risk_assessment_id], references: [id], onDelete: Cascade)
-  repo_scan       RepoScan       @relation(fields: [repo_scan_id], references: [id], onDelete: Cascade)
-  user            User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([risk_assessment_id])
-  @@index([repo_scan_id])
-  @@index([user_id])
-  @@index([final_risk_classification])
-  @@index([verified_at])
-  @@index([approved_for_report])
+  @@index([approved_for_report], map: "idx_final_risk_assessments_approved")
+  @@index([final_risk_classification], map: "idx_final_risk_assessments_classification")
+  @@index([repo_scan_id], map: "idx_final_risk_assessments_repo_scan_id")
+  @@index([risk_assessment_id], map: "idx_final_risk_assessments_risk_assessment_id")
+  @@index([user_id], map: "idx_final_risk_assessments_user_id")
+  @@index([verified_at], map: "idx_final_risk_assessments_verified_at")
   @@map("final_risk_assessments")
-
-  // Feature 5 relationship
-  compliance_report ComplianceReport?
 }
 
-// Feature 5: Compliance Report
 model ComplianceReport {
-  id                        String   @id @default(cuid())
-  final_risk_assessment_id  String   @unique
-  user_id                   String
+  id                       String              @id @default(dbgenerated("(gen_random_uuid())::text"))
+  final_risk_assessment_id String              @unique
+  user_id                  String
+  file_name                String
+  file_path                String
+  file_url                 String?
+  file_size                Int
+  risk_classification      String
+  risk_score               Int
+  digital_signature        String?
+  signed_at                DateTime?           @db.Timestamptz(6)
+  version                  Int                 @default(1)
+  generated_at             DateTime            @default(now()) @db.Timestamptz(6)
+  expires_at               DateTime?           @db.Timestamptz(6)
+  created_at               DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime            @default(now()) @updatedAt @db.Timestamptz(6)
+  final_risk_assessment    FinalRiskAssessment @relation(fields: [final_risk_assessment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user                     User                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  // File metadata (stored in Supabase Storage)
-  file_name                 String
-  file_path                 String   // Supabase storage path: userId/reportId.pdf
-  file_url                  String?  // Signed URL (expires)
-  file_size                 Int
-
-  // Report data
-  risk_classification       String
-  risk_score                Int
-
-  // Digital signing
-  digital_signature         String?
-  signed_at                 DateTime?
-
-  // Versioning
-  version                   Int      @default(1)
-
-  // Timestamps
-  generated_at              DateTime @default(now())
-  expires_at                DateTime? // Signed URL expiration
-  created_at                DateTime @default(now())
-  updated_at                DateTime @updatedAt
-
-  // Relationships
-  final_risk_assessment FinalRiskAssessment @relation(fields: [final_risk_assessment_id], references: [id], onDelete: Cascade)
-  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, file_name])
-  @@index([user_id])
-  @@index([final_risk_assessment_id])
-  @@index([generated_at])
+  @@unique([user_id, file_name], map: "idx_compliance_reports_user_file")
+  @@index([generated_at], map: "idx_compliance_reports_generated_at")
+  @@index([user_id], map: "idx_compliance_reports_user_id")
   @@map("compliance_reports")
 }
 
-// =============================================================================
-// GitHub Action MVP - Recurring Revenue Infrastructure
-// =============================================================================
-
-// Track GitHub Action installations per repo
 model GitHubActionInstall {
-  id             String   @id @default(cuid())
-  user_id        String
-  repo_full_name String   // e.g., "owner/repo"
-  repo_id        Int?     // GitHub repo ID
-  status         String   @default("active") // active, paused, disabled
-  
-  // Configuration
-  block_on_high_risk    Boolean @default(false) // Block PRs with HIGH_RISK
-  block_on_unacceptable Boolean @default(true)  // Block PRs with UNACCEPTABLE
-  notify_slack          Boolean @default(false)
+  id                    String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id               String
+  repo_full_name        String
+  repo_id               Int?
+  status                String?   @default("active")
+  block_on_high_risk    Boolean?  @default(false)
+  block_on_unacceptable Boolean?  @default(true)
+  notify_slack          Boolean?  @default(false)
   slack_webhook_url     String?
-  
-  // Metadata
-  installed_at  DateTime @default(now())
-  last_scan_at  DateTime?
-  total_scans   Int      @default(0)
-  
-  // Relationships
-  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  pr_scans PRScan[]
+  installed_at          DateTime? @default(now()) @db.Timestamptz(6)
+  last_scan_at          DateTime? @db.Timestamptz(6)
+  total_scans           Int?      @default(0)
+  user                  User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, repo_full_name])
-  @@index([user_id])
-  @@index([repo_full_name])
-  @@index([status])
+  @@index([repo_full_name], map: "idx_github_action_installs_repo_full_name")
+  @@index([status], map: "idx_github_action_installs_status")
+  @@index([user_id], map: "idx_github_action_installs_user_id")
   @@map("github_action_installs")
 }
 
-// Track individual PR scans
 model PRScan {
-  id             String   @id @default(cuid())
-  user_id        String
-  repo_full_name String
-  
-  // PR Details
-  pr_number      Int
-  pr_title       String
-  pr_url         String
-  head_sha       String
-  
-  // Scan Results
-  risk_level          String   // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
-  matched_patterns    String[] @default([])
-  matched_constraints String[] @default([])
-  blocked             Boolean  @default(false)
-  comment_posted      Boolean  @default(false)
-  
-  // Metadata
-  scanned_at     DateTime @default(now())
-  scan_duration_ms Int?
-  
-  // Relationships
-  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  github_action_install GitHubActionInstall? @relation(fields: [repo_full_name, user_id], references: [repo_full_name, user_id])
+  id                  String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id             String
+  repo_full_name      String
+  pr_number           Int
+  pr_title            String
+  pr_url              String
+  head_sha            String
+  risk_level          String
+  matched_patterns    String[]  @default([])
+  matched_constraints String[]  @default([])
+  blocked             Boolean?  @default(false)
+  comment_posted      Boolean?  @default(false)
+  scanned_at          DateTime? @default(now()) @db.Timestamptz(6)
+  scan_duration_ms    Int?
+  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([user_id])
-  @@index([repo_full_name])
-  @@index([pr_number])
-  @@index([scanned_at])
-  @@index([risk_level])
+  @@index([pr_number], map: "idx_pr_scans_pr_number")
+  @@index([repo_full_name], map: "idx_pr_scans_repo_full_name")
+  @@index([risk_level], map: "idx_pr_scans_risk_level")
+  @@index([scanned_at], map: "idx_pr_scans_scanned_at")
+  @@index([user_id], map: "idx_pr_scans_user_id")
   @@map("pr_scans")
 }
 
-// =============================================================================
-// Subscription & Billing (Stripe-Ready)
-// =============================================================================
-
 model Subscription {
-  id        String   @id @default(cuid())
-  user_id   String   @unique  // One subscription per user
-  
-  // Subscription Tier
-  tier      String   @default("free") // free, pro, enterprise
-  status    String   @default("active") // active, canceled, past_due, trialing
-  
-  // Usage Limits (per month)
-  repos_limit        Int @default(1)  // Free: 1, Pro: 10, Enterprise: unlimited
-  scans_limit        Int @default(5)  // Free: 5/month, Pro: 100/month
-  pr_scans_limit     Int @default(0)  // Free: 0, Pro: unlimited
-  reports_limit      Int @default(1)  // Free: 1/month, Pro: 20/month
-  
-  // Current Usage (reset monthly)
-  repos_used         Int @default(0)
-  scans_used         Int @default(0)
-  pr_scans_used      Int @default(0)
-  reports_used       Int @default(0)
-  usage_reset_at     DateTime @default(now())
-  
-  // Payment Integration (Dodo Payments)
-  payment_customer_id     String?  @unique @map("stripe_customer_id") // Keep map for backward compat if needed, or just rename col
-  payment_subscription_id String?  @unique @map("stripe_subscription_id")
-  payment_product_id      String?  @map("stripe_price_id")
-  payment_provider        String   @default("dodo") // dodo, stripe
-  
-  // Billing Cycle
-  current_period_start  DateTime?
-  current_period_end    DateTime?
-  cancel_at_period_end  Boolean @default(false)
-  
-  // Manual Override (for early adopters, demos)
-  is_manual_grant     Boolean @default(false)
-  manual_grant_reason String?
-  granted_by          String?  // Admin user ID
-  
-  // Metadata
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  
-  // Relationships
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                      String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id                 String    @unique
+  tier                    String?   @default("free")
+  status                  String?   @default("active")
+  repos_limit             Int?      @default(1)
+  scans_limit             Int?      @default(5)
+  pr_scans_limit          Int?      @default(0)
+  reports_limit           Int?      @default(1)
+  repos_used              Int?      @default(0)
+  scans_used              Int?      @default(0)
+  pr_scans_used           Int?      @default(0)
+  reports_used            Int?      @default(0)
+  usage_reset_at          DateTime? @default(now()) @db.Timestamptz(6)
+  payment_customer_id     String?   @unique @map("stripe_customer_id")
+  payment_subscription_id String?   @unique @map("stripe_subscription_id")
+  payment_product_id      String?   @map("stripe_price_id")
+  current_period_start    DateTime? @db.Timestamptz(6)
+  current_period_end      DateTime? @db.Timestamptz(6)
+  cancel_at_period_end    Boolean?  @default(false)
+  is_manual_grant         Boolean?  @default(false)
+  manual_grant_reason     String?
+  granted_by              String?
+  created_at              DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  payment_provider        String    @default("dodo")
+  user                    User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([tier])
-  @@index([status])
-  @@index([payment_customer_id])
+  @@index([status], map: "idx_subscriptions_status")
+  @@index([payment_customer_id], map: "idx_subscriptions_stripe_customer_id")
+  @@index([tier], map: "idx_subscriptions_tier")
   @@map("subscriptions")
 }
 
-
-// Feedback System
 model Feedback {
-  id        String   @id @default(cuid())
-  user_id   String?  // Optional: can be anonymous
-  
-  rating    Int      // 1-5
-  comment   String?
-  page_url  String?
-  
-  // Metadata
+  id         String   @id @default(cuid())
+  user_id    String?
+  rating     Int
+  comment    String?
+  page_url   String?
   created_at DateTime @default(now())
-  
-  // Relationships
-  user      User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([created_at])
   @@map("feedback")
 }
 
-// =============================================================================
-// AI System Registry - Phase 1 of Platform Rebuild
-// =============================================================================
-
 model AiSystem {
-  id              String   @id @default(cuid())
-  user_id         String
-  
-  // Identification
-  name            String
-  description     String?
-  
-  // Source (links to existing scan)
-  source_repo_url String?
-  latest_scan_id  String?  @unique
-  
-  // Classification (synced from latest assessment)
-  risk_classification String?   // UNACCEPTABLE, HIGH_RISK, LIMITED_RISK, MINIMAL_RISK
-  risk_score          Int?      // 0-100
-  
-  // Status
-  status          String   @default("active")  // active, archived
-  lifecycle_stage String   @default("development")  // development, testing, production, retired
-  
-  // Last scan metadata
-  last_scanned_at   DateTime?
-  capabilities      Json?     // Synced from LlmCapabilityAnalysis
-  matched_articles  Json?     // Synced from RiskAssessment
-  
-  // Public sharing (Phase 1.1)
-  public_share_id   String?   @unique  // Random ID for public URL
-  share_enabled     Boolean   @default(false)
-  
-  // Code drift tracking (Phase 3.1)
-  last_commit_sha     String?   // SHA of last scanned commit
-  files_changed_count Int?      @default(0)  // Files changed since last scan
-  drift_detected      Boolean   @default(false)
-  drift_checked_at    DateTime?
-  
-  // Timestamps
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  // Relations
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  latest_scan     RepoScan? @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id])
-  scan_history    AiSystemScan[]
-  documents       ComplianceDocument[]  // Phase 2: Generated docs
-  alerts          MonitoringAlert[]     // Phase 3.3: Monitoring alerts
-  audit_logs      AuditLog[]            // Phase 4.1: Audit trail
-  evidence        ComplianceEvidence[]  // Phase 4.2: Compliance evidence
-  conformity_assessments ConformityAssessment[]  // Phase 5: Conformity tracking
-  
+  id                     String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id                String
+  name                   String
+  description            String?
+  source_repo_url        String?
+  latest_scan_id         String?               @unique
+  risk_classification    String?
+  risk_score             Int?
+  status                 String                @default("active")
+  lifecycle_stage        String                @default("development")
+  last_scanned_at        DateTime?             @db.Timestamptz(6)
+  capabilities           Json?
+  matched_articles       Json?
+  created_at             DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime              @default(now()) @updatedAt @db.Timestamptz(6)
+  public_share_id        String?               @unique
+  share_enabled          Boolean?              @default(false)
+  last_commit_sha        String?
+  files_changed_count    Int?                  @default(0)
+  drift_detected         Boolean?              @default(false)
+  drift_checked_at       DateTime?             @db.Timestamptz(6)
+  scan_history           AiSystemScan[]
+  latest_scan            RepoScan?             @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                   User                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  audit_logs             AuditLog[]
+  documents              ComplianceDocument[]
+  evidence               ComplianceEvidence[]
+  conformity_assessments ConformityAssessment?
+  alerts                 MonitoringAlert[]
+
   @@unique([user_id, name])
-  @@index([user_id])
-  @@index([risk_classification])
-  @@index([status])
+  @@index([public_share_id], map: "idx_ai_systems_public_share_id")
+  @@index([risk_classification], map: "idx_ai_systems_risk_classification")
+  @@index([status], map: "idx_ai_systems_status")
+  @@index([user_id], map: "idx_ai_systems_user_id")
   @@map("ai_systems")
 }
 
-// =============================================================================
-// Scan History - Phase 1.2: Track all scans per AI System
-// =============================================================================
-
 model AiSystemScan {
-  id            String   @id @default(cuid())
-  ai_system_id  String
-  repo_scan_id  String
-  
-  // Snapshot of risk at time of scan
-  risk_classification String?
-  risk_score          Int?
-  
-  // Change tracking
+  id                      String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  ai_system_id            String
+  repo_scan_id            String
+  risk_classification     String?
+  risk_score              Int?
   previous_classification String?
-  classification_changed  Boolean @default(false)
-  
-  scanned_at    DateTime @default(now())
-  
-  // Relations
-  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  repo_scan     RepoScan @relation("ScanHistory", fields: [repo_scan_id], references: [id], onDelete: Cascade)
-  
+  classification_changed  Boolean?  @default(false)
+  scanned_at              DateTime? @default(now()) @db.Timestamptz(6)
+  ai_system               AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  repo_scan               RepoScan  @relation("ScanHistory", fields: [repo_scan_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@unique([ai_system_id, repo_scan_id])
-  @@index([ai_system_id])
-  @@index([scanned_at])
+  @@index([ai_system_id], map: "idx_ai_system_scans_ai_system_id")
+  @@index([scanned_at], map: "idx_ai_system_scans_scanned_at")
   @@map("ai_system_scans")
 }
 
-// =============================================================================
-// Compliance Documents - Phase 2: Auto-generated EU AI Act documents
-// =============================================================================
-
 model ComplianceDocument {
-  id            String   @id @default(cuid())
-  ai_system_id  String
-  
-  // Document Type: technical_doc, risk_management, data_governance, 
-  //                instructions_for_use, declaration_of_conformity
-  document_type String
-  
-  // Content
-  title         String
-  content       Json     // Markdown content + field status
-  template_version String @default("1.0")
-  
-  // Completion Status
-  status        String   @default("draft")  // draft, complete, exported
-  completion_percent Int @default(0)
-  missing_fields Json?   // List of unfilled placeholders
-  
-  // Version tracking
-  version       Int      @default(1)
-  
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
-  // Relations
-  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  
+  id                 String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  ai_system_id       String
+  document_type      String
+  title              String
+  content            Json
+  template_version   String?   @default("1.0")
+  status             String?   @default("draft")
+  completion_percent Int?      @default(0)
+  missing_fields     Json?
+  version            Int?      @default(1)
+  created_at         DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  ai_system          AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@unique([ai_system_id, document_type])
-  @@index([ai_system_id])
-  @@index([document_type])
   @@map("compliance_documents")
 }
 
-// =============================================================================
-// Monitoring Alerts - Phase 3.3: Alert system for compliance events
-// =============================================================================
-
 model MonitoringAlert {
-  id            String   @id @default(cuid())
-  user_id       String
-  ai_system_id  String?  // Optional - some alerts may be global
-  
-  // Alert Type
-  category      String   // risk_change, drift_detected, compliance_gap, document_missing
-  severity      String   @default("info")  // critical, warning, info
-  
-  // Content
-  title         String
-  message       String
-  
-  // Status
-  status        String   @default("unread")  // unread, read, resolved, dismissed
-  resolved_at   DateTime?
-  resolved_by   String?
-  
-  // Metadata
-  metadata      Json?    // Additional context (e.g., previous_risk, new_risk)
-  
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
-  // Relations
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  
-  @@index([user_id])
-  @@index([ai_system_id])
-  @@index([status])
-  @@index([category])
+  id           String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id      String
+  ai_system_id String?
+  category     String
+  severity     String?   @default("info")
+  title        String
+  message      String
+  status       String?   @default("unread")
+  resolved_at  DateTime? @db.Timestamptz(6)
+  resolved_by  String?
+  metadata     Json?
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  ai_system    AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@map("monitoring_alerts")
 }
 
-// =============================================================================
-// Audit Log - Phase 4.1: Tamper-proof compliance action logging
-// =============================================================================
-
 model AuditLog {
-  id            String   @id @default(cuid())
+  id            String    @id @default(dbgenerated("(gen_random_uuid())::text"))
   user_id       String
   ai_system_id  String?
-  
-  // Action details
-  action        String   // scan, classify, generate_doc, export, upload_evidence, etc.
-  entity_type   String   // ai_system, document, report, evidence, etc.
+  action        String
+  entity_type   String
   entity_id     String?
-  
-  // Description
   description   String
-  metadata      Json?    // Additional context
-  
-  // Tamper-proof hash chain
-  previous_hash String?  // Hash of previous log entry
-  hash          String   // SHA-256 of this entry's content
-  
-  // IP tracking for audit
+  metadata      Json?
+  previous_hash String?
+  hash          String
   ip_address    String?
   user_agent    String?
-  
-  created_at    DateTime @default(now())
-  
-  // Relations
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  
-  @@index([user_id])
-  @@index([ai_system_id])
-  @@index([action])
-  @@index([entity_type])
-  @@index([created_at])
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([ai_system_id], map: "idx_audit_logs_ai_system_id")
+  @@index([user_id], map: "idx_audit_logs_user_id")
   @@map("audit_logs")
 }
 
-// =============================================================================
-// Compliance Evidence - Phase 4.2: Evidence collection and chain of custody
-// =============================================================================
-
 model ComplianceEvidence {
-  id            String   @id @default(cuid())
+  id            String    @id @default(dbgenerated("(gen_random_uuid())::text"))
   user_id       String
   ai_system_id  String
-  
-  // Evidence details
-  evidence_type String   // scan_result, risk_assessment, document, user_upload, test_result
+  evidence_type String
   title         String
   description   String?
-  
-  // File storage
   file_url      String?
   file_name     String?
   file_size     Int?
   mime_type     String?
-  
-  // Source reference
-  source_type   String?  // repo_scan, document, upload
-  source_id     String?  // ID of the source entity
-  
-  // Chain of custody
-  collected_at  DateTime @default(now())
-  collected_by  String   // User ID who collected/uploaded
-  hash          String   // SHA-256 file integrity hash
-  
-  // Verification
-  verified      Boolean  @default(false)
-  verified_at   DateTime?
+  source_type   String?
+  source_id     String?
+  collected_at  DateTime? @default(now()) @db.Timestamptz(6)
+  collected_by  String
+  hash          String
+  verified      Boolean?  @default(false)
+  verified_at   DateTime? @db.Timestamptz(6)
   verified_by   String?
-  
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
-  // Relations
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  ai_system     AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  
-  @@index([user_id])
-  @@index([ai_system_id])
-  @@index([evidence_type])
-  @@index([collected_at])
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  ai_system     AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_compliance_evidence_user_id")
   @@map("compliance_evidence")
 }
 
-// =============================================================================
-// Regulatory Updates - Phase 3.4: Track EU AI Act amendments and guidance
-// =============================================================================
-
 model RegulatoryUpdate {
-  id              String   @id @default(cuid())
-  
-  // Source and reference
-  source          String   // eu_ai_office, eur_lex, ai_act_news
-  source_url      String?
-  reference_id    String?  @unique  // External ID to prevent duplicates
-  
-  // Content
-  title           String
-  summary         String
-  content         String?  // Full text if available
-  
-  // Classification
-  update_type     String   // amendment, guidance, clarification, deadline
-  severity        String   @default("info")  // critical, warning, info
-  
-  // EU AI Act relevance
-  affected_articles   String[]  // ["Article 6", "Article 9", "Annex III"]
-  affected_risks      String[]  // ["HIGH_RISK", "LIMITED_RISK"]
-  
-  // Status
-  published_at    DateTime
-  effective_date  DateTime?
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
-  @@index([update_type])
-  @@index([severity])
-  @@index([published_at])
+  id                String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  source            String
+  source_url        String?
+  reference_id      String?   @unique
+  title             String
+  summary           String
+  content           String?
+  update_type       String
+  severity          String?   @default("info")
+  affected_articles String[]
+  affected_risks    String[]
+  published_at      DateTime  @db.Timestamptz(6)
+  effective_date    DateTime? @db.Timestamptz(6)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([published_at], map: "idx_regulatory_updates_published")
+  @@index([severity], map: "idx_regulatory_updates_severity")
+  @@index([update_type], map: "idx_regulatory_updates_type")
   @@map("regulatory_updates")
 }
 
-// =============================================================================
-// Conformity Assessment - Phase 5: Track conformity assessment pathway progress
-// =============================================================================
-
 model ConformityAssessment {
-  id              String   @id @default(cuid())
-  ai_system_id    String
-  user_id         String
+  id                       String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  ai_system_id             String    @unique
+  user_id                  String
+  assessment_module        String
+  module_name              String
+  legal_basis              String
+  current_step             Int       @default(0)
+  total_steps              Int
+  steps_data               Json
+  status                   String    @default("not_started")
+  completion_percent       Int       @default(0)
+  requires_notified_body   Boolean   @default(false)
+  self_assessment_eligible Boolean   @default(false)
+  estimated_timeline       String?
+  risk_classification      String?
+  annex_iii_category       Int?
+  notes                    Json?
+  target_date              DateTime? @db.Timestamptz(6)
+  created_at               DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  ai_system                AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_conformity_ai_system")
+  user                     User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_conformity_user")
 
-  // Assessment Module
-  assessment_module String   // MODULE_A, MODULE_B_C, MODULE_D, MODULE_F, NOT_REQUIRED
-  module_name       String
-  legal_basis       String
-
-  // Progress
-  current_step    Int      @default(0)
-  total_steps     Int
-  steps_data      Json     // ConformityStep[] serialised
-
-  // Status
-  status          String   @default("not_started")  // not_started, in_progress, completed, needs_review
-  completion_percent Int   @default(0)
-
-  // Configuration
-  requires_notified_body Boolean @default(false)
-  self_assessment_eligible Boolean @default(false)
-  estimated_timeline String?
-
-  // Metadata
-  risk_classification String?
-  annex_iii_category  Int?
-  notes              Json?    // string[]
-
-  // Target date for completion
-  target_date     DateTime?
-
-  // Timestamps
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-
-  // Relations
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  ai_system       AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-
-  @@unique([ai_system_id])
   @@index([user_id])
   @@index([status])
   @@map("conformity_assessments")
 }
 
-// =============================================================================
-// Demo Requests — Lead Capture from Request Demo page
-// =============================================================================
-
 model DemoRequest {
-  id            String   @id @default(cuid())
-  
-  // Contact Info
-  full_name     String
-  work_email    String
-  company_name  String
-  company_size  String   // 1-10, 11-50, 51-200, 201-1000, 1000+
-  
-  // Optional Qualification
-  role          String?  // CTO/VP Engineering, Engineering Lead, Compliance/Legal, Product Manager, Other
-  use_case      String?  // preparing_for_eu_ai_act, already_under_audit, evaluating_tools, other
-  
-  // Internal Management
-  status        String   @default("new")  // new, contacted, qualified, converted
-  notes         String?  // Admin notes
-  
-  // Metadata
-  ip_address    String?
-  user_agent    String?
-  referrer      String?
-  
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id           String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  full_name    String
+  work_email   String
+  company_name String
+  company_size String
+  role         String?
+  use_case     String?
+  status       String   @default("new")
+  notes        String?
+  ip_address   String?
+  user_agent   String?
+  referrer     String?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
   @@index([work_email])
   @@index([status])
