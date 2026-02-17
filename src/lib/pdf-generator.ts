@@ -356,28 +356,17 @@ export async function generateDocumentPDF(documentData: {
         // === MARKDOWN RENDERER ===
         const tokens = marked.lexer(documentData.markdown);
 
-        // State for rendering
-        let currentY = doc.y;
+        // Handle page headers automatically
+        doc.on('pageAdded', () => {
+            drawHeader(doc, documentData.title);
+            doc.y = 110; // Ensure content starts below header
+        });
 
         tokens.forEach((token) => {
-            // Check for page break if close to bottom
-            if (doc.y > 700) {
-                doc.addPage();
-                drawHeader(doc, documentData.title); // Consistent Header
-                doc.y = 110; // Start content lower
-            }
-
             switch (token.type) {
                 case 'heading': {
                     const level = token.depth;
                     const text = token.text;
-
-                    // Smart Page Break: If header is near bottom, force new page
-                    if (doc.y > 650) {
-                        doc.addPage();
-                        drawHeader(doc, documentData.title);
-                        doc.y = 110;
-                    }
 
                     doc.fillColor(PRIMARY).font('Times-Bold');
 
@@ -397,8 +386,6 @@ export async function generateDocumentPDF(documentData: {
                 }
 
                 case 'paragraph': {
-                    // Strip bold for paragraph for simplicity, OR rely on a more complex styled text drawer 
-                    // For now, strict 'clean' text is better than broken text
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
                     doc.fontSize(11).fillColor(PRIMARY).font('Helvetica')
                         .text(text, { width: 475, align: 'justify' });
@@ -417,7 +404,6 @@ export async function generateDocumentPDF(documentData: {
                 }
 
                 case 'blockquote': {
-                    // Blockquote styling (italic, indented, gray bar)
                     const text = token.text.replace(/\*\*(.*?)\*\*/g, '$1');
                     doc.moveDown(0.5);
                     const startY = doc.y;
@@ -425,22 +411,24 @@ export async function generateDocumentPDF(documentData: {
                         .text(text, 75, doc.y, { width: 460, align: 'left' });
                     const endY = doc.y;
 
-                    // Vertical bar
                     doc.moveTo(65, startY).lineTo(65, endY).lineWidth(2).stroke(ACCENT);
-
                     doc.moveDown(1);
                     doc.font('Helvetica').fillColor(PRIMARY).x = 60; // Reset
                     break;
                 }
 
                 case 'table': {
-                    // Basic Table Renderer
+                    // Basic Table Renderer (Simulated List for safety, or kept as is?)
+                    // User said "remove tables", but we still have this renderer just in case.
+                    // The templates don't use it, but keeping it robust is fine.
+
+                    if (token.header.length === 0) break;
+
                     const headers = token.header.map((h: any) => h.text);
                     const rows = token.rows.map((r: any) => r.map((c: any) => c.text));
                     const colWidth = 475 / headers.length;
                     const startX = 60;
 
-                    // Draw Header
                     doc.rect(startX, doc.y, 475, 20).fill('#F3F4F6');
                     doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10);
 
@@ -450,38 +438,19 @@ export async function generateDocumentPDF(documentData: {
                     });
                     doc.moveDown(0.5);
 
-                    // Draw Rows
                     doc.font('Helvetica').fontSize(10).fillColor(PRIMARY);
                     rows.forEach((row: string[], i: number) => {
                         const rowY = doc.y;
-                        // Background for zebra striping
                         if (i % 2 !== 0) {
                             doc.rect(startX, rowY, 475, 20).fill('#F9FAFB');
-                            doc.fillColor(PRIMARY); // Reset fill after rect
+                            doc.fillColor(PRIMARY);
                         }
 
-                        // Draw cells
                         row.forEach((cell: string, j: number) => {
-                            // Use bold replacement to clean up the look
-                            // For true bold rendering in PDFKit cells, we need x/y measurement which is complex in loop
-                            // For now, stripping the ** is the safest fix for "Audit Ready" clean look
                             const cleanText = cell.replace(/\*\*(.*?)\*\*/g, '$1');
-
-                            // If cell starts with ** and ends with ** (common for Key column), maybe bold it?
-                            if (cell.startsWith('**') && cell.endsWith('**')) {
-                                doc.font('Helvetica-Bold');
-                                doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
-                                doc.font('Helvetica');
-                            } else {
-                                doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
-                            }
+                            doc.text(cleanText, startX + (j * colWidth) + 5, rowY + 5, { width: colWidth - 10, align: 'left' });
                         });
-
-                        // Move down based on height (approximated for single line)
-                        // Ideally measure height of tallest cell
                         doc.y = rowY + 25;
-
-                        // Border line
                         doc.moveTo(startX, doc.y - 5).lineTo(535, doc.y - 5).lineWidth(0.5).stroke(BORDER);
                     });
                     doc.moveDown(1);
