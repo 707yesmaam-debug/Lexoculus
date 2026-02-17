@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { ai_system_id, document_type } = await request.json();
+        const { ai_system_id, document_type, regenerate } = await request.json();
 
         if (!ai_system_id || !document_type) {
             return NextResponse.json(
@@ -104,8 +104,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-
-
         // Check if document already exists
         const existing = await prisma.complianceDocument.findUnique({
             where: {
@@ -116,9 +114,9 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        if (existing) {
+        if (existing && !regenerate) {
             return NextResponse.json(
-                { error: 'Document already exists. Use PUT to update.', document_id: existing.id },
+                { error: 'Document already exists. Use regenerate=true to overwrite.', document_id: existing.id },
                 { status: 409 }
             );
         }
@@ -144,6 +142,7 @@ export async function POST(request: NextRequest) {
                 risk_narrative: aiSystem.latest_scan.risk_assessment.risk_narrative || '',
                 matched_annex_iii_articles: (aiSystem.latest_scan.risk_assessment.matched_annex_iii_articles as Record<string, unknown>[]) || [],
             } : null,
+            contextAnswers: (aiSystem.latest_scan as any)?.context_answers || null, // Allow fallback if not typed yet
             user: {
                 email: aiSystem.user.email,
                 full_name: aiSystem.user.full_name || undefined,
@@ -151,22 +150,40 @@ export async function POST(request: NextRequest) {
         };
 
         // Generate document
-        const generated = generateDocument(document_type as DocumentType, scanData);
+        const generated = generateDocument(document_type as DocumentType, scanData as any);
 
-        // Save to database
-        const document = await prisma.complianceDocument.create({
-            data: {
-                ai_system_id,
-                document_type,
-                title: generated.title,
-                content: { markdown: generated.content },
-                completion_percent: generated.completionPercent,
-                missing_fields: generated.missingFields,
-                status: generated.completionPercent === 100 ? 'complete' : 'draft',
-            }
-        });
-
-        console.log(`📄 [DOCUMENT] Generated ${document_type} for ${aiSystem.name} (${generated.completionPercent}% complete)`);
+        let document;
+        if (existing) {
+            // UPDATE existing document
+            document = await prisma.complianceDocument.update({
+                where: { id: existing.id },
+                data: {
+                    title: generated.title,
+                    content: { markdown: generated.content },
+                    completion_percent: generated.completionPercent,
+                    missing_fields: generated.missingFields,
+                    status: generated.completionPercent === 100 ? 'complete' : 'draft',
+                    updated_at: new Date(),
+                    version: { increment: 1 }
+                }
+            });
+            console.log(`♻️ [DOCUMENT] Regenerated ${document_type} for ${aiSystem.name}`);
+        } else {
+            // CREATE new document
+            document = await prisma.complianceDocument.create({
+                data: {
+                    ai_system_id,
+                    document_type,
+                    title: generated.title,
+                    content: { markdown: generated.content },
+                    completion_percent: generated.completionPercent,
+                    missing_fields: generated.missingFields,
+                    status: generated.completionPercent === 100 ? 'complete' : 'draft',
+                    version: 1
+                }
+            });
+            console.log(`📄 [DOCUMENT] Generated ${document_type} for ${aiSystem.name}`);
+        }
 
         return NextResponse.json({
             document_id: document.id,
@@ -175,6 +192,7 @@ export async function POST(request: NextRequest) {
             completion_percent: generated.completionPercent,
             missing_fields: generated.missingFields,
             status: document.status,
+            version: document.version
         });
 
     } catch (error) {

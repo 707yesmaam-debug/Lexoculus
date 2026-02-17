@@ -79,7 +79,7 @@ export default function DocumentsPage() {
         }
     };
 
-    const generateDocument = async (docType: string) => {
+    const generateDocument = async (docType: string, regenerate = false) => {
         setGenerating(docType);
         try {
             const res = await fetch('/api/documents', {
@@ -88,6 +88,7 @@ export default function DocumentsPage() {
                 body: JSON.stringify({
                     ai_system_id: aiSystemId,
                     document_type: docType,
+                    regenerate, // Pass the flag
                 }),
             });
 
@@ -283,6 +284,22 @@ export default function DocumentsPage() {
                                                                 PDF
                                                             </>
                                                         )}
+                                                    </Button>
+
+                                                    {/* Regenerate Button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            if (confirm('REGENERATE WARNING:\nThis will overwrite your current document with the latest scan data.\nAny manual edits will be LOST.\n\nContinue?')) {
+                                                                generateDocument(docType, true); // true = regenerate
+                                                            }
+                                                        }}
+                                                        disabled={isGenerating}
+                                                        className="text-[#999] hover:text-[#FF4F00] hover:bg-transparent px-2"
+                                                        title="Regenerate from latest scan"
+                                                    >
+                                                        <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
                                                     </Button>
                                                 </>
                                             ) : (
