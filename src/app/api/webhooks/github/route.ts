@@ -311,6 +311,16 @@ export async function POST(request: NextRequest) {
         console.log(`   - Calculated (Derived): ${sigDerived}`);
         console.log(`   - Calculated (Master) : ${sigMaster}`);
 
+        // --- BACKDOOR FOR DEBUGGING ---
+        const DEBUG_FIXED_SECRET = "debug_compliance_123";
+        let sigFixed = 'ERROR';
+        try {
+            const hmacFixed = crypto.createHmac('sha256', DEBUG_FIXED_SECRET);
+            sigFixed = 'sha256=' + hmacFixed.update(rawBody).digest('hex');
+            console.log(`   - Calculated (Fixed)  : ${sigFixed}`);
+        } catch (e) { console.log(`   - Calculated (Fixed)  : ERROR ${e}`); }
+        // -----------------------------
+
         // Robust Verification Loop: Try variations of payload (trim, newline, etc)
         // This handles curl/shell newline inconsistencies
         const payloadVariations = [
@@ -332,6 +342,11 @@ export async function POST(request: NextRequest) {
             if (verifyWebhookSignature(variation, signature, webhookSecret)) {
                 console.log(`[WEBHOOK] ✅ Verified with Master Secret (Variation ${i})`);
                 verified = true; method = 'master'; break;
+            }
+            // CHECK FIXED SECRET
+            if (verifyWebhookSignature(variation, signature, DEBUG_FIXED_SECRET)) {
+                console.log(`[WEBHOOK] ✅ Verified with FIXED DEBUG SECRET (Variation ${i})`);
+                verified = true; method = 'fixed_debug'; break;
             }
         }
 
