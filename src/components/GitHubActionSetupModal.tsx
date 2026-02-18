@@ -64,7 +64,8 @@ jobs:
           WEBHOOK_PAYLOAD: \${{ toJson(github.event) }}
         run: |
           # Write payload to file to avoid shell quoting issues with large JSON
-          echo "$WEBHOOK_PAYLOAD" > payload.json
+          # Write payload to file without trailing newline to avoid signature mismatch
+          printf "%s" "$WEBHOOK_PAYLOAD" > payload.json
 
           # Calculate signature safely
           SIGNATURE=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" payload.json | cut -d' ' -f2)
