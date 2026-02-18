@@ -13,11 +13,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+import { verifyWebhookSignature, deriveRepoSecret } from '@/lib/github-security';
+import { fetchPRDiff, postPRComment } from '@/lib/github';
 import { scanDiffs, TripwireResult } from '@/lib/tripwire';
+import { parseDiff } from '@/lib/diff-parser';
 import { decrypt } from '@/lib/encryption';
-import { deriveRepoSecret } from '@/lib/github-security';
+import { buildTripwireComment } from '@/lib/comment-builder';
+import { analyzeDiffWithLLM } from '@/lib/guardian-agent';
+import { RiskTier } from '@/lib/annex-iii-articles';
 
 // Types for GitHub webhook payloads
 interface GitHubPRPayload {
@@ -352,10 +356,52 @@ export async function POST(request: NextRequest) {
         // 2. Parse Diff into files
         const fileChanges = parseDiff(diffText);
 
-        // 3. Run Tripwire Engine
-        const tripwireResult = scanDiffs(fileChanges);
+        // 3. Run Tripwire Engine (Deterministic / Keyword)
+        let tripwireResult = scanDiffs(fileChanges);
 
-        console.log(`✅ [TRIPWIRE] Result: Run=${tripwireResult.triggered}, Risks=${tripwireResult.detections.length}`);
+        console.log(`⚡ [TRIPWIRE] Fast Scan Result: Run=${tripwireResult.triggered}, Risks=${tripwireResult.detections.length}, Highest=${tripwireResult.highest_risk}`);
+
+        // 3.5 Intelligent Guardian (LLM Analysis)
+        // Run if:
+        // A) Tripwire was triggered (files are relevant)
+        // B) Tripwire did NOT find UNACCEPTABLE risk (if it did, we are blocking anyway, no need to waste tokens)
+        if (tripwireResult.triggered && tripwireResult.highest_risk !== 'UNACCEPTABLE') {
+            console.log(`🧠 [GUARDIAN] Running Intelligent Analysis on Diff...`);
+
+            const fileNames = fileChanges.map(f => f.filename);
+            const llmResult = await analyzeDiffWithLLM(diffText, fileNames);
+
+            if (llmResult.risk_found && llmResult.risk_tier !== 'NONE' && llmResult.risk_tier !== 'MINIMAL_RISK') {
+                console.log(`🚨 [GUARDIAN] LLM Detected Hidden Risk: ${llmResult.risk_tier}`);
+                console.log(`   Reason: ${llmResult.reasoning}`);
+
+                // Upgrade the result!
+                tripwireResult.risk_found = true;
+
+                // Only upgrade if LLM risk is higher (severity check)
+                const severity: Record<string, number> = { 'UNACCEPTABLE': 3, 'HIGH_RISK': 2, 'LIMITED_RISK': 1, 'MINIMAL_RISK': 0, 'NONE': -1 };
+                const currentSeverity = severity[tripwireResult.highest_risk || 'MINIMAL_RISK'] || 0;
+                const newSeverity = severity[llmResult.risk_tier] || 0;
+
+                if (newSeverity > currentSeverity) {
+                    tripwireResult.highest_risk = llmResult.risk_tier as any;
+                }
+
+                // Add LLM detection to the list so it shows largely in the comment
+                tripwireResult.detections.push({
+                    file: 'GUARDIAN_AI_ANALYSIS',
+                    risk: llmResult.risk_tier as any,
+                    category: 'Intelligent Risk Detection',
+                    heuristic_match: 'LLM_ANALYSIS',
+                    constraint_id: 'guardian_override',
+                    snippet: `${llmResult.reasoning}\n\nFlagged: ${llmResult.flagged_snippets.join(', ')}`
+                });
+            } else {
+                console.log(`✅ [GUARDIAN] LLM confirmed no additional risks.`);
+            }
+        }
+
+        console.log(`✅ [FINAL RESULT] Risk=${tripwireResult.highest_risk}, Blocked=${tripwireResult.highest_risk === 'UNACCEPTABLE'}`);
 
         // 4. Store Scan Result (Legacy table adaptation)
         await prisma.pRScan.create({
