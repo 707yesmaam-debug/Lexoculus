@@ -87,6 +87,9 @@ function verifyWebhookSignature(
  * Fetch PR diff from GitHub
  */
 async function fetchPRDiff(diffUrl: string, accessToken: string): Promise<string> {
+    console.log(`[TRIPWIRE] Fetching Diff from: ${diffUrl}`);
+    console.log(`[TRIPWIRE] Using Token: ${accessToken ? 'PRESENT (' + accessToken.substring(0, 4) + '...)' : 'MISSING'}`);
+
     const response = await fetch(diffUrl, {
         headers: {
             'Accept': 'application/vnd.github.v3.diff',
@@ -95,6 +98,9 @@ async function fetchPRDiff(diffUrl: string, accessToken: string): Promise<string
     });
 
     if (!response.ok) {
+        console.error(`[TRIPWIRE] Fetch failed: ${response.status} ${response.statusText}`);
+        const body = await response.text();
+        console.error(`[TRIPWIRE] Error Body: ${body}`);
         throw new Error(`Failed to fetch PR diff: ${response.status}`);
     }
 
