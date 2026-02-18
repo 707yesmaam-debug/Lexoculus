@@ -14,6 +14,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+
+// Allow Vercel functions to run for up to 60 seconds (Hobby limit) to accommodate LLM analysis
+export const maxDuration = 60;
+
 import { deriveRepoSecret } from '@/lib/github-security';
 import crypto from 'crypto'; // Needed for local verifyWebhookSignature
 import { scanDiffs, TripwireResult } from '@/lib/tripwire';
