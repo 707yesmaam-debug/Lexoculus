@@ -272,20 +272,31 @@ export async function POST(request: NextRequest) {
         let secretToVerify = webhookSecret; // Default to global secret (legacy)
 
         if (repoFullName) {
+            console.log(`[WEBHOOK] Repo found: ${repoFullName}, deriving secret...`);
             secretToVerify = deriveRepoSecret(repoFullName);
+        } else {
+            console.log(`[WEBHOOK] No repo name in payload, using global secret.`);
         }
 
         // Verify webhook signature (REQUIRED)
         const signature = request.headers.get('x-hub-signature-256');
+        console.log(`[WEBHOOK] Verifying signature: ${signature ? 'PRESENT' : 'MISSING'}`);
+
         if (!verifyWebhookSignature(rawBody, signature, secretToVerify)) {
+            console.log(`[WEBHOOK] Primary secret verification failed.`);
             // Also try global secret just in case user set it up manually with the master key
             if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
                 console.error('❌ [WEBHOOK] Invalid signature - Secret mismatch');
+                console.log(`[WEBHOOK] Payload start: ${rawBody.substring(0, 50)}...`);
                 return NextResponse.json(
                     { error: 'Invalid webhook signature' },
                     { status: 401 }
                 );
+            } else {
+                console.log(`[WEBHOOK] Global secret verification passed (Legacy Mode).`);
             }
+        } else {
+            console.log(`[WEBHOOK] Signature verified successfully.`);
         }
 
         // Handle 'ping' events (sent when creating a webhook)
