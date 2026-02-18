@@ -46,6 +46,7 @@ interface GitHubPRPayload {
         };
         html_url: string;
         diff_url: string;
+        url: string; // API URL
     };
     repository: {
         id: number;
@@ -433,9 +434,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 1. Fetch PR diff
+        // 1. Fetch PR Diff using the API URL (not the web diff_url)
+        // The web diff_url (https://github.com/...) often fails with Bearer auth for private repos
+        // The API URL (https://api.github.com/...) reliably accepts the token
+        const apiUrl = prPayload.pull_request.url || `https://api.github.com/repos/${prPayload.repository.full_name}/pulls/${prPayload.number}`;
+
         const diffText = await fetchPRDiff(
-            prPayload.pull_request.diff_url,
+            apiUrl,
             decryptedToken
         );
 
