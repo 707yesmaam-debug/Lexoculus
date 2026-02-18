@@ -65,7 +65,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: pull_request" \
             -H "X-Hub-Signature-256: $SIGNATURE" \
-            --data @payload.json)
+            --data-binary @payload.json)
           
           echo "response=$RESPONSE" >> $GITHUB_OUTPUT
           
