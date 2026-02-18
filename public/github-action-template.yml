@@ -56,7 +56,7 @@ jobs:
           printf "%s" "$WEBHOOK_PAYLOAD" > payload.json
 
           # Calculate signature safely
-          SIGNATURE=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" payload.json | cut -d' ' -f2)
+          SIGNATURE="sha256=$(openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" payload.json | cut -d' ' -f2)"
 
           # Send PR diff to LexOculus for optical analysis
           # Added -L to follow redirects

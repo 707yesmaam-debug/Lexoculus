@@ -70,7 +70,12 @@ function verifyWebhookSignature(
 ): boolean {
     if (!signature) return false;
 
-    const sig = Buffer.from(signature);
+    // Normalization: Ensure signature starts with 'sha256='
+    const normalizedSignature = signature.startsWith('sha256=')
+        ? signature
+        : `sha256=${signature}`;
+
+    const sig = Buffer.from(normalizedSignature);
     const hmac = crypto.createHmac('sha256', secret);
     const digest = Buffer.from('sha256=' + hmac.update(payload).digest('hex'));
 
