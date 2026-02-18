@@ -408,15 +408,18 @@ export async function POST(request: NextRequest) {
         // Get user's GitHub access token
         const githubConnection = await prisma.githubConnection.findFirst({
             where: { user_id: installation.user_id },
+            include: { user: true }
         });
 
         if (!githubConnection?.github_oauth_token) {
-            console.error(`❌ [TRIPWIRE] No GitHub token for user ${installation.user_id}`);
+            console.error(`❌ [TRIPWIRE] No GitHub token for user ${installation.user_id} (${installation.user.email})`);
             return NextResponse.json(
                 { error: 'GitHub token not found' },
                 { status: 500 }
             );
         }
+
+        console.log(`[TRIPWIRE] Using credentials for user: ${installation.user.email}`);
 
         // SECURITY: Decrypt the stored GitHub token before use
         let decryptedToken: string;
