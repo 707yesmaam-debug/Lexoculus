@@ -14,12 +14,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyWebhookSignature, deriveRepoSecret } from '@/lib/github-security';
-import { fetchPRDiff, postPRComment } from '@/lib/github';
+import { deriveRepoSecret } from '@/lib/github-security';
+import crypto from 'crypto'; // Needed for local verifyWebhookSignature
 import { scanDiffs, TripwireResult } from '@/lib/tripwire';
-import { parseDiff } from '@/lib/diff-parser';
 import { decrypt } from '@/lib/encryption';
-import { buildTripwireComment } from '@/lib/comment-builder';
 import { analyzeDiffWithLLM } from '@/lib/guardian-agent';
 import { RiskTier } from '@/lib/annex-iii-articles';
 
