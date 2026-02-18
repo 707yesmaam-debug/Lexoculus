@@ -285,7 +285,31 @@ export async function POST(request: NextRequest) {
 
         // Verify webhook signature (REQUIRED)
         const signature = request.headers.get('x-hub-signature-256');
-        console.log(`[WEBHOOK] Verifying signature: ${signature ? 'PRESENT' : 'MISSING'}`);
+
+        // Debug: Log normalization and calculated hashes
+        const sigReceived = signature ? (signature.startsWith('sha256=') ? signature : `sha256=${signature}`) : 'MISSING';
+
+        let sigDerived = 'ERROR';
+        try {
+            const hmacDerived = crypto.createHmac('sha256', secretToVerify);
+            sigDerived = 'sha256=' + hmacDerived.update(JSON.stringify(payload)).digest('hex');
+            // Wait! The payload passed to update() MUST be the RAW BODY, not the JSON object!
+            // JSON.stringify reorders keys differently than the original string.
+            // This was the issue potentially? No, logic uses rawBody below. Let's fix logging.
+            const hmacRaw = crypto.createHmac('sha256', secretToVerify);
+            sigDerived = 'sha256=' + hmacRaw.update(rawBody).digest('hex');
+        } catch (e) { sigDerived = `ERROR: ${e}`; }
+
+        let sigMaster = 'ERROR';
+        try {
+            const hmacMaster = crypto.createHmac('sha256', webhookSecret);
+            sigMaster = 'sha256=' + hmacMaster.update(rawBody).digest('hex');
+        } catch (e) { sigMaster = `ERROR: ${e}`; }
+
+        console.log(`[WEBHOOK] Signature Debug:`);
+        console.log(`   - Received Normalized: ${sigReceived}`);
+        console.log(`   - Calculated (Derived): ${sigDerived}`);
+        console.log(`   - Calculated (Master) : ${sigMaster}`);
 
         if (!verifyWebhookSignature(rawBody, signature, secretToVerify)) {
             console.log(`[WEBHOOK] Primary secret verification failed.`);
@@ -294,7 +318,7 @@ export async function POST(request: NextRequest) {
                 console.error('❌ [WEBHOOK] Invalid signature - Secret mismatch');
                 console.log(`[WEBHOOK] Payload start: ${rawBody.substring(0, 50)}...`);
                 return NextResponse.json(
-                    { error: 'Invalid webhook signature' },
+                    { error: 'Invalid webhook signature', debug: { received: sigReceived, expected_derived: sigDerived, expected_master: sigMaster } },
                     { status: 401 }
                 );
             } else {
