@@ -25,6 +25,11 @@ export async function DELETE(request: NextRequest) {
         // 2. Transaction to delete all GitHub-related data for this user
         // Option A: Maximum Privacy (Delete everything)
         await prisma.$transaction([
+            // 0. Detach scans from AI Systems to prevent FK violations
+            prisma.aiSystem.updateMany({
+                where: { user_id: user.id },
+                data: { latest_scan_id: null }
+            }),
             // Delete connection info
             prisma.githubConnection.deleteMany({
                 where: { user_id: user.id },
