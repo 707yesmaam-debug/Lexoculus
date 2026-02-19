@@ -3,7 +3,7 @@ export default function TermsPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Terms of Service</h1>
-                <p className="text-neutral-500 font-mono text-sm">Effective Date: January 19, 2026</p>
+                <p className="text-neutral-500 font-mono text-sm">Effective Date: February 19, 2026</p>
             </div>
 
             {/* Warning Box */}
@@ -61,7 +61,7 @@ export default function TermsPage() {
                     Certain features ("Pro Plan") require a paid subscription. Payment processing is handled by third-party providers. Billing occurs in advance on a recurring basis (monthly or annually).
                 </p>
                 <div className="bg-neutral-100 p-4 border-l-4 border-neutral-500">
-                    <strong>Payment Processing:</strong> Coming Soon. Details will be provided upon launch of paid features.
+                    <strong>Payment Processing:</strong> Payments are processed by our Merchant of Record, <strong>DodoPayments</strong>. By making a purchase, you agree to DodoPayments' terms and conditions in addition to these Terms.
                 </div>
             </section>
 
@@ -81,7 +81,7 @@ export default function TermsPage() {
                     If you do not wish to waive this right, you may request that access to paid features be delayed until the 14-day period has passed. Contact: <a href="mailto:founder@lexoculus.com" className="text-blue-600 hover:underline">founder@lexoculus.com</a>.
                 </p>
                 <p>
-                    <strong>Termination:</strong> In accordance with the EU Data Act (Regulation (EU) 2023/2854), you may terminate your subscription at any time with a maximum of <strong>60 days' notice</strong>. Refunds for prepaid periods following a mid-term termination will be handled on a pro-rata basis where applicable by law.
+                    <strong>Termination:</strong> In accordance with the EU Data Act (Regulation (EU) 2023/2854), you may terminate your subscription at any time. The termination will take effect at the end of the current billing cycle.
                 </p>
             </section>
 

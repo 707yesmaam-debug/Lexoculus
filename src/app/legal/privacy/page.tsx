@@ -3,7 +3,7 @@ export default function PrivacyPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Privacy Policy</h1>
-                <p className="text-neutral-500 font-mono text-sm">Effective Date: January 19, 2026</p>
+                <p className="text-neutral-500 font-mono text-sm">Effective Date: February 19, 2026</p>
             </div>
 
             <p>
@@ -98,6 +98,11 @@ export default function PrivacyPage() {
                                 <td className="px-6 py-4">All service data (encrypted)</td>
                             </tr>
                             <tr>
+                                <th className="px-6 py-4 font-medium text-gray-900">Analytics</th>
+                                <td className="px-6 py-4">Vercel Analytics</td>
+                                <td className="px-6 py-4">Anonymized usage metrics (Cookie-free)</td>
+                            </tr>
+                            <tr>
                                 <th className="px-6 py-4 font-medium text-gray-900">Database & Auth</th>
                                 <td className="px-6 py-4">Storage, Authentication</td>
                                 <td className="px-6 py-4">Account data, encrypted tokens</td>
@@ -109,8 +114,8 @@ export default function PrivacyPage() {
                             </tr>
                             <tr>
                                 <th className="px-6 py-4 font-medium text-gray-900">Payment Provider</th>
-                                <td className="px-6 py-4">Billing (Coming Soon)</td>
-                                <td className="px-6 py-4">Billing information</td>
+                                <td className="px-6 py-4">DodoPayments</td>
+                                <td className="px-6 py-4">Billing information, transaction history</td>
                             </tr>
                         </tbody>
                     </table>

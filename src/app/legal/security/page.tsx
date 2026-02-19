@@ -3,7 +3,7 @@ export default function SecurityPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Security Policy</h1>
-                <p className="text-neutral-500 font-mono text-sm">Effective Date: January 19, 2026</p>
+                <p className="text-neutral-500 font-mono text-sm">Effective Date: February 19, 2026</p>
             </div>
 
             <section className="space-y-4">
@@ -26,7 +26,7 @@ export default function SecurityPage() {
             <section className="space-y-4">
                 <h2 className="text-2xl font-bold uppercase">3. Infrastructure</h2>
                 <p>
-                    Our infrastructure is hosted on enterprise-grade cloud platforms with SOC 2 Type II and ISO 27001 certifications.
+                    Our infrastructure is hosted on enterprise-grade cloud platforms (e.g., Vercel, Supabase) that maintain SOC 2 Type II and ISO 27001 certifications.
                 </p>
             </section>
 
