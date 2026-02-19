@@ -68,6 +68,7 @@ export default function AdminPage() {
 
     interface Lead {
         id: string;
+        type: 'enterprise' | 'demo';
         full_name: string;
         work_email: string;
         company: string;

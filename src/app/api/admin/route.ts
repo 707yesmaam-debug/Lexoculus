@@ -141,16 +141,50 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // Leads (Enterprise Inquiries)
+        // Leads (Unified Enterprise Inquiries & Demo Requests)
         if (section === 'leads') {
-            const leads = await prisma.enterpriseInquiry.findMany({
-                orderBy: { created_at: 'desc' },
-                take: 50
-            });
+            const [enterpriseLeads, demoRequests] = await Promise.all([
+                prisma.enterpriseInquiry.findMany({
+                    orderBy: { created_at: 'desc' },
+                    take: 50
+                }),
+                prisma.demoRequest.findMany({
+                    orderBy: { created_at: 'desc' },
+                    take: 50
+                })
+            ]);
+
+            // Normalize and merge
+            const unifiedLeads = [
+                ...enterpriseLeads.map((l) => ({
+                    id: l.id,
+                    type: 'enterprise' as const,
+                    full_name: l.full_name,
+                    work_email: l.work_email,
+                    company: l.company,
+                    team_size: l.team_size,
+                    role: l.role,
+                    message: l.message,
+                    status: l.status,
+                    created_at: l.created_at
+                })),
+                ...demoRequests.map((r) => ({
+                    id: r.id,
+                    type: 'demo' as const,
+                    full_name: r.full_name,
+                    work_email: r.work_email,
+                    company: r.company_name,
+                    team_size: r.company_size,
+                    role: r.role,
+                    message: r.use_case,
+                    status: r.status,
+                    created_at: r.created_at
+                }))
+            ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             return NextResponse.json({
-                leads,
-                count: leads.length,
+                leads: unifiedLeads.slice(0, 100), // Cap internal list
+                count: unifiedLeads.length,
             });
         }
 

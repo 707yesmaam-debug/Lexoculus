@@ -136,4 +136,92 @@ export async function sendDemoRequestNotification(data: DemoRequestData): Promis
             `📧 [EMAIL] Failed to send demo request notification`);
         return false;
     }
+    // ... existing code ...
+
 }
+
+/**
+ * Send an enterprise inquiry notification email to the founder
+ */
+export async function sendEnterpriseInquiryNotification(data: DemoRequestData): Promise<boolean> {
+    const mailer = getTransporter();
+
+    if (!mailer) {
+        logger.info({ event: 'email_skip', reason: 'no_smtp' },
+            `📧 [EMAIL] Skipped notification — SMTP not configured. Lead: ${data.work_email}`);
+        return false;
+    }
+
+    const html = `
+    <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; border: 2px solid #000; padding: 0;">
+        <!-- Header -->
+        <div style="background: #000; color: #fff; padding: 20px 24px; border-bottom: 2px solid #000;">
+            <div style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #00ff9d; margin-bottom: 8px;">
+                ENTERPRISE INQUIRY
+            </div>
+            <div style="font-size: 20px; font-weight: bold;">
+                ${data.full_name}
+            </div>
+            <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                ${data.company_name}
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 24px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 0; color: #999; width: 120px; vertical-align: top;">NAME</td>
+                    <td style="padding: 10px 0; font-weight: bold;">${data.full_name}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 0; color: #999; vertical-align: top;">EMAIL</td>
+                    <td style="padding: 10px 0;">
+                        <a href="mailto:${data.work_email}" style="color: #FF4F00; text-decoration: none;">${data.work_email}</a>
+                    </td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 0; color: #999; vertical-align: top;">COMPANY</td>
+                    <td style="padding: 10px 0;">${data.company_name}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 0; color: #999; vertical-align: top;">TEAM SIZE</td>
+                    <td style="padding: 10px 0;">${data.company_size} employees</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px 0; color: #999; vertical-align: top;">ROLE</td>
+                    <td style="padding: 10px 0;">${data.role || 'Not specified'}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 0; color: #999; vertical-align: top;">MESSAGE</td>
+                    <td style="padding: 10px 0;">${data.use_case || 'No message'}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f5f5f5; padding: 16px 24px; border-top: 2px solid #000; font-size: 10px; color: #999; letter-spacing: 1px; text-transform: uppercase;">
+            LexOculus · Enterprise Sales · ${new Date().toISOString().split('T')[0]}
+        </div>
+    </div>
+    `;
+
+    try {
+        await mailer.sendMail({
+            from: `"LexOculus Enterprise" <${process.env.SMTP_FROM || 'onboarding@lexoculus.com'}>`,
+            to: FOUNDER_EMAIL,
+            subject: `💼 Enterprise Inquiry — ${data.company_name}`,
+            html,
+        });
+
+        logger.info({ event: 'email_sent', to: FOUNDER_EMAIL, lead: data.work_email },
+            `📧 [EMAIL] Enterprise notification sent for ${data.work_email}`);
+        return true;
+    } catch (error) {
+        logger.error({ err: error, event: 'email_error' },
+            `📧 [EMAIL] Failed to send enterprise notification`);
+        return false;
+    }
+}
+
+

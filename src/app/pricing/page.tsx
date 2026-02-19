@@ -195,7 +195,7 @@ function PricingContent() {
                             onClick={() => setShowEnterpriseForm(true)}
                             className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors"
                         >
-                            INQUIRE_ACCESS
+                            INITIATE_CONTACT
                         </button>
 
                         <div className="mt-8 space-y-4">
