@@ -356,21 +356,24 @@ export default function ConformityAssessmentPage() {
                                     <div className="px-6 pb-6 border-t border-black/10 pt-4 space-y-4">
                                         <p className="font-mono text-xs text-[#555] leading-relaxed">{step.description}</p>
 
-                                        <div className="flex items-center gap-2">
-                                            <ExternalLink className="w-3 h-3 text-[#FF4F00]" />
-                                            {step.article_url ? (
-                                                <a
-                                                    href={step.article_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="font-mono text-[10px] text-[#FF4F00] hover:underline decoration-[#FF4F00]"
-                                                >
+                                        {step.article_url ? (
+                                            <a
+                                                href={step.article_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+                                            >
+                                                <ExternalLink className="w-3 h-3 text-[#FF4F00]" />
+                                                <span className="font-mono text-[10px] text-[#FF4F00] underline decoration-[#FF4F00] underline-offset-2">
                                                     {step.article_reference}
-                                                </a>
-                                            ) : (
+                                                </span>
+                                            </a>
+                                        ) : (
+                                            <div className="flex items-center gap-2">
+                                                <ExternalLink className="w-3 h-3 text-[#FF4F00]" />
                                                 <span className="font-mono text-[10px] text-[#FF4F00]">{step.article_reference}</span>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
 
                                         {/* Requirements */}
                                         <div>
