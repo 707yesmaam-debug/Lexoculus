@@ -348,7 +348,7 @@ export async function revokeElevatedSubscription(userId: string): Promise<void> 
 // DODO PAYMENTS IMPLEMENTATION
 // =============================================================================
 
-import { dodo, DODO_PRODUCT_ID_PRO } from './dodo';
+import { dodo, DODO_PRODUCT_ID_PRO, DODO_PRODUCT_ID_PRO_YEARLY } from './dodo';
 
 /**
  * Create Dodo checkout session for Pro subscription
@@ -357,17 +357,20 @@ export async function createCheckoutSession(
     userId: string,
     userEmail: string,
     userName?: string,
-    returnUrl: string = `${process.env.NEXTAUTH_URL}/dashboard?checkout=success`
+    returnUrl: string = `${process.env.NEXTAUTH_URL}/dashboard?checkout=success`,
+    billingCycle: 'monthly' | 'yearly' = 'monthly'
 ): Promise<{ url: string | null; error?: string }> {
     try {
-        if (!DODO_PRODUCT_ID_PRO) {
-            logger.warn(`⚠️ [DODO] No DODO_PRODUCT_ID_PRO configured`);
-            return { url: null, error: 'Payment is not configured yet.' };
+        const productId = billingCycle === 'yearly' ? DODO_PRODUCT_ID_PRO_YEARLY : DODO_PRODUCT_ID_PRO;
+
+        if (!productId) {
+            logger.warn(`⚠️ [DODO] No product ID configured for ${billingCycle} cycle`);
+            return { url: null, error: `Payment for ${billingCycle} plan is not configured yet.` };
         }
 
         const session = await dodo.checkoutSessions.create({
             product_cart: [{
-                product_id: DODO_PRODUCT_ID_PRO,
+                product_id: productId,
                 quantity: 1,
             }],
             customer: {

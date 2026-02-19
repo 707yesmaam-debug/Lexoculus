@@ -20,3 +20,4 @@ export const dodo = new DodoPayments({
 });
 
 export const DODO_PRODUCT_ID_PRO = process.env.DODO_PAYMENTS_PRODUCT_ID_PRO || '';
+export const DODO_PRODUCT_ID_PRO_YEARLY = process.env.DODO_PAYMENTS_PRODUCT_ID_PRO_YEARLY || '';

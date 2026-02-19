@@ -5,6 +5,9 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
     try {
+        const body = await req.json().catch(() => ({}));
+        const { billingCycle } = body;
+
         const supabase = await createServerClient();
         const {
             data: { user: authUser },
@@ -39,7 +42,8 @@ export async function POST(req: Request) {
             user.id,
             user.email,
             user.full_name || undefined,
-            `${baseUrl}/dashboard?checkout=success`
+            `${baseUrl}/dashboard?checkout=success`,
+            billingCycle
         );
 
         if (error || !url) {
