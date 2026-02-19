@@ -208,8 +208,7 @@ function PricingContent() {
                         <FeatureItem included>Audit Logs & RBAC</FeatureItem>
                     </div>
                 </div>
-        </div>
-            </main >
+            </main>
 
             <footer className="border-t-2 border-black p-6 md:p-8 flex flex-col md:flex-row justify-between items-center bg-white">
                 <div className="text-[10px] font-mono text-[#555] tracking-widest mb-8 md:mb-0">
