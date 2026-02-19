@@ -398,34 +398,31 @@ export default function ConformityAssessmentPage() {
                                             </div>
                                         </div>
 
-                                        {/* Status Actions */}
+                                        {/* Status Actions - Checklist Mode */}
                                         {assessment && (
-                                            <div className="flex gap-2 pt-2 border-t border-black/5">
-                                                {step.status !== 'completed' && (
-                                                    <Button
-                                                        onClick={() => handleStepUpdate(step.step_id, 'completed')}
-                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-none font-mono text-[10px] uppercase tracking-widest h-8 px-4"
-                                                    >
-                                                        Mark_Complete
-                                                    </Button>
-                                                )}
-                                                {step.status !== 'in_progress' && step.status !== 'completed' && (
-                                                    <Button
-                                                        onClick={() => handleStepUpdate(step.step_id, 'in_progress')}
-                                                        className="bg-[#FF4F00] hover:bg-[#E04500] text-white rounded-none font-mono text-[10px] uppercase tracking-widest h-8 px-4"
-                                                    >
-                                                        Start_Step
-                                                    </Button>
-                                                )}
-                                                {step.status === 'completed' && (
-                                                    <Button
-                                                        onClick={() => handleStepUpdate(step.step_id, 'not_started')}
-                                                        variant="outline"
-                                                        className="rounded-none font-mono text-[10px] uppercase tracking-widest h-8 px-4 border-black/20"
-                                                    >
-                                                        Reset
-                                                    </Button>
-                                                )}
+                                            <div className="pt-4 border-t border-black/5 mt-4">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStepUpdate(step.step_id, step.status === 'completed' ? 'not_started' : 'completed');
+                                                    }}
+                                                    className={`
+                                                        group flex items-center gap-3 px-4 py-2 border transition-all w-full md:w-auto
+                                                        ${step.status === 'completed'
+                                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                            : 'bg-white border-black/10 hover:border-black/30 text-[#555] hover:bg-gray-50'}
+                                                    `}
+                                                >
+                                                    <div className={`
+                                                        w-4 h-4 border flex items-center justify-center transition-colors
+                                                        ${step.status === 'completed' ? 'bg-emerald-600 border-emerald-600' : 'border-black/20 bg-white group-hover:border-black/40'}
+                                                    `}>
+                                                        {step.status === 'completed' && <CheckCircle2 className="w-3 h-3 text-white" />}
+                                                    </div>
+                                                    <span className="font-mono text-[11px] uppercase tracking-widest font-medium">
+                                                        {step.status === 'completed' ? 'Step Completed' : 'Mark as Complete'}
+                                                    </span>
+                                                </button>
                                             </div>
                                         )}
                                     </div>
