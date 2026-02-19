@@ -158,59 +158,58 @@ function PricingContent() {
                         </div>
                         <div className="font-mono text-xs text-[#FF4F00] mb-4 uppercase tracking-widest">PROFESSIONAL</div>
                         <h3 className="font-serif text-3xl font-bold mb-2">Pro</h3>
-                        <div className="text-4xl font-mono font-bold mb-6 flex items-baseline gap-2">
-                            <span>{pricing.symbol}{price} <span className="text-base font-normal text-[#999]">/mo</span></span>
-                            <span className="text-[10px] font-mono text-[#999] uppercase tracking-wider">(Tax Included)</span>
-                        </div>
-                        <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
-                            For teams building compliant AI products at scale.
-                        </p>
-                        <button
-                            onClick={handleUpgrade}
-                            disabled={isLoading}
-                            className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-[#CC4000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? 'PROCESSING...' : 'PURCHASE_LICENSE'}
-                        </button>
-
-                        <div className="mt-8 space-y-4">
-                            <FeatureItem included dark>Unlimited Scans</FeatureItem>
-                            <FeatureItem included dark>Private Repositories</FeatureItem>
-                            <FeatureItem included dark>PDF Compliance Reports</FeatureItem>
-                            <FeatureItem included dark>Context Verification</FeatureItem>
-                            <FeatureItem included dark>GitHub Action Integration</FeatureItem>
-                            <FeatureItem included dark>Priority Support</FeatureItem>
-                        </div>
+                        <span>{pricing.symbol}{price} <span className="text-base font-normal text-[#999]">/mo</span></span>
+                        <span className="text-[10px] font-mono text-[#FF4F00] uppercase tracking-wider">(+ Applicable Tax)</span>
                     </div>
+                    <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
+                        For teams building compliant AI products at scale.
+                    </p>
+                    <button
+                        onClick={handleUpgrade}
+                        disabled={isLoading}
+                        className="block w-full text-center bg-[#FF4F00] text-white py-3 font-mono text-xs hover:bg-[#CC4000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isLoading ? 'PROCESSING...' : 'PURCHASE_LICENSE'}
+                    </button>
 
-                    {/* Enterprise Tier */}
-                    <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
-                        <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">ENTERPRISE</div>
-                        <h3 className="font-serif text-3xl font-bold mb-2">Scale</h3>
-                        <div className="text-4xl font-mono font-bold mb-6">
-                            Talk to us
-                        </div>
-                        <p className="text-sm text-[#555] mb-8 min-h-[40px]">
-                            For organizations requiring automated governance and custom rule enforcement.
-                        </p>
-                        <button
-                            onClick={() => setShowEnterpriseForm(true)}
-                            className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors"
-                        >
-                            INITIATE_CONTACT
-                        </button>
-
-                        <div className="mt-8 space-y-4">
-                            <FeatureItem included>Everything in Pro</FeatureItem>
-                            <FeatureItem included>Headless API Access</FeatureItem>
-                            <FeatureItem included>Custom Policy Engine</FeatureItem>
-                            <FeatureItem included>Unlimited Team Seats</FeatureItem>
-                            <FeatureItem included>Priority Support Channel</FeatureItem>
-                            <FeatureItem included>Audit Logs & RBAC</FeatureItem>
-                        </div>
+                    <div className="mt-8 space-y-4">
+                        <FeatureItem included dark>Unlimited Scans</FeatureItem>
+                        <FeatureItem included dark>Private Repositories</FeatureItem>
+                        <FeatureItem included dark>PDF Compliance Reports</FeatureItem>
+                        <FeatureItem included dark>Context Verification</FeatureItem>
+                        <FeatureItem included dark>GitHub Action Integration</FeatureItem>
+                        <FeatureItem included dark>Priority Support</FeatureItem>
                     </div>
                 </div>
-            </main>
+
+                {/* Enterprise Tier */}
+                <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
+                    <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">ENTERPRISE</div>
+                    <h3 className="font-serif text-3xl font-bold mb-2">Scale</h3>
+                    <div className="text-4xl font-mono font-bold mb-6">
+                        Talk to us
+                    </div>
+                    <p className="text-sm text-[#555] mb-8 min-h-[40px]">
+                        For organizations requiring automated governance and custom rule enforcement.
+                    </p>
+                    <button
+                        onClick={() => setShowEnterpriseForm(true)}
+                        className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors"
+                    >
+                        INITIATE_CONTACT
+                    </button>
+
+                    <div className="mt-8 space-y-4">
+                        <FeatureItem included>Everything in Pro</FeatureItem>
+                        <FeatureItem included>Headless API Access</FeatureItem>
+                        <FeatureItem included>Custom Policy Engine</FeatureItem>
+                        <FeatureItem included>Unlimited Team Seats</FeatureItem>
+                        <FeatureItem included>Priority Support Channel</FeatureItem>
+                        <FeatureItem included>Audit Logs & RBAC</FeatureItem>
+                    </div>
+                </div>
+        </div>
+            </main >
 
             <footer className="border-t-2 border-black p-6 md:p-8 flex flex-col md:flex-row justify-between items-center bg-white">
                 <div className="text-[10px] font-mono text-[#555] tracking-widest mb-8 md:mb-0">
@@ -228,7 +227,7 @@ function PricingContent() {
                 isOpen={showEnterpriseForm}
                 onClose={() => setShowEnterpriseForm(false)}
             />
-        </div>
+        </div >
     );
 }
 
