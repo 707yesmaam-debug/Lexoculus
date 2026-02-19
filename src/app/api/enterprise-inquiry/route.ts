@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendDemoRequestNotification } from '@/lib/email';
+import { sendEnterpriseInquiryNotification } from '@/lib/email';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 2. Send Email Notification
-        const success = await sendDemoRequestNotification({
+        const success = await sendEnterpriseInquiryNotification({
             full_name: validated.full_name,
             work_email: validated.work_email,
             company_name: validated.company_name,
