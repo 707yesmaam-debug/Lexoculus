@@ -33,6 +33,7 @@ export interface ConformityStep {
     estimated_duration: string;
     requires_notified_body: boolean;
     status: StepStatus;
+    article_url?: string;
 }
 
 export interface ConformityPathway {
@@ -107,6 +108,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: '4-8 weeks',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/17/',
         },
         {
             step_id: 'module_a_tech_docs',
@@ -127,6 +129,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: '3-6 weeks',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/11/',
         },
         {
             step_id: 'module_a_testing',
@@ -145,6 +148,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: '2-4 weeks',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/9/',
         },
         {
             step_id: 'module_a_declaration',
@@ -162,6 +166,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: '1-2 weeks',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/47/',
         },
         {
             step_id: 'module_a_registration',
@@ -180,6 +185,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: '1 week',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/49/',
         },
         {
             step_id: 'module_a_monitoring',
@@ -197,6 +203,7 @@ function getModuleASteps(): ConformityStep[] {
             estimated_duration: 'Ongoing',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/72/',
         },
     ];
 }
@@ -218,6 +225,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: '2-4 weeks',
             requires_notified_body: true,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/28/',
         },
         {
             step_id: 'module_bc_tech_docs',
@@ -235,6 +243,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: '4-8 weeks',
             requires_notified_body: true,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/annex/iv/',
         },
         {
             step_id: 'module_bc_examination',
@@ -252,6 +261,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: '6-12 weeks',
             requires_notified_body: true,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/annex/vii/',
         },
         {
             step_id: 'module_bc_conformity',
@@ -268,6 +278,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: 'Ongoing',
             requires_notified_body: true,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/annex/vii/',
         },
         {
             step_id: 'module_bc_declaration',
@@ -284,6 +295,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: '1-2 weeks',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/47/',
         },
         {
             step_id: 'module_bc_monitoring',
@@ -301,6 +313,7 @@ function getModuleBCSteps(): ConformityStep[] {
             estimated_duration: 'Ongoing',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/72/',
         },
     ];
 }
@@ -321,6 +334,7 @@ function getNotRequiredSteps(): ConformityStep[] {
             estimated_duration: '1 week',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/50/',
         },
         {
             step_id: 'not_required_best_practices',
@@ -336,6 +350,7 @@ function getNotRequiredSteps(): ConformityStep[] {
             estimated_duration: 'Optional',
             requires_notified_body: false,
             status: 'not_started',
+            article_url: 'https://artificialintelligenceact.eu/article/95/',
         },
     ];
 }

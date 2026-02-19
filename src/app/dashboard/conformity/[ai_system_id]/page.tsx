@@ -22,6 +22,7 @@ interface ConformityStep {
     estimated_duration: string;
     requires_notified_body: boolean;
     status: 'not_started' | 'in_progress' | 'completed' | 'blocked';
+    article_url?: string;
 }
 
 interface PathwayData {
@@ -357,7 +358,18 @@ export default function ConformityAssessmentPage() {
 
                                         <div className="flex items-center gap-2">
                                             <ExternalLink className="w-3 h-3 text-[#FF4F00]" />
-                                            <span className="font-mono text-[10px] text-[#FF4F00]">{step.article_reference}</span>
+                                            {step.article_url ? (
+                                                <a
+                                                    href={step.article_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="font-mono text-[10px] text-[#FF4F00] hover:underline decoration-[#FF4F00]"
+                                                >
+                                                    {step.article_reference}
+                                                </a>
+                                            ) : (
+                                                <span className="font-mono text-[10px] text-[#FF4F00]">{step.article_reference}</span>
+                                            )}
                                         </div>
 
                                         {/* Requirements */}
