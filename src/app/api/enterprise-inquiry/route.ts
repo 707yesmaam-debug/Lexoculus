@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendDemoRequestNotification } from '@/lib/email';
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const inquirySchema = z.object({
@@ -16,6 +17,27 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const validated = inquirySchema.parse(body);
 
+        // 1. Save to Database (Fail-safe)
+        let inquiryId;
+        try {
+            const record = await prisma.enterpriseInquiry.create({
+                data: {
+                    full_name: validated.full_name,
+                    work_email: validated.work_email,
+                    company: validated.company_name,
+                    team_size: validated.company_size,
+                    role: validated.role,
+                    message: validated.message,
+                    status: 'new'
+                }
+            });
+            inquiryId = record.id;
+        } catch (dbError) {
+            console.error('Failed to save enterprise inquiry to DB:', dbError);
+            // We continue to try sending email even if DB fails, though unlikely
+        }
+
+        // 2. Send Email Notification
         const success = await sendDemoRequestNotification({
             full_name: validated.full_name,
             work_email: validated.work_email,

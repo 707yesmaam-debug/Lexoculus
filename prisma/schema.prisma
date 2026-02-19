@@ -537,3 +537,17 @@ model DemoRequest {
   @@index([created_at])
   @@map("demo_requests")
 }
+
+model EnterpriseInquiry {
+  id          String   @id @default(cuid())
+  full_name   String
+  work_email  String
+  company     String
+  team_size   String
+  role        String?
+  message     String?
+  status      String   @default("new") // new, contacted, archived
+  created_at  DateTime @default(now())
+
+  @@map("enterprise_inquiries")
+}

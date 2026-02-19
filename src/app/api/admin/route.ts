@@ -141,6 +141,19 @@ export async function GET(request: NextRequest) {
             });
         }
 
+        // Leads (Enterprise Inquiries)
+        if (section === 'leads') {
+            const leads = await prisma.enterpriseInquiry.findMany({
+                orderBy: { created_at: 'desc' },
+                take: 50
+            });
+
+            return NextResponse.json({
+                leads,
+                count: leads.length,
+            });
+        }
+
         // GitHub Action Installs
         if (section === 'github_installs') {
             const installs = await prisma.gitHubActionInstall.findMany({

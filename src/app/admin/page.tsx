@@ -49,7 +49,7 @@ export default function AdminPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'feedback' | 'subscriptions'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'feedback' | 'subscriptions' | 'leads'>('overview');
 
     // Data
     const [stats, setStats] = useState<Stats | null>(null);
@@ -65,6 +65,19 @@ export default function AdminPage() {
         user: { email: string } | null;
     }
     const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+
+    interface Lead {
+        id: string;
+        full_name: string;
+        work_email: string;
+        company: string;
+        team_size: string;
+        role: string | null;
+        message: string | null;
+        status: string;
+        created_at: string;
+    }
+    const [leads, setLeads] = useState<Lead[]>([]);
 
     // Actions
     const [actionLoading, setActionLoading] = useState(false);
@@ -116,6 +129,14 @@ export default function AdminPage() {
                 }
                 const data = await res.json();
                 setFeedbacks(data.feedbacks || []);
+            } else if (activeTab === 'leads') {
+                const res = await fetch('/api/admin?section=leads');
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to fetch leads');
+                }
+                const data = await res.json();
+                setLeads(data.leads || []);
             }
         } catch (err) {
             setError('Access denied or failed to load');
@@ -224,7 +245,7 @@ export default function AdminPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-8 border-b border-gray-800">
-                    {['overview', 'users', 'feedback', 'subscriptions'].map((tab) => (
+                    {['overview', 'users', 'feedback', 'subscriptions', 'leads'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -431,6 +452,66 @@ export default function AdminPage() {
                                             </td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Leads Tab */}
+                {activeTab === 'leads' && (
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                        <h2 className="text-xl font-bold text-white mb-4">Enterprise Inquiries ({leads.length})</h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="text-gray-400 border-b border-gray-800">
+                                        <th className="pb-2">Date</th>
+                                        <th className="pb-2">Name / Email</th>
+                                        <th className="pb-2">Company</th>
+                                        <th className="pb-2">Message</th>
+                                        <th className="pb-2">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {leads.map((lead) => (
+                                        <tr key={lead.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                                            <td className="py-4 text-gray-500 text-sm">
+                                                {new Date(lead.created_at).toLocaleDateString()}
+                                                <br />
+                                                <span className="text-xs text-gray-600">{new Date(lead.created_at).toLocaleTimeString()}</span>
+                                            </td>
+                                            <td className="py-4">
+                                                <div className="text-white font-medium">{lead.full_name}</div>
+                                                <div className="text-cyan-400 text-sm hover:underline">
+                                                    <a href={`mailto:${lead.work_email}`}>{lead.work_email}</a>
+                                                </div>
+                                                <div className="text-gray-500 text-xs">{lead.role || '-'}</div>
+                                            </td>
+                                            <td className="py-4">
+                                                <div className="text-white">{lead.company}</div>
+                                                <div className="text-gray-500 text-xs">{lead.team_size} size</div>
+                                            </td>
+                                            <td className="py-4 text-gray-400 text-sm max-w-xs truncate" title={lead.message || ''}>
+                                                {lead.message || <span className="text-gray-600 italic">No message</span>}
+                                            </td>
+                                            <td className="py-4">
+                                                <span className={`px-2 py-1 rounded text-xs uppercase font-medium ${lead.status === 'new' ? 'bg-blue-500/20 text-blue-400' :
+                                                    lead.status === 'contacted' ? 'bg-green-500/20 text-green-400' :
+                                                        'bg-gray-700 text-gray-400'
+                                                    }`}>
+                                                    {lead.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {leads.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="py-8 text-center text-gray-500">
+                                                No inquiries received yet.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>

@@ -267,10 +267,7 @@ export function EnterpriseInquiryForm({ isOpen, onClose }: EnterpriseInquiryForm
                             </AnimatePresence>
                         </div>
 
-                        {/* Decoration */}
-                        <div className="absolute top-0 right-0 p-2 pointer-events-none opacity-10">
-                            <div className="w-32 h-32 border border-black rounded-full" />
-                        </div>
+
                     </motion.div>
                 </Dialog.Content>
             </Dialog.Portal>
