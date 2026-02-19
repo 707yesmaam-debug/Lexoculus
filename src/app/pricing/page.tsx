@@ -7,10 +7,11 @@ import { PRICING_CONFIG } from '@/lib/pricing-config';
 import OpticalLogo from '@/components/OpticalLogo';
 import { useSearchParams } from 'next/navigation';
 
-// ... imports
+import { EnterpriseInquiryForm } from '@/components/EnterpriseInquiryForm';
 
 function PricingContent() {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [showEnterpriseForm, setShowEnterpriseForm] = useState(false);
     // Removed region state as strict EUR pricing is enforced
     const pricing = PRICING_CONFIG;
 
@@ -183,24 +184,27 @@ function PricingContent() {
                     {/* Enterprise Tier */}
                     <div className="border border-black bg-white p-8 relative group hover:border-[#FF4F00] transition-colors">
                         <div className="font-mono text-xs text-[#999] mb-4 uppercase tracking-widest">ENTERPRISE</div>
-                        <h3 className="font-serif text-3xl font-bold mb-2">Custom</h3>
+                        <h3 className="font-serif text-3xl font-bold mb-2">Scale</h3>
                         <div className="text-4xl font-mono font-bold mb-6">
                             Talk to us
                         </div>
                         <p className="text-sm text-[#555] mb-8 min-h-[40px]">
-                            For organizations with advanced security needs.
+                            For organizations requiring automated governance and custom rule enforcement.
                         </p>
-                        <button disabled className="block w-full text-center border border-black py-3 font-mono text-xs opacity-75 cursor-not-allowed bg-neutral-100 text-neutral-500">
-                            COMING_SOON
+                        <button
+                            onClick={() => setShowEnterpriseForm(true)}
+                            className="block w-full text-center border border-black py-3 font-mono text-xs hover:bg-black hover:text-white transition-colors"
+                        >
+                            INQUIRE_ACCESS
                         </button>
 
                         <div className="mt-8 space-y-4">
                             <FeatureItem included>Everything in Pro</FeatureItem>
-                            <FeatureItem included>Custom SSO / SAML</FeatureItem>
-                            <FeatureItem included>Audit Logs</FeatureItem>
-                            <FeatureItem included>Dedicated Success Manager</FeatureItem>
-                            <FeatureItem included>Custom SLAs</FeatureItem>
-                            <FeatureItem included>On-premise Deployment</FeatureItem>
+                            <FeatureItem included>Headless API Access</FeatureItem>
+                            <FeatureItem included>Custom Policy Engine</FeatureItem>
+                            <FeatureItem included>Unlimited Team Seats</FeatureItem>
+                            <FeatureItem included>Priority Support Channel</FeatureItem>
+                            <FeatureItem included>Audit Logs & RBAC</FeatureItem>
                         </div>
                     </div>
                 </div>
@@ -217,6 +221,11 @@ function PricingContent() {
                     <Link href="/legal/compliance" className="hover:text-[#FF4F00]">EU_DISCLAIMER</Link>
                 </div>
             </footer>
+
+            <EnterpriseInquiryForm
+                isOpen={showEnterpriseForm}
+                onClose={() => setShowEnterpriseForm(false)}
+            />
         </div>
     );
 }
