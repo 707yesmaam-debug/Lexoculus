@@ -158,8 +158,10 @@ function PricingContent() {
                         </div>
                         <div className="font-mono text-xs text-[#FF4F00] mb-4 uppercase tracking-widest">PROFESSIONAL</div>
                         <h3 className="font-serif text-3xl font-bold mb-2">Pro</h3>
-                        <span>{pricing.symbol}{price} <span className="text-base font-normal text-[#999]">/mo</span></span>
-                        <span className="text-[10px] font-mono text-[#FF4F00] uppercase tracking-wider">(+ Applicable Tax)</span>
+                        <div className="text-4xl font-mono font-bold mb-6 flex items-baseline gap-2">
+                            <span>{pricing.symbol}{price} <span className="text-base font-normal text-[#999]">/mo</span></span>
+                            <span className="text-[10px] font-mono text-[#FF4F00] uppercase tracking-wider">(+ Applicable Tax)</span>
+                        </div>
                     </div>
                     <p className="text-sm text-[#ccc] mb-8 min-h-[40px]">
                         For teams building compliant AI products at scale.
