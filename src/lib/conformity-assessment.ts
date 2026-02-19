@@ -557,3 +557,16 @@ export function calculateCompletionPercent(steps: ConformityStep[]): number {
 export function getCurrentStep(steps: ConformityStep[]): ConformityStep | null {
     return steps.find(s => s.status !== 'completed') || null;
 }
+
+/**
+ * Get the full step definition (refreshed data) by ID
+ * Used to hydrate stored steps with new static data like links
+ */
+export function getStepById(stepId: string): ConformityStep | undefined {
+    const allSteps = [
+        ...getModuleASteps(),
+        ...getModuleBCSteps(),
+        ...getNotRequiredSteps()
+    ];
+    return allSteps.find(s => s.step_id === stepId);
+}

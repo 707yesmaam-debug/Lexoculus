@@ -6,7 +6,8 @@ import prisma from '@/lib/prisma';
 import {
     determineConformityPathway,
     calculateCompletionPercent,
-    getCurrentStep
+    getCurrentStep,
+    getStepById
 } from '@/lib/conformity-assessment';
 import { classifyGPAI } from '@/lib/gpai-classifier';
 
@@ -35,10 +36,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
         });
 
         if (existing && existing.user_id === user.id) {
+            // Hydrate stored steps with fresh static data (like article_url)
+            const hydratedSteps = (existing.steps_data as any[]).map(step => {
+                const freshStep = getStepById(step.step_id);
+                return {
+                    ...step,
+                    article_url: freshStep?.article_url, // Inject fresh URL
+                    article_reference: freshStep?.article_reference || step.article_reference, // Optional: keep refs fresh too
+                };
+            });
+
             return NextResponse.json({
                 assessment: existing,
-                steps: existing.steps_data,
-                current_step: getCurrentStep(existing.steps_data as any[]),
+                steps: hydratedSteps,
+                current_step: getCurrentStep(hydratedSteps),
                 completion_percent: existing.completion_percent,
             });
         }
