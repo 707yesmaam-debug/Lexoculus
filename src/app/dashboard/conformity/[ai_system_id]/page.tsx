@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft, Loader2, AlertCircle, CheckCircle2, Circle,
     Clock, Shield, AlertTriangle, ChevronDown, ChevronUp,
-    Scale, FileText, ExternalLink, Play, Ban
+    Scale, FileText, ExternalLink, Play, Ban, Printer
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
@@ -216,7 +216,29 @@ export default function ConformityAssessmentPage() {
                         )}
                     </div>
                 </div>
+
+                {/* Actions */}
+                <div className="flex justify-end mb-8 no-print">
+                    <Button
+                        onClick={() => window.print()}
+                        variant="outline"
+                        className="border-black text-black hover:bg-black hover:text-white rounded-none font-mono text-xs uppercase tracking-widest gap-2"
+                    >
+                        <Printer className="w-4 h-4" />
+                        EXPORT_REPORT
+                    </Button>
+                </div>
             </div>
+
+            <style jsx global>{`
+                @media print {
+                    @page { margin: 2cm; }
+                    body { background: white; }
+                    .no-print, header, nav, footer, button { display: none !important; }
+                    .print-only { display: block !important; }
+                    .border-2 { border-width: 1px !important; }
+                }
+            `}</style>
 
             {/* Module Info Card */}
             <div className="border-2 border-black bg-white mb-8">
@@ -300,10 +322,10 @@ export default function ConformityAssessmentPage() {
                         const isExpanded = expandedStep === step.step_id;
                         return (
                             <div key={step.step_id} className={`border-2 ${step.status === 'completed'
-                                    ? 'border-emerald-200 bg-emerald-50/30'
-                                    : step.status === 'in_progress'
-                                        ? 'border-[#FF4F00]/40 bg-[#FFF5F0]'
-                                        : 'border-black/10 bg-white'
+                                ? 'border-emerald-200 bg-emerald-50/30'
+                                : step.status === 'in_progress'
+                                    ? 'border-[#FF4F00]/40 bg-[#FFF5F0]'
+                                    : 'border-black/10 bg-white'
                                 }`}>
                                 {/* Step Header */}
                                 <button
