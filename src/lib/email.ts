@@ -224,4 +224,73 @@ export async function sendEnterpriseInquiryNotification(data: DemoRequestData): 
     }
 }
 
+/**
+ * Send password reset email
 
+     */
+export async function sendPasswordResetEmail(email: string, actionLink: string): Promise<boolean> {
+    const mailer = getTransporter();
+
+    if (!mailer) {
+        logger.info({ event: 'email_skip', reason: 'no_smtp' },
+            `📧 [EMAIL] Skipped notification — SMTP not configured. Action Link: ${actionLink}`);
+        return false;
+    }
+
+    const html = `
+    <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; border: 2px solid #000; padding: 0;">
+        <!-- Header -->
+        <div style="background: #000; color: #fff; padding: 20px 24px; border-bottom: 2px solid #000;">
+            <div style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #FF4F00; margin-bottom: 8px;">
+                SECURITY PROTOCOL
+            </div>
+            <div style="font-size: 20px; font-weight: bold;">
+                Password Reset Request
+            </div>
+            <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                LexOculus Authentication System
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 24px;">
+            <p style="margin-top: 0; font-size: 14px; line-height: 1.6;">
+                A request has been made to reset the password for the account associated with <strong>${email}</strong>.
+            </p>
+            <p style="font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                To authenticate and establish a new credential, follow the secure link below:
+            </p>
+            
+            <a href="${actionLink}" style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid #FF4F00;">
+                RESET PASSWORD ->
+            </a>
+            
+            <p style="font-size: 12px; color: #999; margin-top: 32px; line-height: 1.5;">
+                If you did not initiate this sequence, you may safely ignore this message. The link will expire automatically.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f5f5f5; padding: 16px 24px; border-top: 2px solid #000; font-size: 10px; color: #999; letter-spacing: 1px; text-transform: uppercase;">
+            LexOculus · Access Gateway · ${new Date().toISOString().split('T')[0]}
+        </div>
+    </div>
+    `;
+
+    try {
+        await mailer.sendMail({
+            from: `"LexOculus Security" <${process.env.SMTP_FROM || 'security@lexoculus.com'}>`,
+            to: email,
+            subject: `Action Required: Password Reset`,
+            html,
+        });
+
+        logger.info({ event: 'email_sent', to: email },
+            `📧 [EMAIL] Password reset sent to ${email}`);
+        return true;
+    } catch (error) {
+        logger.error({ err: error, event: 'email_error' },
+            `📧 [EMAIL] Failed to send password reset notification`);
+        return false;
+    }
+}

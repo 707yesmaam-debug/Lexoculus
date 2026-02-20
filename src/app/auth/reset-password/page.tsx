@@ -18,17 +18,21 @@ function ResetPasswordForm() {
         setError(null);
         setSuccess(false);
 
-        const supabase = createClient();
-        const origin = window.location.origin;
+        try {
+            const res = await fetch('/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
 
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${origin}/auth/update-password`,
-        });
-
-        if (error) {
-            setError(error.message);
-        } else {
-            setSuccess(true);
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data.error || 'Failed to send recovery email');
+            } else {
+                setSuccess(true);
+            }
+        } catch (err: any) {
+            setError(err.message || 'An unexpected error occurred');
         }
         setLoading(false);
     };
