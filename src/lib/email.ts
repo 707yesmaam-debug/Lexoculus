@@ -8,7 +8,8 @@
 import nodemailer from 'nodemailer';
 import logger from './logger';
 
-const FOUNDER_EMAIL = 'founder@lexoculus.com';
+const FOUNDER_EMAIL = process.env.LEADS_EMAIL || 'founder@lexoculus.com';
+const NO_REPLY_EMAIL = process.env.SMTP_FROM || 'onboarding@lexoculus.com';
 
 // Create transporter (lazy init)
 let transporter: nodemailer.Transporter | null = null;
@@ -122,7 +123,7 @@ export async function sendDemoRequestNotification(data: DemoRequestData): Promis
 
     try {
         await mailer.sendMail({
-            from: `"LexOculus Leads" <${process.env.SMTP_FROM || 'onboarding@lexoculus.com'}>`,
+            from: `"LexOculus Leads" <${NO_REPLY_EMAIL}>`,
             to: FOUNDER_EMAIL,
             subject: `🔔 New Demo Request — ${data.full_name} (${data.company_name})`,
             html,
@@ -208,7 +209,7 @@ export async function sendEnterpriseInquiryNotification(data: DemoRequestData): 
 
     try {
         await mailer.sendMail({
-            from: `"LexOculus Enterprise" <${process.env.SMTP_FROM || 'onboarding@lexoculus.com'}>`,
+            from: `"LexOculus Enterprise" <${NO_REPLY_EMAIL}>`,
             to: FOUNDER_EMAIL,
             subject: `💼 Enterprise Inquiry — ${data.company_name}`,
             html,
@@ -279,7 +280,7 @@ export async function sendPasswordResetEmail(email: string, actionLink: string):
 
     try {
         await mailer.sendMail({
-            from: `"LexOculus Security" <${process.env.SMTP_FROM || 'security@lexoculus.com'}>`,
+            from: `"LexOculus Security" <${NO_REPLY_EMAIL}>`,
             to: email,
             subject: `Action Required: Password Reset`,
             html,
