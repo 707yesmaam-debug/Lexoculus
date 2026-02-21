@@ -14,12 +14,35 @@ function UpdatePasswordForm() {
     const [success, setSuccess] = useState(false);
     const router = useRouter();
 
+    const supabase = createClient();
+
+    useEffect(() => {
+        // When landing from an email link, Supabase might put the tokens in the URL hash
+        // e.g. #access_token=...&refresh_token=...&type=recovery
+        const hash = window.location.hash;
+        if (hash) {
+            const hashParams = new URLSearchParams(hash.substring(1));
+            const access_token = hashParams.get('access_token');
+            const refresh_token = hashParams.get('refresh_token');
+
+            if (access_token && refresh_token) {
+                supabase.auth.setSession({
+                    access_token,
+                    refresh_token
+                }).then(({ error }) => {
+                    if (error) {
+                        console.error("Error setting session from hash:", error);
+                        setError("Invalid or expired recovery link. Please request a new one.");
+                    }
+                });
+            }
+        }
+    }, [supabase]);
+
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
-        const supabase = createClient();
 
         const { error } = await supabase.auth.updateUser({
             password: password
