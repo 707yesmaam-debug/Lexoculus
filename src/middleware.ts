@@ -46,9 +46,9 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // Redirect logged-in users from auth pages to dashboard
+    // Redirect logged-in users from auth pages to dashboard, EXCEPT when they are updating their password
     if (request.nextUrl.pathname.startsWith('/auth')) {
-        if (user) {
+        if (user && !request.nextUrl.pathname.startsWith('/auth/update-password') && !request.nextUrl.pathname.startsWith('/auth/reset-password') && !request.nextUrl.pathname.startsWith('/auth/callback')) {
             const url = request.nextUrl.clone();
             url.pathname = '/dashboard/scanner';
             return NextResponse.redirect(url);
