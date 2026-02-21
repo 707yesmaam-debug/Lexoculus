@@ -32,6 +32,11 @@ function StatusBlinker({ label }: { label: string }) {
 
 // ─── HERO CTA ────────────────────────────────────────────────────────────────
 function HeroCTA() {
+    const [isVideoOpen, setIsVideoOpen] = useState(false);
+
+    // Default trailer ID - user can swap this out easily
+    const youtubeVideoId = "dQw4w9WgXcQ";
+
     return (
         <div className="mb-8">
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -41,12 +46,12 @@ function HeroCTA() {
                 >
                     Request_Demo →
                 </Link>
-                <a
-                    href="#"
+                <button
+                    onClick={() => setIsVideoOpen(true)}
                     className="bg-white text-black font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-[#F5F5F5] transition-colors border-2 border-black text-center"
                 >
                     Watch_Demo
-                </a>
+                </button>
             </div>
 
             <div className="flex items-center gap-4 mt-3">
@@ -61,6 +66,41 @@ function HeroCTA() {
                     View_Plans →
                 </Link>
             </div>
+
+            {/* Video Modal Overlay */}
+            {isVideoOpen && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8 animate-in fade-in"
+                    onClick={() => setIsVideoOpen(false)}
+                >
+                    <div
+                        className="relative w-full max-w-[1000px] aspect-video bg-black border-2 border-[#FF4F00] shadow-2xl animate-in zoom-in-95"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header Bar */}
+                        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+                            <span className="font-mono text-[10px] uppercase tracking-widest text-[#FF4F00]">
+                                LexOculus // Product_Demo
+                            </span>
+                            <button
+                                onClick={() => setIsVideoOpen(false)}
+                                className="pointer-events-auto font-mono text-xs uppercase tracking-widest text-white hover:text-[#FF4F00] bg-black/50 px-3 py-1 border border-white/20 backdrop-blur-md transition-colors"
+                            >
+                                [Close_X]
+                            </button>
+                        </div>
+
+                        {/* Iframe */}
+                        <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                            title="Product Demo"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
