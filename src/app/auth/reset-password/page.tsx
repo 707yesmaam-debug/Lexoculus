@@ -2,12 +2,15 @@
 
 import { createClient } from '@/lib/supabase';
 import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
 
 function ResetPasswordForm() {
-    const [email, setEmail] = useState('');
+    const searchParams = useSearchParams();
+    const urlEmail = searchParams.get('email');
+    const [email, setEmail] = useState(urlEmail || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -70,7 +73,23 @@ function ResetPasswordForm() {
                         // Reset_Sequence
                     </div>
 
-                    {success ? (
+                    {!urlEmail ? (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="bg-[#FF4F00]/10 border border-[#FF4F00] p-6 text-center">
+                                <AlertCircle className="w-12 h-12 text-[#FF4F00] mx-auto mb-4" />
+                                <h3 className="font-serif text-xl font-bold mb-2">Email Identity Required</h3>
+                                <p className="font-mono text-xs text-black">
+                                    Please initiate credential recovery from the login gateway by entering your email first.
+                                </p>
+                            </div>
+                            <Link
+                                href="/auth/login"
+                                className="block w-full text-center bg-black hover:bg-[#FF4F00] text-white font-mono font-bold py-4 text-sm transition-colors tracking-widest uppercase"
+                            >
+                                RETURN_TO_LOGIN
+                            </Link>
+                        </div>
+                    ) : success ? (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="bg-[#F0FFF4] border border-[#22c55e] p-6 text-center">
                                 <CheckCircle className="w-12 h-12 text-[#22c55e] mx-auto mb-4" />
@@ -102,9 +121,8 @@ function ResetPasswordForm() {
                                     id="email"
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none placeholder:text-gray-300"
-                                    placeholder="name@organization.com"
+                                    readOnly
+                                    className="w-full bg-[#F5F5F5] border border-black p-4 text-[#555] font-mono text-sm focus:outline-none transition-none rounded-none cursor-not-allowed"
                                     required
                                 />
                             </div>

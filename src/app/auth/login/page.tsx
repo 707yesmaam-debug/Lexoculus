@@ -89,7 +89,19 @@ function LoginForm() {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="password">Passkey</label>
-                                <Link href="/auth/reset-password" className="text-xs font-mono text-[#999] hover:text-[#FF4F00]">RESET_CREDENTIALS</Link>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!email) {
+                                            setError("Please enter your Email_Identity first to reset credentials.");
+                                            return;
+                                        }
+                                        router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+                                    }}
+                                    className="text-xs font-mono text-[#999] hover:text-[#FF4F00] uppercase tracking-widest"
+                                >
+                                    RESET_CREDENTIALS
+                                </button>
                             </div>
                             <input
                                 id="password"
