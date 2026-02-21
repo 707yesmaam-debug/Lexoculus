@@ -21,15 +21,6 @@ function UpdatePasswordForm() {
 
         const supabase = createClient();
 
-        useEffect(() => {
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                console.log("Current Session:", session);
-            });
-            supabase.auth.onAuthStateChange((event, session) => {
-                console.log("Auth Event:", event, "Session:", session);
-            });
-        }, [supabase]);
-
         const { error } = await supabase.auth.updateUser({
             password: password
         });
