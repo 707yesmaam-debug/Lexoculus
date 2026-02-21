@@ -219,7 +219,7 @@ export default function ConformityAssessmentPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end mb-8 no-print">
+                <div className="flex justify-end mb-8 mt-6 no-print">
                     <Button
                         onClick={() => window.print()}
                         variant="outline"

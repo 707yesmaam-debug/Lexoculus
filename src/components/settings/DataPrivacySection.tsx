@@ -132,7 +132,7 @@ export default function DataPrivacySection() {
                                 DELETE_MY_ACCOUNT
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="border-2 border-red-600 rounded-none sm:max-w-md">
+                        <DialogContent className="bg-white border-2 border-red-600 rounded-none sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2 text-red-600 font-serif text-xl">
                                     <AlertOctagon className="w-6 h-6" />
