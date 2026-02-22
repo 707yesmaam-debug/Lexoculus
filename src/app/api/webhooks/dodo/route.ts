@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { dodo } from '@/lib/dodo';
 import { prisma } from '@/lib/prisma';
+import { TIER_LIMITS } from '@/lib/subscription';
 
 // Disable next.js body parsing (not needed in app router, just read text)
 // But we need the raw body for signature verification.
@@ -93,6 +94,10 @@ async function handleSubscriptionUpdate(data: any) {
             payment_product_id: data.product_id,
             current_period_end: new Date(data.next_billing_date),
             cancel_at_period_end: false,
+            repos_limit: TIER_LIMITS.pro.repos_limit,
+            scans_limit: TIER_LIMITS.pro.scans_limit,
+            pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
+            reports_limit: TIER_LIMITS.pro.reports_limit,
         },
         update: {
             tier: 'pro',
@@ -103,6 +108,10 @@ async function handleSubscriptionUpdate(data: any) {
             payment_product_id: data.product_id,
             current_period_end: new Date(data.next_billing_date),
             cancel_at_period_end: false,
+            repos_limit: TIER_LIMITS.pro.repos_limit,
+            scans_limit: TIER_LIMITS.pro.scans_limit,
+            pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
+            reports_limit: TIER_LIMITS.pro.reports_limit,
         },
     });
 
