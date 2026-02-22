@@ -34,8 +34,8 @@ function StatusBlinker({ label }: { label: string }) {
 function HeroCTA() {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
 
-    // Default trailer ID - user can swap this out easily
-    const youtubeVideoId = "dQw4w9WgXcQ";
+    // The official 6-minute LexOculus product demo
+    const youtubeVideoId = "AKUD2auu6K0";
 
     return (
         <div className="mb-8">
