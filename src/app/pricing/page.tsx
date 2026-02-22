@@ -69,7 +69,7 @@ function PricingContent() {
     };
 
     const price = billingCycle === 'monthly' ? pricing.monthly : Math.round(pricing.yearly / 12);
-    const annualSavings = (pricing.monthly * 12) - pricing.yearly;
+    const annualSavings = (pricing.monthly * 12) - (Math.round(pricing.yearly / 12) * 12);
 
     return (
         <div className="min-h-screen bg-[#F5F5F5] font-sans text-black">
