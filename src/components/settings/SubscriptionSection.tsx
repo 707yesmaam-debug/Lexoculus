@@ -26,7 +26,8 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
     const isPro = subscription?.tier === 'pro' || subscription?.tier === 'enterprise';
     const scanLimit = subscription?.limits.scans || 5;
     const scanUsage = subscription?.usage.scans || 0;
-    const scanPercentage = Math.min((scanUsage / scanLimit) * 100, 100);
+    const isUnlimited = scanLimit >= 999999;
+    const scanPercentage = isUnlimited ? 100 : Math.min((scanUsage / scanLimit) * 100, 100);
 
     return (
         <div className="space-y-8">
@@ -72,9 +73,11 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                     <div>
                         <div className="flex justify-between font-mono text-xs mb-2">
                             <span>SCAN_CREDITS</span>
-                            <span>{scanUsage} / {scanLimit === 2147483647 ? 'UNLIMITED' : scanLimit}</span>
+                            <span>{scanUsage} / {isUnlimited ? 'UNLIMITED' : scanLimit}</span>
                         </div>
-                        <Progress value={scanLimit === 2147483647 ? 100 : scanPercentage} className="h-2 bg-gray-200" indicatorClassName="bg-black" />
+                        {!isUnlimited && (
+                            <Progress value={scanPercentage} className="h-2 bg-gray-200" indicatorClassName="bg-black" />
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">

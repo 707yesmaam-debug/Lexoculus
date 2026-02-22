@@ -57,9 +57,9 @@ export interface UsageStatus {
 // =============================================================================
 export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
     pro: {
-        repos_limit: 50,
-        scans_limit: 100,
-        pr_scans_limit: 500,
+        repos_limit: 999999,
+        scans_limit: 999999,
+        pr_scans_limit: 999999,
         reports_limit: 100,
         features: {
             github_action: true,
