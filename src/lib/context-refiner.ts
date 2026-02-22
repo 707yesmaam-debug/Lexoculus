@@ -63,6 +63,9 @@ export interface ContextSummary {
     has_transparency_statement: boolean;
     has_appeal_mechanism: boolean;
     has_data_safeguards: boolean;
+    has_architecture_diagram: boolean;
+    has_human_policy_document: boolean;
+    has_data_policy_document: boolean;
 }
 
 export interface EvidenceItem {
@@ -428,6 +431,40 @@ export function refineWithContext(
         }
     }
 
+    const hasArchitectureDiagram = !!answers.architecture_diagram;
+    const hasHumanPolicy = !!answers.human_oversight_policy;
+    const hasDataPolicy = !!answers.data_governance_policy;
+
+    if (hasArchitectureDiagram) {
+        evidenceItems.push({
+            category: 'Verified Evidence: Architecture Diagram',
+            description: 'System architecture diagram uploaded to secure storage.',
+            supports_classification: finalClassification,
+            user_provided: true,
+            confidence: 'HIGH',
+        });
+    }
+
+    if (hasHumanPolicy) {
+        evidenceItems.push({
+            category: 'Verified Evidence: Human Oversight Policy',
+            description: 'Human-in-the-loop oversight policy uploaded to secure storage.',
+            supports_classification: finalClassification,
+            user_provided: true,
+            confidence: 'HIGH',
+        });
+    }
+
+    if (hasDataPolicy) {
+        evidenceItems.push({
+            category: 'Verified Evidence: Data Governance Policy',
+            description: 'Data collection and privacy measures policy uploaded to secure storage.',
+            supports_classification: finalClassification,
+            user_provided: true,
+            confidence: 'HIGH',
+        });
+    }
+
     // ========================================
     // STEP 7: Calculate Compliance Readiness
     // ========================================
@@ -438,7 +475,10 @@ export function refineWithContext(
         preliminaryArticles,
         hasHumanOversight,
         hasTesting,
-        hasTransparency
+        hasTransparency,
+        hasArchitectureDiagram,
+        hasHumanPolicy,
+        hasDataPolicy
     );
 
     // ========================================
@@ -463,6 +503,9 @@ export function refineWithContext(
             answers.financial_human_review === 'yes',
         has_data_safeguards: answers.data_protection === 'comprehensive' ||
             answers.data_protection === 'basic',
+        has_architecture_diagram: hasArchitectureDiagram,
+        has_human_policy_document: hasHumanPolicy,
+        has_data_policy_document: hasDataPolicy,
     };
 
     // ========================================
@@ -521,7 +564,10 @@ function calculateComplianceReadiness(
     articles: PreliminaryArticle[],
     hasOversight: boolean,
     hasTesting: boolean,
-    hasTransparency: boolean
+    hasTransparency: boolean,
+    hasArchitectureDiagram: boolean,
+    hasHumanPolicy: boolean,
+    hasDataPolicy: boolean
 ): ComplianceReadiness {
     const requirementsMet: string[] = [];
     const requirementsPending: string[] = [];
@@ -553,6 +599,28 @@ function calculateComplianceReadiness(
     } else {
         requirementsPending.push('Transparency statement implementation');
         actionItems.push('Implement and publish transparency statement');
+    }
+
+    // Check evidence uploads
+    if (hasArchitectureDiagram) {
+        requirementsMet.push('System Architecture Diagram verified');
+    } else {
+        requirementsPending.push('System Architecture Diagram');
+        actionItems.push('Upload System Architecture Diagram');
+    }
+
+    if (hasHumanPolicy) {
+        requirementsMet.push('Human Oversight Policy verified');
+    } else {
+        requirementsPending.push('Human Oversight Policy');
+        actionItems.push('Upload Human Oversight Policy document');
+    }
+
+    if (hasDataPolicy) {
+        requirementsMet.push('Data Governance Policy verified');
+    } else {
+        requirementsPending.push('Data Governance Policy');
+        actionItems.push('Upload Data Governance Policy document');
     }
 
     // Article-specific requirements
@@ -631,6 +699,16 @@ function generateNarrative(
     else lines.push('⏳ Transparency statement pending');
     lines.push('');
 
+    // Evidence
+    lines.push('**Verified Evidence:**');
+    if (context.has_architecture_diagram) lines.push('✅ Architecture diagram provided');
+    if (context.has_human_policy_document) lines.push('✅ Human oversight policy provided');
+    if (context.has_data_policy_document) lines.push('✅ Data governance policy provided');
+    if (!context.has_architecture_diagram && !context.has_human_policy_document && !context.has_data_policy_document) {
+        lines.push('⏳ No documents uploaded to evidence vault');
+    }
+    lines.push('');
+
     // Compliance status
     lines.push(`**Compliance Status:** ${compliance.overall_readiness.replace('_', ' ')}`);
 
@@ -669,6 +747,11 @@ function calculateFinalScore(
     if (context.has_transparency_statement) score -= 5;
     if (context.has_appeal_mechanism) score -= 3;
     if (context.has_data_safeguards) score -= 2;
+
+    // Adjust for verified evidence (-2 per document)
+    if (context.has_architecture_diagram) score -= 2;
+    if (context.has_human_policy_document) score -= 2;
+    if (context.has_data_policy_document) score -= 2;
 
     // Adjust for pending items
     score += compliance.developer_action_items.length * 3;
