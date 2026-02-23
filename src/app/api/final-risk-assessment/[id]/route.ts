@@ -34,6 +34,13 @@ export async function GET(
                         repo_name: true,
                         repo_owner: true,
                         primary_language: true,
+                        ai_system: {
+                            select: { id: true }
+                        },
+                        scan_history: {
+                            select: { ai_system_id: true },
+                            take: 1
+                        }
                     },
                 },
                 risk_assessment: {
@@ -61,11 +68,16 @@ export async function GET(
             );
         }
 
+        // Determine ai_system_id (either it's the latest scan for a system, or it's in the scan history)
+        const ai_system_id = finalAssessment.repo_scan.ai_system?.id ||
+            finalAssessment.repo_scan.scan_history?.[0]?.ai_system_id || null;
+
         // 4. Return final assessment
         return NextResponse.json({
             final_risk_assessment_id: finalAssessment.id,
             risk_assessment_id: finalAssessment.risk_assessment_id,
             repo_scan_id: finalAssessment.repo_scan_id,
+            ai_system_id,
             repo_name: finalAssessment.repo_scan.repo_name,
             repo_owner: finalAssessment.repo_scan.repo_owner,
             primary_language: finalAssessment.repo_scan.primary_language,
