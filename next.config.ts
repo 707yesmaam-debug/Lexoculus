@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: https: blob:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.github.com",
               "frame-src 'self' https://www.youtube.com",
+              "media-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",
             ].join('; '),
           },
