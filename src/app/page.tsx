@@ -34,9 +34,6 @@ function StatusBlinker({ label }: { label: string }) {
 function HeroCTA() {
     const [isVideoOpen, setIsVideoOpen] = useState(false);
 
-    // The official 6-minute LexOculus product demo
-    const youtubeVideoId = "AKUD2auu6K0";
-
     return (
         <div className="mb-8">
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -91,13 +88,15 @@ function HeroCTA() {
                         </div>
 
                         {/* Iframe */}
-                        <iframe
-                            className="w-full h-full"
-                            src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                        <video
+                            className="w-full h-full object-cover"
+                            src="https://sqxqtaiwgrtiimlfgsyu.supabase.co/storage/v1/object/public/website-assests/Lex%201.mp4"
                             title="Product Demo"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                        ></iframe>
+                            autoPlay
+                            controls
+                            playsInline
+                            controlsList="nodownload"
+                        />
                     </div>
                 </div>
             )}
