@@ -90,7 +90,7 @@ function HeroCTA() {
                         {/* Iframe */}
                         <video
                             className="w-full h-full object-cover"
-                            src="https://sqxqtaiwgrtiimlfgsyu.supabase.co/storage/v1/object/public/website-assests/Lex%201.mp4"
+                            src="https://sqxqtaiwgrtiimlfgsyu.supabase.co/storage/v1/object/public/website-assests/lexoculus-demo.mp4"
                             title="Product Demo"
                             autoPlay
                             controls
