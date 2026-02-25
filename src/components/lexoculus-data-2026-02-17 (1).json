@@ -337,7 +337,7 @@
           "user_id": "7a4340a6-e3cf-4463-ad78-63ca2d8bd4e4",
           "final_risk_classification": "LIMITED_RISK",
           "final_risk_score": 25,
-          "final_narrative": "This AI system is classified as **LIMITED RISK** under the EU AI Act.\n\n**Matched Article:** Article 50(2) - Generative AI\n\n**System Context:**\n- Purpose: Other purpose\n- Users: Software developers\n- Deployment: European Union\n\n**Compliance Measures:**\n✅ Human oversight in place\n✅ Testing procedures documented\n✅ Transparency statement published\n\n**Compliance Status:** FULL COMPLIANCE",
+          "final_narrative": "This AI system is classified as **LIMITED RISK** under the EU AI Act.\n\n**Matched Article:** Article 50(2) - Generative AI\n\n**System Context:**\n- Purpose: Other purpose\n- Users: Software developers\n- Deployment: European Union\n\n**Compliance Measures:**\n[SUCCESS] Human oversight in place\n[SUCCESS] Testing procedures documented\n[SUCCESS] Transparency statement published\n\n**Compliance Status:** FULL COMPLIANCE",
           "context_verified": true,
           "context_summary": {
             "intended_use": "Other purpose",
@@ -1679,7 +1679,7 @@
           "user_id": "7a4340a6-e3cf-4463-ad78-63ca2d8bd4e4",
           "risk_classification": "LIMITED_RISK",
           "risk_score": 48,
-          "risk_narrative": "This AI system has been classified as LIMITED RISK under EU AI Act Article 50. Limited-risk systems require transparency measures: users must be informed they are interacting with AI. Legal basis: Article 50(1), Article 50(2), Article 53(1)(a), Article 53(1)(b) of Regulation (EU) 2024/1689. GPAI Deployer detected: integrates models from OpenAI, Groq. ⚠️ Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply. Article 50 transparency obligations apply from 2 August 2026.",
+          "risk_narrative": "This AI system has been classified as LIMITED RISK under EU AI Act Article 50. Limited-risk systems require transparency measures: users must be informed they are interacting with AI. Legal basis: Article 50(1), Article 50(2), Article 53(1)(a), Article 53(1)(b) of Regulation (EU) 2024/1689. GPAI Deployer detected: integrates models from OpenAI, Groq. [WARN] Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply. Article 50 transparency obligations apply from 2 August 2026.",
           "matched_annex_iii_articles": [
             {
               "article": "Article 50(2)",
@@ -1701,7 +1701,7 @@
           "is_minimal_risk": false,
           "key_findings": [
             "GPAI Deployer: integrates models from OpenAI, Groq",
-            "⚠️ Uses systemic risk GPAI models (≥10^25 FLOPs)",
+            "[WARN] Uses systemic risk GPAI models (≥10^25 FLOPs)",
             "Article 50 transparency obligations apply from 2 August 2026",
             "Generative AI system - LIMITED RISK (requires AI-generated content labeling)"
           ],
@@ -1802,7 +1802,7 @@
           "user_id": "7a4340a6-e3cf-4463-ad78-63ca2d8bd4e4",
           "risk_classification": "HIGH_RISK",
           "risk_score": 89,
-          "risk_narrative": "This classification was validated against official EU AI Act regulatory text. This AI system has been classified as HIGH RISK under EU AI Act Annex III. High-risk systems require conformity assessment, registration in EU database, human oversight, and continuous monitoring. Legal basis: Annex III(5), Article 50(1), Article 50(2), Article 53(1)(a), Article 53(1)(b) of Regulation (EU) 2024/1689. GPAI Deployer detected: integrates models from OpenAI, Anthropic. ⚠️ Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply. Article 50 transparency obligations apply from 2 August 2026.",
+          "risk_narrative": "This classification was validated against official EU AI Act regulatory text. This AI system has been classified as HIGH RISK under EU AI Act Annex III. High-risk systems require conformity assessment, registration in EU database, human oversight, and continuous monitoring. Legal basis: Annex III(5), Article 50(1), Article 50(2), Article 53(1)(a), Article 53(1)(b) of Regulation (EU) 2024/1689. GPAI Deployer detected: integrates models from OpenAI, Anthropic. [WARN] Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply. Article 50 transparency obligations apply from 2 August 2026.",
           "matched_annex_iii_articles": [
             {
               "article": "Article 50(2)",
@@ -1826,7 +1826,7 @@
           "is_minimal_risk": false,
           "key_findings": [
             "GPAI Deployer: integrates models from OpenAI, Anthropic",
-            "⚠️ Uses systemic risk GPAI models (≥10^25 FLOPs)",
+            "[WARN] Uses systemic risk GPAI models (≥10^25 FLOPs)",
             "Article 50 transparency obligations apply from 2 August 2026",
             "Regulatory Validation Adjustment: Regulatory Validation ESCALATED risk from LIMITED_RISK to HIGH_RISK. Matched constraints: annex3_5, art50_chatbot, art50_generative, art53_tech_docs, art53_downstream_info",
             "Generative AI system - LIMITED RISK (requires AI-generated content labeling)",
@@ -1963,7 +1963,7 @@
             "document_type": "instructions_for_use",
             "title": "Instructions for Use",
             "content": {
-              "markdown": "# Instructions for Use\r\n## EU AI Act Article 13 Compliance\r\n\r\n---\r\n\r\n### 1. Product Identification\r\n\r\n| Field | Value |\r\n|-------|-------|\r\n| **System Name** | MediScan AI - Diagnostic Assistant |\r\n| **Version** | 1.0 |\r\n| **Provider** | Varad Khoriya |\r\n| **Risk Classification** | HIGH_RISK |\r\n\r\n---\r\n\r\n### 2. Intended Purpose\r\n\r\nThis AI system is designed for the following use:\r\n\r\n{{MISSING: intended_purpose}}\r\n\r\n---\r\n\r\n### 3. User Requirements\r\n\r\n#### 3.1 Competencies Required\r\n{{MISSING: required_competencies}}\r\n\r\n#### 3.2 Training Requirements\r\n{{MISSING: training_requirements}}\r\n\r\n---\r\n\r\n### 4. Technical Capabilities\r\n\r\n{{MISSING: capabilities_list}}\r\n\r\n---\r\n\r\n### 5. Known Limitations\r\n\r\n> ⚠️ **Important Limitations to Understand**\r\n\r\n{{MISSING: known_limitations}}\r\n\r\n---\r\n\r\n### 6. Conditions of Use\r\n\r\n#### 6.1 Operating Environment\r\n{{MISSING: operating_environment}}\r\n\r\n#### 6.2 Prohibited Uses\r\n{{MISSING: prohibited_uses}}\r\n\r\n---\r\n\r\n### 7. Human Oversight Requirements\r\n\r\n#### 7.1 Monitoring Requirements\r\n{{MISSING: monitoring_requirements}}\r\n\r\n#### 7.2 Override Capabilities\r\n{{MISSING: override_capabilities}}\r\n\r\n#### 7.3 Decision Review Process\r\n{{MISSING: decision_review_process}}\r\n\r\n---\r\n\r\n### 8. Maintenance and Updates\r\n\r\n#### 8.1 Update Procedures\r\n{{MISSING: update_procedures}}\r\n\r\n#### 8.2 Support Contact\r\n- **Email:** varadkhoriya17@gmail.com\r\n- **Documentation:** {{MISSING: documentation_url}}\r\n\r\n---\r\n\r\n*Document generated by LexOculus EU AI Act Compliance Platform*\r\n*Template Version: 1.0*\r\n"
+              "markdown": "# Instructions for Use\r\n## EU AI Act Article 13 Compliance\r\n\r\n---\r\n\r\n### 1. Product Identification\r\n\r\n| Field | Value |\r\n|-------|-------|\r\n| **System Name** | MediScan AI - Diagnostic Assistant |\r\n| **Version** | 1.0 |\r\n| **Provider** | Varad Khoriya |\r\n| **Risk Classification** | HIGH_RISK |\r\n\r\n---\r\n\r\n### 2. Intended Purpose\r\n\r\nThis AI system is designed for the following use:\r\n\r\n{{MISSING: intended_purpose}}\r\n\r\n---\r\n\r\n### 3. User Requirements\r\n\r\n#### 3.1 Competencies Required\r\n{{MISSING: required_competencies}}\r\n\r\n#### 3.2 Training Requirements\r\n{{MISSING: training_requirements}}\r\n\r\n---\r\n\r\n### 4. Technical Capabilities\r\n\r\n{{MISSING: capabilities_list}}\r\n\r\n---\r\n\r\n### 5. Known Limitations\r\n\r\n> [WARN] **Important Limitations to Understand**\r\n\r\n{{MISSING: known_limitations}}\r\n\r\n---\r\n\r\n### 6. Conditions of Use\r\n\r\n#### 6.1 Operating Environment\r\n{{MISSING: operating_environment}}\r\n\r\n#### 6.2 Prohibited Uses\r\n{{MISSING: prohibited_uses}}\r\n\r\n---\r\n\r\n### 7. Human Oversight Requirements\r\n\r\n#### 7.1 Monitoring Requirements\r\n{{MISSING: monitoring_requirements}}\r\n\r\n#### 7.2 Override Capabilities\r\n{{MISSING: override_capabilities}}\r\n\r\n#### 7.3 Decision Review Process\r\n{{MISSING: decision_review_process}}\r\n\r\n---\r\n\r\n### 8. Maintenance and Updates\r\n\r\n#### 8.1 Update Procedures\r\n{{MISSING: update_procedures}}\r\n\r\n#### 8.2 Support Contact\r\n- **Email:** varadkhoriya17@gmail.com\r\n- **Documentation:** {{MISSING: documentation_url}}\r\n\r\n---\r\n\r\n*Document generated by LexOculus EU AI Act Compliance Platform*\r\n*Template Version: 1.0*\r\n"
             },
             "template_version": "1.0",
             "status": "exported",
@@ -2177,7 +2177,7 @@
             "document_type": "instructions_for_use",
             "title": "Instructions for Use",
             "content": {
-              "markdown": "# Instructions for Use\n## EU AI Act Article 13 Compliance\n\n---\n\n### 1. Product Identification\n\n| Field | Value |\n|-------|-------|\n| **System Name** | wordcraft |\n| **Version** | 1.0 |\n| **Provider** | Varad Khoriya |\n| **Risk Classification** | LIMITED_RISK |\n\n---\n\n### 2. Intended Purpose\n\nThis AI system is designed for the following use:\n\n{{MISSING: intended_purpose}}\n\n---\n\n### 3. User Requirements\n\n#### 3.1 Competencies Required\nYES.\n\n#### 3.2 Training Requirements\n{{MISSING: training_requirements}}\n\n---\n\n### 4. Technical Capabilities\n\n- NLP\n- Text Analysis\n- Sentiment Analysis\n- Language Understanding\n\n---\n\n### 5. Known Limitations\n\n> ⚠️ **Important Limitations to Understand**\n\n{{MISSING: known_limitations}}\n\n---\n\n### 6. Conditions of Use\n\n#### 6.1 Operating Environment\n{{MISSING: operating_environment}}\n\n#### 6.2 Prohibited Uses\n{{MISSING: prohibited_uses}}\n\n---\n\n### 7. Human Oversight Requirements\n\n#### 7.1 Monitoring Requirements\n{{MISSING: monitoring_requirements}}\n\n#### 7.2 Override Capabilities\n{{MISSING: override_capabilities}}\n\n#### 7.3 Decision Review Process\n{{MISSING: decision_review_process}}\n\n---\n\n### 8. Maintenance and Updates\n\n#### 8.1 Update Procedures\n{{MISSING: update_procedures}}\n\n#### 8.2 Support Contact\n- **Email:** varadkhoriya17@gmail.com\n- **Documentation:** {{MISSING: documentation_url}}\n\n---\n\n*Document generated by LexOculus EU AI Act Compliance Platform*\n*Template Version: 1.0*\n"
+              "markdown": "# Instructions for Use\n## EU AI Act Article 13 Compliance\n\n---\n\n### 1. Product Identification\n\n| Field | Value |\n|-------|-------|\n| **System Name** | wordcraft |\n| **Version** | 1.0 |\n| **Provider** | Varad Khoriya |\n| **Risk Classification** | LIMITED_RISK |\n\n---\n\n### 2. Intended Purpose\n\nThis AI system is designed for the following use:\n\n{{MISSING: intended_purpose}}\n\n---\n\n### 3. User Requirements\n\n#### 3.1 Competencies Required\nYES.\n\n#### 3.2 Training Requirements\n{{MISSING: training_requirements}}\n\n---\n\n### 4. Technical Capabilities\n\n- NLP\n- Text Analysis\n- Sentiment Analysis\n- Language Understanding\n\n---\n\n### 5. Known Limitations\n\n> [WARN] **Important Limitations to Understand**\n\n{{MISSING: known_limitations}}\n\n---\n\n### 6. Conditions of Use\n\n#### 6.1 Operating Environment\n{{MISSING: operating_environment}}\n\n#### 6.2 Prohibited Uses\n{{MISSING: prohibited_uses}}\n\n---\n\n### 7. Human Oversight Requirements\n\n#### 7.1 Monitoring Requirements\n{{MISSING: monitoring_requirements}}\n\n#### 7.2 Override Capabilities\n{{MISSING: override_capabilities}}\n\n#### 7.3 Decision Review Process\n{{MISSING: decision_review_process}}\n\n---\n\n### 8. Maintenance and Updates\n\n#### 8.1 Update Procedures\n{{MISSING: update_procedures}}\n\n#### 8.2 Support Contact\n- **Email:** varadkhoriya17@gmail.com\n- **Documentation:** {{MISSING: documentation_url}}\n\n---\n\n*Document generated by LexOculus EU AI Act Compliance Platform*\n*Template Version: 1.0*\n"
             },
             "template_version": "1.0",
             "status": "exported",

@@ -164,11 +164,11 @@ function buildEnhancedPrompt(repoScan: RepoScan, scanResult: DependencyScanResul
 === 4-LAYER DETECTION SYSTEM ===
 Layer 1 (VERIFIED): ${verifiedLibraries.length > 0 ? verifiedLibraries.join(', ') : 'None'}
 Layer 2 (CANDIDATES): ${candidateLibraries.length > 0 ? candidateLibraries.map(c => `${c.name} (${c.pattern})`).join(', ') : 'None'}
-Layer 3 (CONTEXT SIGNALS): ${hasContextSignals ? `⚠️ ${contextSignals.summary}` : 'None'}
+Layer 3 (CONTEXT SIGNALS): ${hasContextSignals ? `[WARN] ${contextSignals.summary}` : 'None'}
 Layer 4 (YOUR JUDGMENT): You have FULL AUTHORITY to classify this as AI if evidence suggests it.
 
 ${isLikelyAPIWrapper ? `
-⚠️ IMPORTANT: This appears to be an API WRAPPER
+[WARN] IMPORTANT: This appears to be an API WRAPPER
 - No traditional ML libraries detected
 - But context signals suggest AI API usage
 - README keywords: ${contextSignals.readme_ai_keywords.slice(0, 5).join(', ') || 'None'}
@@ -187,7 +187,7 @@ ${verifiedFrameworks.length > 0 ? verifiedFrameworks.join(', ') : 'None'}
 === DETECTED CATEGORIES ===
 ${verifiedCategories.length > 0 ? verifiedCategories.join(', ') : 'None'}
 
-=== HIGH-RISK LIBRARIES ⚠️ ===
+=== HIGH-RISK LIBRARIES [WARN] ===
 ${highRiskLibs.length > 0 ? highRiskLibs.join(', ') : 'None'}
 
 === MODEL FILES FOUND ===
@@ -258,7 +258,7 @@ function parseAndValidateResponse(responseText: string): AnalysisResult {
     try {
         parsed = JSON.parse(jsonStr);
     } catch (e) {
-        console.error('❌ [GROQ] JSON Parse Error. Raw content:', jsonStr.slice(0, 500) + '...');
+        console.error('[ERROR] [GROQ] JSON Parse Error. Raw content:', jsonStr.slice(0, 500) + '...');
         // Attempt simple repair (remove newlines in strings? No, too risky)
         throw new Error(`Invalid JSON from LLM: ${jsonStr.slice(0, 50)}...`);
     }
@@ -365,9 +365,9 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
     }
 
     // STEP 1: Run deterministic scanner FIRST (mandatory, ~10ms)
-    console.log(`🔍 [SCANNER] Running deterministic dependency scan...`);
+    console.log(`[SCAN] [SCANNER] Running deterministic dependency scan...`);
     const scanResult = scanDependencies(repoScan);
-    console.log(`✅ [SCANNER] Completed in ${scanResult.scan_duration_ms}ms`);
+    console.log(`[SUCCESS] [SCANNER] Completed in ${scanResult.scan_duration_ms}ms`);
     console.log(`   Detected ${scanResult.detected_libraries.length} AI libraries`);
     console.log(`   AI System: ${scanResult.is_ai_system}`);
     console.log(`   High-risk: ${scanResult.high_risk_libraries.length > 0 ? scanResult.high_risk_libraries.join(', ') : 'None'}`);
@@ -378,7 +378,7 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
 
     const startTime = Date.now();
 
-    console.log(`🤖 [GROQ] Calling Groq API for PURPOSE/CONTEXT analysis...`);
+    console.log(`[AI] [GROQ] Calling Groq API for PURPOSE/CONTEXT analysis...`);
     console.log(`   Model: ${model}`);
     console.log(`   Repo: ${repoScan.repo_owner}/${repoScan.repo_name}`);
 
@@ -414,7 +414,7 @@ export async function analyzeRepository(repoScan: RepoScan): Promise<GroqRespons
         const data = await response.json();
         const duration_ms = Date.now() - startTime;
 
-        console.log(`✅ [GROQ] Response received in ${duration_ms}ms`);
+        console.log(`[SUCCESS] [GROQ] Response received in ${duration_ms}ms`);
 
         const content = data.choices?.[0]?.message?.content;
         if (!content) {

@@ -25,7 +25,7 @@ export interface AdminCheckResult {
  */
 export async function checkAdminAccess(): Promise<AdminCheckResult> {
     if (!ADMIN_EMAIL) {
-        logger.error('❌ [ADMIN] ADMIN_EMAIL not configured');
+        logger.error('[ERROR] [ADMIN] ADMIN_EMAIL not configured');
         return {
             isAdmin: false,
             user: null,
@@ -48,8 +48,8 @@ export async function checkAdminAccess(): Promise<AdminCheckResult> {
         const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
         if (!isAdmin) {
-            logger.warn({ email: user.email }, `⚠️ [ADMIN] Access denied`);
-            logger.debug(`⚠️ [ADMIN] Comparison: '${user.email?.toLowerCase()}' !== '${ADMIN_EMAIL.toLowerCase()}'`);
+            logger.warn({ email: user.email }, `[WARN] [ADMIN] Access denied`);
+            logger.debug(`[WARN] [ADMIN] Comparison: '${user.email?.toLowerCase()}' !== '${ADMIN_EMAIL.toLowerCase()}'`);
         }
 
         return {

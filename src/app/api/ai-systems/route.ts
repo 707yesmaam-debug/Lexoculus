@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
             }
         });
 
-        console.log(`✅ [AI_SYSTEM] Created: ${aiSystem.name} (${aiSystem.id})`);
+        console.log(`[SUCCESS] [AI_SYSTEM] Created: ${aiSystem.name} (${aiSystem.id})`);
 
         return NextResponse.json({
             ai_system: aiSystem,

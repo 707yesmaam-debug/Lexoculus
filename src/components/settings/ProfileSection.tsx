@@ -98,8 +98,8 @@ export default function ProfileSection({ initialData }: ProfileSectionProps) {
                         placeholder="e.g. Jane Doe"
                     />
                     {form.formState.errors.full_name && (
-                        <p className="text-xs text-red-500 font-mono mt-1">
-                            ⚠️ {form.formState.errors.full_name.message}
+                        <p className="text-xs text-red-500 font-mono mt-1 flex items-center gap-1">
+                            {form.formState.errors.full_name.message}
                         </p>
                     )}
                 </div>

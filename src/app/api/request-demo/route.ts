@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         });
 
         logger.info({ event: 'demo_request', id: demoRequest.id, email: work_email },
-            `🎯 [LEAD] New demo request from ${full_name} (${company_name})`);
+            `[TARGET] [LEAD] New demo request from ${full_name} (${company_name})`);
 
         // ─── EMAIL NOTIFICATION (async, don't block response) ───────
         sendDemoRequestNotification({

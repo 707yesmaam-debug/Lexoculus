@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
                     version: { increment: 1 }
                 }
             });
-            console.log(`♻️ [DOCUMENT] Regenerated ${document_type} for ${aiSystem.name}`);
+            console.log(`♻ [DOCUMENT] Regenerated ${document_type} for ${aiSystem.name}`);
         } else {
             // CREATE new document
             document = await prisma.complianceDocument.create({

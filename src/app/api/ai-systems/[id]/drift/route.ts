@@ -144,7 +144,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
             }
         });
 
-        console.log(`🔍 [DRIFT] ${aiSystem.name}: ${driftDetected ? `${filesChanged} files changed` : 'No changes'}`);
+        console.log(`[SCAN] [DRIFT] ${aiSystem.name}: ${driftDetected ? `${filesChanged} files changed` : 'No changes'}`);
 
         return NextResponse.json({
             drift_detected: driftDetected,

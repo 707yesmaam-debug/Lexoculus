@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingAssessment) {
-            console.log(`📦 [CACHE] Returning cached risk assessment for ${repo_scan_id}`);
+            console.log(`[CACHE] [CACHE] Returning cached risk assessment for ${repo_scan_id}`);
             return NextResponse.json({
                 cached: true,
                 message: 'Risk assessment already exists',
@@ -101,21 +101,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`🎯 [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
+        console.log(`[TARGET] [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
 
         // 7. Run risk classification with Constraint Engine validation
         const result = classifyRiskFull(llmAnalysis);
 
-        console.log(`✅ [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
+        console.log(`[SUCCESS] [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
         console.log(`   Articles matched: ${result.matched_annex_iii_articles.length}`);
         console.log(`   Key findings: ${result.key_findings.length}`);
         if (result.constraint_validation?.was_overridden) {
-            console.log(`   ⚖️ Constraint Override: ${result.constraint_validation.override_reason}`);
+            console.log(`   [LEGAL] Constraint Override: ${result.constraint_validation.override_reason}`);
         }
 
         // 8. Generate Tailored Questions (Feature 7)
         // 8. Generate Tailored Questions (Feature 7)
-        console.log('🤖 [AI] Generating tailored verification questions...');
+        console.log('[AI] [AI] Generating tailored verification questions...');
 
         let tailoredQuestions: { id: string; question: string; type: string }[] = [];
         try {
@@ -135,14 +135,14 @@ export async function POST(request: NextRequest) {
                 analysisForGroq,
                 llmAnalysis.repo_scan.repo_name
             );
-            console.log(`✅ [AI] Generated ${tailoredQuestions.length} tailored questions`);
+            console.log(`[SUCCESS] [AI] Generated ${tailoredQuestions.length} tailored questions`);
         } catch (groqError) {
-            console.error('⚠️ [AI] Failed to generate tailored questions (continuing workflow):', groqError);
+            console.error('[WARN] [AI] Failed to generate tailored questions (continuing workflow):', groqError);
             tailoredQuestions = [];
         }
 
         // 9. Store assessment in database
-        console.log('💾 [DB] Saving assessment to database...');
+        console.log('[DB] [DB] Saving assessment to database...');
         let assessment;
         try {
             assessment = await prisma.riskAssessment.create({
@@ -165,9 +165,9 @@ export async function POST(request: NextRequest) {
                     manual_review_reason: result.manual_review_reason,
                 },
             });
-            console.log('✅ [DB] Assessment saved successfully with ID:', assessment.id);
+            console.log('[SUCCESS] [DB] Assessment saved successfully with ID:', assessment.id);
         } catch (dbError) {
-            console.error('❌ [DB] Failed to save with tailored_questions. Retrying without...', dbError);
+            console.error('[ERROR] [DB] Failed to save with tailored_questions. Retrying without...', dbError);
             // Fallback: Try saving without tailored_questions (in case schema migration failed)
             assessment = await prisma.riskAssessment.create({
                 data: {
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
                     manual_review_reason: result.manual_review_reason,
                 },
             });
-            console.log('✅ [DB] Fallback save successful with ID:', assessment.id);
+            console.log('[SUCCESS] [DB] Fallback save successful with ID:', assessment.id);
         }
 
         // 10. Update AI System with risk classification
@@ -236,17 +236,17 @@ export async function POST(request: NextRequest) {
                         }
                     });
 
-                    console.log(`✅ [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
+                    console.log(`[SUCCESS] [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
                     if (classificationChanged) {
-                        console.log(`📜 [HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
+                        console.log(`[HISTORY] [HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
                     }
                 }
             }
         } catch (aiSystemError) {
-            console.error('⚠️ [AI_SYSTEM] Failed to update AI System (non-fatal):', aiSystemError);
+            console.error('[WARN] [AI_SYSTEM] Failed to update AI System (non-fatal):', aiSystemError);
         }
 
-        console.log('🚀 [API] Returning successful response');
+        console.log('[START] [API] Returning successful response');
         // 9. Return assessment with constraint validation data
         return NextResponse.json({
             cached: false,
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error) {
-        console.error('❌ [API] Critical Risk classification error:', error);
+        console.error('[ERROR] [API] Critical Risk classification error:', error);
         if (error instanceof Error) {
             console.error('Stack:', error.stack);
         }

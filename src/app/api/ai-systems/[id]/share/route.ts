@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
         const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://lexoculus.com'}/status/${shareId}`;
 
-        console.log(`✅ [SHARE] Enabled sharing for ${aiSystem.name}: ${shareUrl}`);
+        console.log(`[SUCCESS] [SHARE] Enabled sharing for ${aiSystem.name}: ${shareUrl}`);
 
         return NextResponse.json({
             share_id: shareId,
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
             data: { share_enabled: false }
         });
 
-        console.log(`🔒 [SHARE] Disabled sharing for ${aiSystem.name}`);
+        console.log(`[SECURE] [SHARE] Disabled sharing for ${aiSystem.name}`);
 
         return NextResponse.json({
             share_enabled: false,

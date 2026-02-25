@@ -1065,7 +1065,7 @@ export function getScanSummary(result: DependencyScanResult): string {
     summary += `\nConfidence: ${(result.confidence_score * 100).toFixed(0)}%`;
 
     if (result.high_risk_libraries.length > 0) {
-        summary += `\n⚠️ High-risk libraries: ${result.high_risk_libraries.join(', ')}`;
+        summary += `\n[WARNING] High-risk libraries: ${result.high_risk_libraries.join(', ')}`;
     }
 
     if (result.detected_model_files.length > 0) {

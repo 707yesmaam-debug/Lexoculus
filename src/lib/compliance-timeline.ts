@@ -212,7 +212,7 @@ export function calculateComplianceTimeline(
     let urgentAction = 'No immediate compliance action required.';
     if (critical > 0) {
         const criticalDl = applicableDeadlines.find(d => d.status === 'critical')!;
-        urgentAction = `⚠️ CRITICAL: "${criticalDl.title}" deadline in ${criticalDl.days_remaining} days (${criticalDl.article}).`;
+        urgentAction = `[CRITICAL]: "${criticalDl.title}" deadline in ${criticalDl.days_remaining} days (${criticalDl.article}).`;
     } else if (upcoming > 0) {
         const upcomingDl = applicableDeadlines.find(d => d.status === 'upcoming')!;
         urgentAction = `"${upcomingDl.title}" deadline in ${upcomingDl.days_remaining} days (${upcomingDl.article}).`;

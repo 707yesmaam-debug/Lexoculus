@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingAnalysis) {
-            console.log(`📦 [CACHE] Returning cached analysis for ${repo_scan_id}`);
+            console.log(`[CACHE] [CACHE] Returning cached analysis for ${repo_scan_id}`);
             console.log(`   Analyzed at: ${existingAnalysis.analyzed_at}`);
             console.log(`   Model used: ${existingAnalysis.llm_model_used}`);
 

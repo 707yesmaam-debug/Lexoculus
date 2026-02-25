@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
                     last_scanned_at: new Date(),
                 }
             });
-            console.log(`✅ [AI_SYSTEM] Updated: ${systemName} with new scan`);
+            console.log(`[SUCCESS] [AI_SYSTEM] Updated: ${systemName} with new scan`);
         } else {
             // Create new AI System entry
             const newSystem = await prisma.aiSystem.create({
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
                 }
             });
             aiSystemId = newSystem.id;
-            console.log(`✅ [AI_SYSTEM] Auto-created: ${systemName}`);
+            console.log(`[SUCCESS] [AI_SYSTEM] Auto-created: ${systemName}`);
         }
 
         // Phase 1.2: Create scan history entry
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
                 // risk_classification will be updated after classification runs
             }
         });
-        console.log(`📜 [HISTORY] Added scan to history for ${systemName}`);
+        console.log(`[HISTORY] [HISTORY] Added scan to history for ${systemName}`);
 
         // QUOTA: Increment usage counter
         await incrementUsage(user.id, 'scan');

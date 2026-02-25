@@ -6,9 +6,9 @@ const mode = (process.env.DODO_PAYMENTS_MODE as 'live_mode' | 'test_mode') ||
 
 // Diagnostic logging
 if (!apiKey) {
-    console.warn('⚠️ [Dodo Config] API Key is MISSING');
+    console.warn('[WARN] [Dodo Config] API Key is MISSING');
 } else {
-    console.log(`✅ [Dodo Config] Mode: ${mode}`);
+    console.log(`[SUCCESS] [Dodo Config] Mode: ${mode}`);
     console.log(`🔑 [Dodo Config] Key Prefix: ${apiKey.substring(0, 8)}...`);
 }
 

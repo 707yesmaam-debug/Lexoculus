@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             }
         });
 
-        console.log(`✅ [AI_SYSTEM] Updated: ${updated.name} (${updated.id})`);
+        console.log(`[SUCCESS] [AI_SYSTEM] Updated: ${updated.name} (${updated.id})`);
 
         return NextResponse.json({
             ai_system: updated,
@@ -165,7 +165,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
             data: { status: 'archived' }
         });
 
-        console.log(`🗑️ [AI_SYSTEM] Archived: ${existing.name} (${id})`);
+        console.log(`🗑 [AI_SYSTEM] Archived: ${existing.name} (${id})`);
 
         return NextResponse.json({
             message: 'AI system archived successfully'

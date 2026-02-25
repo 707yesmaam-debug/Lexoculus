@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        console.log(`🚨 [ESCALATE] Assessment ${final_risk_assessment_id} flagged for manual review`);
+        console.log(`[ALERT] [ESCALATE] Assessment ${final_risk_assessment_id} flagged for manual review`);
 
         // 6. Return confirmation
         return NextResponse.json({

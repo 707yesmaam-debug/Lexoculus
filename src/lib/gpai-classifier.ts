@@ -570,7 +570,7 @@ function generateGPAISummary(
     }
 
     if (hasSystemicRisk) {
-        parts.push('⚠️ Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply.');
+        parts.push('[WARNING] Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply.');
     }
 
     if (openSourceException) {

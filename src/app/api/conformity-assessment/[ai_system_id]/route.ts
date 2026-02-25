@@ -200,7 +200,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             },
         });
 
-        console.log(`✅ [CONFORMITY] Created assessment for AI system ${aiSystem.name}: ${pathway.applicable_module}`);
+        console.log(`[SUCCESS] [CONFORMITY] Created assessment for AI system ${aiSystem.name}: ${pathway.applicable_module}`);
 
         return NextResponse.json({
             assessment,
@@ -285,7 +285,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             },
         });
 
-        console.log(`✅ [CONFORMITY] Step ${step_id} → ${stepStatus} (${completionPercent}% complete)`);
+        console.log(`[SUCCESS] [CONFORMITY] Step ${step_id} → ${stepStatus} (${completionPercent}% complete)`);
 
         return NextResponse.json({
             assessment: updated,

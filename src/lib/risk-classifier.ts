@@ -796,7 +796,7 @@ export function classifyRiskFull(
         }
 
         if (gpaiResult.is_systemic_risk) {
-            gpaiFindings.push('⚠️ Uses systemic risk GPAI models (≥10^25 FLOPs)');
+            gpaiFindings.push('[WARNING] Uses systemic risk GPAI models (≥10^25 FLOPs)');
         }
 
         if (gpaiResult.open_source_exception) {

@@ -29,7 +29,7 @@ export async function analyzeDiffWithLLM(
     // Safety check: specific file types only to save tokens/time
     // We already filter in the webhook, but good to be safe.
     if (!apiKey) {
-        console.warn('⚠️ [GUARDIAN] No GROQ_API_KEY found. Skipping Intelligent Analysis.');
+        console.warn('[WARN] [GUARDIAN] No GROQ_API_KEY found. Skipping Intelligent Analysis.');
         return {
             risk_found: false,
             risk_tier: 'NONE',
@@ -124,7 +124,7 @@ ${truncatedDiff}
         };
 
     } catch (error) {
-        console.error('❌ [GUARDIAN AGENT] Failed:', error);
+        console.error('[ERROR] [GUARDIAN AGENT] Failed:', error);
         return {
             risk_found: false,
             risk_tier: 'NONE',

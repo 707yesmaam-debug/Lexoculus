@@ -161,20 +161,20 @@ function buildTripwireComment(result: TripwireResult): string {
         const highestRisk = result.highest_risk;
 
         if (highestRisk === 'UNACCEPTABLE') {
-            lines.push('## 🚫 ComplianceAI: PROHIBITED Risk Detected');
+            lines.push('## [PROHIBITED] ComplianceAI: Risk Detected');
             lines.push('> **Critical Alert**: This PR introduces capabilities banned under EU AI Act Article 5.');
         } else if (highestRisk === 'HIGH_RISK') {
-            lines.push('## ⚠️ ComplianceAI: HIGH Risk Detected');
+            lines.push('## [HIGH RISK] ComplianceAI: Risk Detected');
             lines.push('> **Warning**: This PR introduces High-Risk AI capabilities (Annex III).');
         } else if (highestRisk === 'LIMITED_RISK') {
-            lines.push('## ℹ️ ComplianceAI: Transparency Requirements');
+            lines.push('## [NOTICE] ComplianceAI: Transparency Requirements');
             lines.push('> **Notice**: This PR introduces Limited Risk AI capabilities.');
         } else {
             // Should technically not happen if match found, but fallback
-            lines.push('## 🔍 ComplianceAI: Risk Detected');
+            lines.push('## [RISK] ComplianceAI: Risk Detected');
         }
     } else {
-        lines.push('## ✅ ComplianceAI: Passed');
+        lines.push('## [PASSED] ComplianceAI: Passed');
         lines.push('> No specific EU AI Act risks detected in this PR.');
         // If it was just irrelevant files, we might not even post this default message 
         // to reduce noise, but for now we'll be explicit.
@@ -184,7 +184,7 @@ function buildTripwireComment(result: TripwireResult): string {
     lines.push('');
 
     // Tripwire Findings
-    lines.push('### 🕸️ Tripwire Findings');
+    lines.push('### [TRIPWIRE] Findings');
     lines.push('The following risk patterns were detected in your changes:');
     lines.push('');
     lines.push('| Risk Level | Category | File | Pattern |');
@@ -193,10 +193,10 @@ function buildTripwireComment(result: TripwireResult): string {
     for (const detection of result.detections) {
         // Format risk level for table
         const riskEmoji = {
-            'UNACCEPTABLE': '🚫 PROHIBITED',
-            'HIGH_RISK': '⚠️ HIGH',
-            'LIMITED_RISK': 'ℹ️ LIMITED',
-            'MINIMAL_RISK': '✅ LOW'
+            'UNACCEPTABLE': '[PROHIBITED]',
+            'HIGH_RISK': '[HIGH]',
+            'LIMITED_RISK': '[LIMITED]',
+            'MINIMAL_RISK': '[LOW]'
         }[detection.risk] || detection.risk;
 
         lines.push(`| ${riskEmoji} | ${detection.category} | \`${detection.file}\` | \`${detection.heuristic_match}\` |`);
@@ -204,7 +204,7 @@ function buildTripwireComment(result: TripwireResult): string {
 
     // Action Items
     lines.push('');
-    lines.push('### 🛡️ Recommended Actions');
+    lines.push('### [ACTION] Recommended Actions');
     lines.push('');
     if (result.highest_risk === 'UNACCEPTABLE') {
         lines.push('1. **BLOCKED**: You cannot merge this PR.');
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
         // SECURITY: Webhook signature verification is MANDATORY
         const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
         if (!webhookSecret) {
-            console.error('❌ [WEBHOOK] GITHUB_WEBHOOK_SECRET not configured - rejecting request');
+            console.error('[ERROR] [WEBHOOK] GITHUB_WEBHOOK_SECRET not configured - rejecting request');
             return NextResponse.json(
                 { error: 'Webhook endpoint not properly configured' },
                 { status: 500 }
@@ -333,11 +333,11 @@ export async function POST(request: NextRequest) {
 
         for (const [i, variation] of payloadVariations.entries()) {
             if (verifyWebhookSignature(variation, signature, secretToVerify)) {
-                console.log(`[WEBHOOK] ✅ Verified with Derived Secret (Variation ${i})`);
+                console.log(`[WEBHOOK] [SUCCESS] Verified with Derived Secret (Variation ${i})`);
                 verified = true; method = 'derived'; break;
             }
             if (verifyWebhookSignature(variation, signature, webhookSecret)) {
-                console.log(`[WEBHOOK] ✅ Verified with Master Secret (Variation ${i})`);
+                console.log(`[WEBHOOK] [SUCCESS] Verified with Master Secret (Variation ${i})`);
                 verified = true; method = 'master'; break;
             }
         }
@@ -345,7 +345,7 @@ export async function POST(request: NextRequest) {
         if (!verified) {
             console.log(`[WEBHOOK] Primary secret verification failed.`);
             // ... error handling
-            console.error('❌ [WEBHOOK] Invalid signature - Secret mismatch');
+            console.error('[ERROR] [WEBHOOK] Invalid signature - Secret mismatch');
             console.log(`[WEBHOOK] Payload start: ${rawBody.substring(0, 50)}...`);
             return NextResponse.json(
                 { error: 'Invalid webhook signature', debug: { received: sigReceived, expected_derived: sigDerived } },
@@ -357,7 +357,7 @@ export async function POST(request: NextRequest) {
 
         // Handle 'ping' events (sent when creating a webhook)
         if (event === 'ping') {
-            console.log('✅ [WEBHOOK] Ping received!');
+            console.log('[SUCCESS] [WEBHOOK] Ping received!');
             return NextResponse.json({ message: 'Pong!' });
         }
 
@@ -373,7 +373,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ message: 'Action ignored' });
         }
 
-        console.log(`🔍 [TRIPWIRE] Scanning PR #${prPayload.number} in ${prPayload.repository.full_name}`);
+        console.log(`[SCAN] [TRIPWIRE] Scanning PR #${prPayload.number} in ${prPayload.repository.full_name}`);
 
         // Find the user who installed this for this repo
         const installation = await prisma.gitHubActionInstall.findFirst({
@@ -387,7 +387,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!installation) {
-            console.log(`⚠️ [TRIPWIRE] No active installation found for ${prPayload.repository.full_name}`);
+            console.log(`[WARN] [TRIPWIRE] No active installation found for ${prPayload.repository.full_name}`);
             return NextResponse.json({ message: 'No installation found' });
         }
 
@@ -398,7 +398,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (!githubConnection?.github_oauth_token) {
-            console.error(`❌ [TRIPWIRE] No GitHub token for user ${installation.user_id} (${installation.user.email})`);
+            console.error(`[ERROR] [TRIPWIRE] No GitHub token for user ${installation.user_id} (${installation.user.email})`);
             return NextResponse.json(
                 { error: 'GitHub token not found' },
                 { status: 500 }
@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
         try {
             decryptedToken = decrypt(githubConnection.github_oauth_token);
         } catch (decryptError) {
-            console.error(`❌ [TRIPWIRE] Failed to decrypt GitHub token for user ${installation.user_id}`);
+            console.error(`[ERROR] [TRIPWIRE] Failed to decrypt GitHub token for user ${installation.user_id}`);
             return NextResponse.json(
                 { error: 'Failed to access GitHub credentials' },
                 { status: 500 }
@@ -435,20 +435,20 @@ export async function POST(request: NextRequest) {
         // 3. Run Tripwire Engine (Deterministic / Keyword)
         let tripwireResult = scanDiffs(fileChanges);
 
-        console.log(`⚡ [TRIPWIRE] Fast Scan Result: Run=${tripwireResult.triggered}, Risks=${tripwireResult.detections.length}, Highest=${tripwireResult.highest_risk}`);
+        console.log(`[FAST] [TRIPWIRE] Fast Scan Result: Run=${tripwireResult.triggered}, Risks=${tripwireResult.detections.length}, Highest=${tripwireResult.highest_risk}`);
 
         // 3.5 Intelligent Guardian (LLM Analysis)
         // Run if:
         // A) Tripwire was triggered (files are relevant)
         // B) Tripwire did NOT find UNACCEPTABLE risk (if it did, we are blocking anyway, no need to waste tokens)
         if (tripwireResult.triggered && tripwireResult.highest_risk !== 'UNACCEPTABLE') {
-            console.log(`🧠 [GUARDIAN] Running Intelligent Analysis on Diff...`);
+            console.log(`[LLM] [GUARDIAN] Running Intelligent Analysis on Diff...`);
 
             const fileNames = fileChanges.map(f => f.filename);
             const llmResult = await analyzeDiffWithLLM(diffText, fileNames);
 
             if (llmResult.risk_found && llmResult.risk_tier !== 'NONE' && llmResult.risk_tier !== 'MINIMAL_RISK') {
-                console.log(`🚨 [GUARDIAN] LLM Detected Hidden Risk: ${llmResult.risk_tier}`);
+                console.log(`[ALERT] [GUARDIAN] LLM Detected Hidden Risk: ${llmResult.risk_tier}`);
                 console.log(`   Reason: ${llmResult.reasoning}`);
 
                 // Upgrade the result!
@@ -473,11 +473,11 @@ export async function POST(request: NextRequest) {
                     snippet: `${llmResult.reasoning}\n\nFlagged: ${llmResult.flagged_snippets.join(', ')}`
                 });
             } else {
-                console.log(`✅ [GUARDIAN] LLM confirmed no additional risks.`);
+                console.log(`[SUCCESS] [GUARDIAN] LLM confirmed no additional risks.`);
             }
         }
 
-        console.log(`✅ [FINAL RESULT] Risk=${tripwireResult.highest_risk}, Blocked=${tripwireResult.highest_risk === 'UNACCEPTABLE'}`);
+        console.log(`[SUCCESS] [FINAL RESULT] Risk=${tripwireResult.highest_risk}, Blocked=${tripwireResult.highest_risk === 'UNACCEPTABLE'}`);
 
         // 4. Store Scan Result (Legacy table adaptation)
         await prisma.pRScan.create({
@@ -507,7 +507,7 @@ export async function POST(request: NextRequest) {
                 commentBody,
                 decryptedToken
             );
-            console.log(`💬 [TRIPWIRE] Posted comment on PR #${prPayload.number}`);
+            console.log(`[MSG] [TRIPWIRE] Posted comment on PR #${prPayload.number}`);
         } else {
             console.log(`zzz [TRIPWIRE] No risks found or irrelevant files. Sleeping.`);
         }

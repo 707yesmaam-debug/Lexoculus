@@ -68,7 +68,7 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<string> {
             }
         });
 
-        console.log(`📋 [AUDIT] ${entry.action} on ${entry.entityType} by ${entry.userId}`);
+        console.log(`[AUDIT] [AUDIT] ${entry.action} on ${entry.entityType} by ${entry.userId}`);
 
         return log.id;
     } catch (error) {

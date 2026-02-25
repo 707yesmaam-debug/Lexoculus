@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
             .update(JSON.stringify(auditPackage))
             .digest('hex');
 
-        console.log(`📦 [AUDIT EXPORT] Generated package for ${aiSystem.name} (hash: ${packageHash.slice(0, 12)}...)`);
+        console.log(`[CACHE] [AUDIT EXPORT] Generated package for ${aiSystem.name} (hash: ${packageHash.slice(0, 12)}...)`);
 
         // Return as HTML document for printing/PDF
         const html = generateAuditPackageHtml(auditPackage, packageHash);
@@ -241,7 +241,7 @@ function generateAuditPackageHtml(pkg: AuditPackage, hash: string): string {
 </head>
 <body>
     <div class="header">
-        <h1>🔒 EU AI Act Compliance Audit Package</h1>
+        <h1>EU AI Act Compliance Audit Package</h1>
         <p style="font-size: 14pt;"><strong>${pkg.system.name}</strong></p>
         <p>Export Date: ${new Date(pkg.exportedAt).toLocaleString()}</p>
     </div>
@@ -290,7 +290,7 @@ function generateAuditPackageHtml(pkg: AuditPackage, hash: string): string {
             <td>${formatDate(scan.scannedAt)}</td>
             <td>${scan.riskClassification || 'N/A'}</td>
             <td>${scan.riskScore !== null ? scan.riskScore : 'N/A'}</td>
-            <td>${scan.classificationChanged ? '⚠️ Yes' : 'No'}</td>
+            <td>${scan.classificationChanged ? 'Yes (Changed)' : 'No'}</td>
         </tr>
         `).join('')}
     </table>
@@ -305,7 +305,7 @@ function generateAuditPackageHtml(pkg: AuditPackage, hash: string): string {
             <td>${e.type}</td>
             <td>${e.title}</td>
             <td>${formatDate(e.collectedAt)}</td>
-            <td>${e.verified ? '✅ Yes' : 'No'}</td>
+            <td>${e.verified ? 'Yes' : 'No'}</td>
             <td><code>${e.hash.slice(0, 16)}...</code></td>
         </tr>
         `).join('')}
@@ -328,7 +328,7 @@ function generateAuditPackageHtml(pkg: AuditPackage, hash: string): string {
     ` : '<p>No audit logs available.</p>'}
 
     <div class="integrity">
-        <h3>📋 Package Integrity Verification</h3>
+        <h3>[AUDIT] Package Integrity Verification</h3>
         <p><strong>SHA-256 Hash:</strong></p>
         <code>${hash}</code>
         <p style="margin-top: 10pt;"><strong>Exported At:</strong> ${pkg.exportedAt}</p>

@@ -319,7 +319,7 @@ export async function grantProSubscription(
         userId,
         durationDays,
         reason
-    }, `✅ [SUBSCRIPTION] Granted Pro to ${userId}`);
+    }, `[SUCCESS] [SUBSCRIPTION] Granted Pro to ${userId}`);
 }
 
 /**
@@ -341,7 +341,7 @@ export async function revokeElevatedSubscription(userId: string): Promise<void> 
         },
     });
 
-    logger.info({ event: 'subscription_revoke', userId }, `🚫 [SUBSCRIPTION] Revoked elevated subscription from ${userId}`);
+    logger.info({ event: 'subscription_revoke', userId }, `[BLOCKED] [SUBSCRIPTION] Revoked elevated subscription from ${userId}`);
 }
 
 // =============================================================================
@@ -364,7 +364,7 @@ export async function createCheckoutSession(
         const productId = billingCycle === 'yearly' ? DODO_PRODUCT_ID_PRO_YEARLY : DODO_PRODUCT_ID_PRO;
 
         if (!productId) {
-            logger.warn(`⚠️ [DODO] No product ID configured for ${billingCycle} cycle`);
+            logger.warn(`[WARN] [DODO] No product ID configured for ${billingCycle} cycle`);
             return { url: null, error: `Payment for ${billingCycle} plan is not configured yet.` };
         }
 
@@ -388,7 +388,7 @@ export async function createCheckoutSession(
 
         return { url: session.checkout_url ?? null };
     } catch (error: any) {
-        logger.error({ error: error.message, userId }, '❌ [DODO] Failed to create checkout session');
+        logger.error({ error: error.message, userId }, '[ERROR] [DODO] Failed to create checkout session');
         return { url: null, error: error.message || 'Failed to initiate checkout.' };
     }
 }
@@ -411,7 +411,7 @@ export async function getCustomerPortalUrl(
         const session = await dodo.customers.customerPortal.create(subscription.payment_customer_id);
         return { url: session.link };
     } catch (error: any) {
-        logger.error({ error: error.message, userId }, '❌ [DODO] Failed to create portal session');
+        logger.error({ error: error.message, userId }, '[ERROR] [DODO] Failed to create portal session');
         return { url: null, error: 'Failed to access billing portal.' };
     }
 }

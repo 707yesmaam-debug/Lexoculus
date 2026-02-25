@@ -86,12 +86,12 @@ jobs:
           BLOCKED=$(echo $RESPONSE | jq -r '.blocked // false')
           
           # Output summary to PR
-          echo "## 👁️ LexOculus Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "## [LEXOCULUS] Audit Results" >> $GITHUB_STEP_SUMMARY
           echo "**Risk Level:** $RISK_LEVEL" >> $GITHUB_STEP_SUMMARY
           echo "**Blocked:** $BLOCKED" >> $GITHUB_STEP_SUMMARY
 
           if [ "$BLOCKED" = "true" ]; then
-            echo "❌ PR blocked due to UNACCEPTABLE risk under EU AI Act"
+            echo "[BLOCKED] PR blocked due to UNACCEPTABLE risk under EU AI Act"
             exit 1
           fi
 `;

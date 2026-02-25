@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingFinal) {
-            console.log(`📦 [CACHE] Returning cached final assessment for ${repo_scan_id}`);
+            console.log(`[CACHE] [CACHE] Returning cached final assessment for ${repo_scan_id}`);
             return NextResponse.json({
                 cached: true,
                 message: 'Final assessment already exists',
@@ -95,12 +95,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`🔍 [CONTEXT] Verifying context for ${assessment.repo_scan.repo_owner}/${assessment.repo_scan.repo_name}`);
+        console.log(`[SCAN] [CONTEXT] Verifying context for ${assessment.repo_scan.repo_owner}/${assessment.repo_scan.repo_name}`);
 
         // 7. Run context refinement
         const result = refineWithContext(assessment, context_answers as ContextAnswers);
 
-        console.log(`✅ [CONTEXT] Final classification: ${result.final_risk_classification} (score: ${result.final_risk_score})`);
+        console.log(`[SUCCESS] [CONTEXT] Final classification: ${result.final_risk_classification} (score: ${result.final_risk_score})`);
         console.log(`   Evidence items: ${result.evidence_items.length}`);
         console.log(`   Approved for report: ${result.approved_for_report}`);
 

@@ -689,23 +689,23 @@ function generateNarrative(
 
     // Mitigations
     lines.push('**Compliance Measures:**');
-    if (context.has_human_oversight) lines.push('✅ Human oversight in place');
-    else lines.push('❌ Human oversight missing');
+    if (context.has_human_oversight) lines.push('[Met] Human oversight in place');
+    else lines.push('[Missing] Human oversight missing');
 
-    if (context.has_testing_procedure) lines.push('✅ Testing procedures documented');
-    else lines.push('❌ Testing procedures not documented');
+    if (context.has_testing_procedure) lines.push('[Met] Testing procedures documented');
+    else lines.push('[Missing] Testing procedures not documented');
 
-    if (context.has_transparency_statement) lines.push('✅ Transparency statement published');
-    else lines.push('⏳ Transparency statement pending');
+    if (context.has_transparency_statement) lines.push('[Met] Transparency statement published');
+    else lines.push('[Pending] Transparency statement pending');
     lines.push('');
 
     // Evidence
     lines.push('**Verified Evidence:**');
-    if (context.has_architecture_diagram) lines.push('✅ Architecture diagram provided');
-    if (context.has_human_policy_document) lines.push('✅ Human oversight policy provided');
-    if (context.has_data_policy_document) lines.push('✅ Data governance policy provided');
+    if (context.has_architecture_diagram) lines.push('[Met] Architecture diagram provided');
+    if (context.has_human_policy_document) lines.push('[Met] Human oversight policy provided');
+    if (context.has_data_policy_document) lines.push('[Met] Data governance policy provided');
     if (!context.has_architecture_diagram && !context.has_human_policy_document && !context.has_data_policy_document) {
-        lines.push('⏳ No documents uploaded to evidence vault');
+        lines.push('[Pending] No documents uploaded to evidence vault');
     }
     lines.push('');
 

@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        console.log(`✅ [INSTALL] GitHub Action enabled for ${repo_full_name}`);
+        console.log(`[SUCCESS] [INSTALL] GitHub Action enabled for ${repo_full_name}`);
 
         return NextResponse.json({
             success: true,
@@ -219,7 +219,7 @@ export async function DELETE(request: NextRequest) {
             },
         });
 
-        console.log(`🚫 [INSTALL] GitHub Action disabled for ${repo_full_name}`);
+        console.log(`[BLOCKED] [INSTALL] GitHub Action disabled for ${repo_full_name}`);
 
         return NextResponse.json({
             success: true,
