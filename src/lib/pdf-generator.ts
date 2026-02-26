@@ -190,7 +190,7 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
         doc.moveTo(60, yPos).lineTo(535, yPos).lineWidth(1).stroke(BORDER);
         yPos += 15;
 
-        const capabilities = data.capabilities?.detected_capabilities || [];
+        const capabilities = data.capabilities?.capabilities || data.capabilities?.detected_capabilities || [];
         if (capabilities.length === 0) {
             doc.fontSize(11).font('Helvetica').fillColor(GRAY).text('No specific AI capabilities detected during static analysis.', 60, yPos);
             yPos += 30;
