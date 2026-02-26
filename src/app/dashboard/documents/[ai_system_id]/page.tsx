@@ -22,9 +22,11 @@ interface Document {
 interface AiSystem {
     id: string;
     name: string;
+    latest_scan_id?: string;
     latest_scan?: {
         final_risk_assessment?: {
             id: string;
+            repo_scan_id: string;
         }
     }
 }
@@ -124,7 +126,8 @@ export default function DocumentsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
-                    regenerate: true // Always use latest template
+                    repo_scan_id: aiSystem.latest_scan.final_risk_assessment.repo_scan_id,
+                    regenerate: true
                 }),
             });
 
@@ -266,10 +269,8 @@ export default function DocumentsPage() {
                 ) : (
                     <div className="grid gap-4">
                         {/* Official Compliance Report Card */}
-                        <div className="border-2 border-black bg-[#FFF5F0] p-6 mb-4 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF4F00] opacity-10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500 z-0" />
-
-                            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="border-2 border-black bg-[#FFF5F0] p-6 mb-4">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="px-2 py-0.5 bg-black text-white font-mono text-[10px] uppercase tracking-widest">
