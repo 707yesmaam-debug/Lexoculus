@@ -121,11 +121,7 @@ export default function ReportsDashboard() {
                         <div
                             key={system.id}
                             onClick={() => {
-                                if (system.latest_scan_id) {
-                                    router.push(`/dashboard/report/${system.latest_scan_id}`);
-                                } else {
-                                    router.push(`/dashboard/documents/${system.id}`);
-                                }
+                                router.push(`/dashboard/documents/${system.id}`);
                             }}
                             className="border-2 border-black bg-white p-6 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer group"
                         >
@@ -152,7 +148,7 @@ export default function ReportsDashboard() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs font-bold font-mono">
                                     <FileText className="w-3 h-3" />
-                                    VIEW_REPORT
+                                    VIEW_DOCUMENTS
                                 </div>
                             </div>
                         </div>

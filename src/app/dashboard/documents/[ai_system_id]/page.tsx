@@ -22,6 +22,11 @@ interface Document {
 interface AiSystem {
     id: string;
     name: string;
+    latest_scan?: {
+        final_risk_assessment?: {
+            id: string;
+        }
+    }
 }
 
 const DOCUMENT_TYPES = {
@@ -45,6 +50,7 @@ export default function DocumentsPage() {
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [docContent, setDocContent] = useState<string>('');
     const [openingDocId, setOpeningDocId] = useState<string | null>(null);
+    const [generatingReport, setGeneratingReport] = useState(false);
 
 
     useEffect(() => {
@@ -105,6 +111,35 @@ export default function DocumentsPage() {
             console.error('Generation error:', error);
         } finally {
             setGenerating(null);
+        }
+    };
+
+    const generateOfficialReport = async () => {
+        if (!aiSystem?.latest_scan?.final_risk_assessment?.id) return;
+
+        setGeneratingReport(true);
+        try {
+            const res = await fetch('/api/generate-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
+                    regenerate: true // Always use latest template
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.url) {
+                // Trigger download
+                window.open(data.url, '_blank');
+            } else {
+                alert(data.error || 'Failed to generate official report.');
+            }
+        } catch (error) {
+            console.error('Report generation error:', error);
+            alert('Failed to generate official report.');
+        } finally {
+            setGeneratingReport(false);
         }
     };
 
@@ -226,6 +261,59 @@ export default function DocumentsPage() {
                     </div>
                 ) : (
                     <div className="grid gap-4">
+                        {/* Official Compliance Report Card */}
+                        <div className="border-2 border-black bg-[#FFF5F0] p-6 mb-4 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF4F00] opacity-10 rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500" />
+
+                            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="px-2 py-0.5 bg-black text-white font-mono text-[10px] uppercase tracking-widest">
+                                            OFFICIAL_RECORD
+                                        </div>
+                                    </div>
+                                    <h2 className="font-serif text-2xl font-bold text-black mb-1">
+                                        Comprehensive Compliance Report
+                                    </h2>
+                                    <p className="font-mono text-xs text-[#666] max-w-xl">
+                                        Consolidated PDF containing the final risk assessment, capabilities analysis, and all evidentiary responses mapped to the EU AI Act.
+                                    </p>
+                                </div>
+
+                                <div className="flex-shrink-0 w-full md:w-auto">
+                                    {aiSystem?.latest_scan?.final_risk_assessment?.id ? (
+                                        <Button
+                                            onClick={generateOfficialReport}
+                                            disabled={generatingReport}
+                                            className="w-full bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
+                                        >
+                                            {generatingReport ? (
+                                                <>
+                                                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                                                    GENERATING_PDF...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Download className="w-4 h-4 mr-2" />
+                                                    GENERATE_MASTER_REPORT
+                                                </>
+                                            )}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            disabled
+                                            className="w-full bg-[#E5E5E5] text-[#999] rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6"
+                                        >
+                                            <AlertCircle className="w-4 h-4 mr-2" />
+                                            REQUIRES_VERIFICATION
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Individual Documents Grid */}
+                        <h3 className="font-serif text-xl font-bold mt-4 mb-2">Individual Artifacts</h3>
                         {Object.entries(DOCUMENT_TYPES).map(([docType, info]) => {
                             const doc = getDocumentForType(docType);
                             const isGenerating = generating === docType;
