@@ -169,24 +169,17 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Generate Report] Upload successful: ${path}`);
 
-        // 9. Save to database (upsert to handle re-generation for same file name)
-        const report = await prisma.complianceReport.upsert({
+        // 9. Clean up any conflicting report with same filename (prevents unique constraint violation)
+        await prisma.complianceReport.deleteMany({
             where: {
-                final_risk_assessment_id,
+                user_id: user.id,
+                file_name: fileName,
             },
-            update: {
-                final_risk_assessment_id,
-                file_path: path,
-                file_url: url,
-                file_size: size,
-                risk_classification: assessment.final_risk_classification,
-                risk_score: assessment.final_risk_score,
-                digital_signature: signature,
-                signed_at: timestamp,
-                version: { increment: 1 },
-                expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            },
-            create: {
+        });
+
+        // 10. Save to database
+        const report = await prisma.complianceReport.create({
+            data: {
                 id: reportId,
                 final_risk_assessment_id,
                 user_id: user.id,
