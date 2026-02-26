@@ -107,6 +107,7 @@ export default function ReportGeneratorPage() {
                 body: JSON.stringify({
                     final_risk_assessment_id: assessment.final_risk_assessment_id,
                     repo_scan_id,
+                    regenerate: true,
                 }),
             });
 

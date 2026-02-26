@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { final_risk_assessment_id, repo_scan_id } = await req.json();
+        const { final_risk_assessment_id, repo_scan_id, regenerate } = await req.json();
 
         if (!final_risk_assessment_id || !repo_scan_id) {
             return NextResponse.json(
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
             where: { final_risk_assessment_id },
         });
 
-        if (existingReport) {
+        if (existingReport && !regenerate) {
             return NextResponse.json({
                 status: 'exists',
                 report_id: existingReport.id,
@@ -64,6 +64,14 @@ export async function POST(req: NextRequest) {
                 file_size: existingReport.file_size,
                 generated_at: existingReport.generated_at,
                 message: 'Report already exists',
+            });
+        }
+
+        // 2b. If regenerating, delete old database record
+        if (existingReport && regenerate) {
+            console.log(`[Generate Report] Deleting old report record: ${existingReport.id}`);
+            await prisma.complianceReport.delete({
+                where: { id: existingReport.id }
             });
         }
 
