@@ -260,11 +260,7 @@ export default function ContextVerifierPage() {
                                 onClick={() => {
                                     // CLEAR ACTIVE SCAN STATE to unlock sidebar
                                     localStorage.removeItem('last_active_scan_id');
-                                    if (finalAssessment?.ai_system_id) {
-                                        router.push(`/dashboard/documents/${finalAssessment.ai_system_id}`);
-                                    } else {
-                                        router.push(`/dashboard/report/${repo_scan_id}`);
-                                    }
+                                    router.push(`/dashboard/report/${repo_scan_id}`);
                                 }}
                                 className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-black hover:bg-[#FF4F00] text-white font-mono text-xs uppercase tracking-widest transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
                             >
