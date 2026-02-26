@@ -87,14 +87,22 @@ function ScannerPageContent() {
                 body: JSON.stringify({ repo_url: repoUrl }),
             });
 
-            const data = await response.json();
+            let data: any;
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                throw new Error(`Server returned unexpected format (${response.status}): ${text.substring(0, 100)}...`);
+            }
 
             if (!response.ok) {
-                if (data.needsReconnect) {
+                if (data?.needsReconnect) {
                     setIsConnected(false);
                     setStep(1);
                 }
-                throw new Error(data.message || 'Scan failed');
+                throw new Error(data?.message || `Scan failed with status ${response.status}`);
             }
 
             setScanData({

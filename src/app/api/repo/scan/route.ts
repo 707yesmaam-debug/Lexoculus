@@ -6,6 +6,8 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
 import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
 import prisma from '@/lib/prisma';
 
+export const maxDuration = 300; // Allow 5 minutes for large repo cloning.
+
 interface ScanRequestBody {
     repo_url: string;
 }
