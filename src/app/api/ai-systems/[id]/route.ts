@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 interface RouteContext {
     params: Promise<{ id: string }>;
 }
