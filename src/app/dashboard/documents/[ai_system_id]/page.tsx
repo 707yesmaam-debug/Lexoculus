@@ -64,7 +64,7 @@ export default function DocumentsPage() {
             const res = await fetch(`/api/ai-systems/${aiSystemId}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
-                setAiSystem(data);
+                setAiSystem(data.ai_system || data);
             }
         } catch (error) {
             console.error('Failed to fetch AI system:', error);
