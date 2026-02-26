@@ -53,12 +53,19 @@ export default function DocumentsPage() {
     const [docContent, setDocContent] = useState<string>('');
     const [openingDocId, setOpeningDocId] = useState<string | null>(null);
     const [generatingReport, setGeneratingReport] = useState(false);
+    const [existingReportUrl, setExistingReportUrl] = useState<string | null>(null);
 
 
     useEffect(() => {
         fetchAiSystem();
         fetchDocuments();
     }, [aiSystemId]);
+
+    useEffect(() => {
+        if (aiSystem?.latest_scan?.final_risk_assessment?.id) {
+            checkExistingReport();
+        }
+    }, [aiSystem]);
 
 
     const fetchAiSystem = async () => {
@@ -116,7 +123,7 @@ export default function DocumentsPage() {
         }
     };
 
-    const generateOfficialReport = async () => {
+    const generateOfficialReport = async (regenerate = false) => {
         if (!aiSystem?.latest_scan?.final_risk_assessment?.id) return;
 
         setGeneratingReport(true);
@@ -127,13 +134,14 @@ export default function DocumentsPage() {
                 body: JSON.stringify({
                     final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
                     repo_scan_id: aiSystem.latest_scan.final_risk_assessment.repo_scan_id,
-                    regenerate: true
+                    regenerate
                 }),
             });
 
             if (res.ok) {
                 const data = await res.json();
                 if (data.file_url) {
+                    setExistingReportUrl(data.file_url);
                     const a = document.createElement('a');
                     a.href = data.file_url;
                     a.target = '_blank';
@@ -153,6 +161,30 @@ export default function DocumentsPage() {
             alert('Failed to generate official report. Please refresh and try again.');
         } finally {
             setGeneratingReport(false);
+        }
+    };
+
+    // Check for existing report on load
+    const checkExistingReport = async () => {
+        if (!aiSystem?.latest_scan?.final_risk_assessment?.id) return;
+        try {
+            const res = await fetch('/api/generate-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
+                    repo_scan_id: aiSystem.latest_scan.final_risk_assessment.repo_scan_id,
+                    regenerate: false
+                }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.file_url && (data.status === 'exists' || data.status === 'complete')) {
+                    setExistingReportUrl(data.file_url);
+                }
+            }
+        } catch (error) {
+            // Silent — just means no cached report
         }
     };
 
@@ -293,23 +325,57 @@ export default function DocumentsPage() {
 
                                 <div className="flex-shrink-0 w-full md:w-auto">
                                     {aiSystem?.latest_scan?.final_risk_assessment?.id ? (
-                                        <Button
-                                            onClick={generateOfficialReport}
-                                            disabled={generatingReport}
-                                            className="w-full bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
-                                        >
-                                            {generatingReport ? (
-                                                <>
-                                                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                                                    GENERATING_PDF...
-                                                </>
-                                            ) : (
-                                                <>
+                                        existingReportUrl ? (
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    onClick={() => {
+                                                        const a = document.createElement('a');
+                                                        a.href = existingReportUrl;
+                                                        a.target = '_blank';
+                                                        a.rel = 'noopener noreferrer';
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        document.body.removeChild(a);
+                                                    }}
+                                                    className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-6 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
+                                                >
                                                     <Download className="w-4 h-4 mr-2" />
-                                                    GENERATE_MASTER_REPORT
-                                                </>
-                                            )}
-                                        </Button>
+                                                    DOWNLOAD_REPORT
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        if (confirm('REGENERATE WARNING:\nThis will generate a fresh compliance report using the latest data.\nThe existing report will be replaced.\n\nContinue?')) {
+                                                            generateOfficialReport(true);
+                                                        }
+                                                    }}
+                                                    disabled={generatingReport}
+                                                    className="text-[#999] hover:text-[#FF4F00] hover:bg-transparent px-2"
+                                                    title="Regenerate from latest data"
+                                                >
+                                                    <RefreshCw className={`w-4 h-4 ${generatingReport ? 'animate-spin' : ''}`} />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                onClick={() => generateOfficialReport(false)}
+                                                disabled={generatingReport}
+                                                className="w-full bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
+                                            >
+                                                {generatingReport ? (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                                                        GENERATING_PDF...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Download className="w-4 h-4 mr-2" />
+                                                        GENERATE_MASTER_REPORT
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )
                                     ) : (
                                         <Button
                                             disabled
