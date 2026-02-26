@@ -205,13 +205,14 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error('[Generate Report] Error:', error);
-        // SECURITY: Only expose error details in development
-        const errorResponse: { error: string; details?: string } = {
+        console.error('[Generate Report] CRITICAL Error Details:', error);
+
+        const errorResponse: { error: string; details?: string; stack?: string } = {
             error: 'Failed to generate report',
+            details: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
         };
-        if (process.env.NODE_ENV === 'development') {
-            errorResponse.details = error instanceof Error ? error.message : 'Unknown error';
-        }
+
         return NextResponse.json(errorResponse, { status: 500 });
     }
 }
