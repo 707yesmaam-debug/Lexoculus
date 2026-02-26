@@ -30,7 +30,11 @@ export async function GET(request: NextRequest, context: RouteContext) {
                     include: {
                         llm_analysis: true,
                         risk_assessment: true,
-                        final_risk_assessment: true,
+                        final_risk_assessment: {
+                            include: {
+                                compliance_report: true,
+                            }
+                        },
                     }
                 }
             }

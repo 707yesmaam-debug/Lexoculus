@@ -27,6 +27,9 @@ interface AiSystem {
         final_risk_assessment?: {
             id: string;
             repo_scan_id: string;
+            compliance_report?: {
+                file_url?: string;
+            } | null;
         }
     }
 }
@@ -61,19 +64,19 @@ export default function DocumentsPage() {
         fetchDocuments();
     }, [aiSystemId]);
 
-    useEffect(() => {
-        if (aiSystem?.latest_scan?.final_risk_assessment?.id) {
-            checkExistingReport();
-        }
-    }, [aiSystem]);
-
 
     const fetchAiSystem = async () => {
         try {
             const res = await fetch(`/api/ai-systems/${aiSystemId}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
-                setAiSystem(data.ai_system || data);
+                const system = data.ai_system || data;
+                setAiSystem(system);
+                // Check if a compliance report already exists
+                const reportUrl = system?.latest_scan?.final_risk_assessment?.compliance_report?.file_url;
+                if (reportUrl) {
+                    setExistingReportUrl(reportUrl);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch AI system:', error);
@@ -164,29 +167,6 @@ export default function DocumentsPage() {
         }
     };
 
-    // Check for existing report on load
-    const checkExistingReport = async () => {
-        if (!aiSystem?.latest_scan?.final_risk_assessment?.id) return;
-        try {
-            const res = await fetch('/api/generate-report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
-                    repo_scan_id: aiSystem.latest_scan.final_risk_assessment.repo_scan_id,
-                    regenerate: false
-                }),
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.file_url && (data.status === 'exists' || data.status === 'complete')) {
-                    setExistingReportUrl(data.file_url);
-                }
-            }
-        } catch (error) {
-            // Silent — just means no cached report
-        }
-    };
 
     const viewDocument = async (doc: Document) => {
         setOpeningDocId(doc.id);
