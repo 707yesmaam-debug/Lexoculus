@@ -134,7 +134,13 @@ export default function DocumentsPage() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.file_url) {
-                    window.open(data.file_url, '_blank');
+                    const a = document.createElement('a');
+                    a.href = data.file_url;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                 } else {
                     alert('Official report generated but no download URL available.');
                 }
