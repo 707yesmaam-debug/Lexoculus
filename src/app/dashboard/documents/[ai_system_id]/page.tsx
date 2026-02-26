@@ -128,16 +128,20 @@ export default function DocumentsPage() {
                 }),
             });
 
-            const data = await res.json();
-            if (res.ok && data.url) {
-                // Trigger download
-                window.open(data.url, '_blank');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.file_url) {
+                    window.open(data.file_url, '_blank');
+                } else {
+                    alert('Official report generated but no download URL available.');
+                }
             } else {
+                const data = await res.json();
                 alert(data.error || 'Failed to generate official report.');
             }
         } catch (error) {
             console.error('Report generation error:', error);
-            alert('Failed to generate official report.');
+            alert('Failed to generate official report. Please refresh and try again.');
         } finally {
             setGeneratingReport(false);
         }
@@ -302,7 +306,7 @@ export default function DocumentsPage() {
                                     ) : (
                                         <Button
                                             disabled
-                                            className="w-full bg-[#E5E5E5] text-[#999] rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6"
+                                            className="w-full bg-[#E5E5E5] text-[#999] rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 h-auto"
                                         >
                                             <AlertCircle className="w-4 h-4 mr-2" />
                                             REQUIRES_VERIFICATION
