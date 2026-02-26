@@ -93,7 +93,7 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
         // ==========================================
         // PAGE 1: COVER & EXECUTIVE SUMMARY
         // ==========================================
-        let yPos = drawHeader(doc, 'Executive Summary');
+        let yPos = addFormattedPage('Executive Summary');
 
         doc.fontSize(32)
             .font('Times-Bold')
