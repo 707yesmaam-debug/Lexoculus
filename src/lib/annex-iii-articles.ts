@@ -899,12 +899,18 @@ export const GPAI_CONSTRAINTS: EUAIConstraint[] = [
 // COMBINED EXPORTS
 // =============================================================================
 
-/** All EU AI Act constraints */
+/** All EU AI Act constraints for the constraint engine.
+ * NOTE: GPAI_CONSTRAINTS are intentionally EXCLUDED here because they are
+ * provider-only obligations (Articles 53, 55). The GPAI classifier in
+ * gpai-classifier.ts handles them separately with proper provider/deployer
+ * distinction. Including them here would incorrectly flag deployers/integrators
+ * who merely use APIs from OpenAI, Anthropic, etc.
+ */
 export const ALL_CONSTRAINTS: EUAIConstraint[] = [
     ...ARTICLE_5_CONSTRAINTS,
     ...ANNEX_III_CONSTRAINTS,
     ...LIMITED_RISK_CONSTRAINTS,
-    ...GPAI_CONSTRAINTS
+    // GPAI_CONSTRAINTS excluded — handled by gpai-classifier.ts
 ];
 
 /** Get all UNACCEPTABLE (banned) constraints */

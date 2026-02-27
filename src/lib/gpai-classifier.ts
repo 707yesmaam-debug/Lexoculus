@@ -573,8 +573,13 @@ function generateGPAISummary(
         parts.push('GPAI Provider detected: trains or hosts general-purpose AI models.');
     }
 
-    if (hasSystemicRisk) {
+    if (hasSystemicRisk && isProvider) {
+        // Only providers bear Article 55 systemic risk obligations
         parts.push('[WARNING] Systemic risk GPAI models detected (≥10^25 FLOPs). Additional Article 55 obligations apply.');
+    } else if (hasSystemicRisk && isDeployer) {
+        // Deployers just integrate these models — inform them, but this is NOT their obligation
+        const systemicProviders = providers.filter(p => p.systemic_risk).map(p => p.provider_name).join(', ');
+        parts.push(`Note: You integrate models from ${systemicProviders} which are classified as systemic risk GPAI. Article 55 obligations apply to the model provider, not to you as a deployer.`);
     }
 
     if (openSourceException) {
