@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
         // 2. Parse request body
         const body = await request.json();
-        const { repo_scan_id } = body;
+        const { repo_scan_id, force } = body;
 
         if (!repo_scan_id) {
             return NextResponse.json(
@@ -48,8 +48,13 @@ export async function POST(request: NextRequest) {
             where: { repo_scan_id },
         });
 
-        if (existingAssessment) {
-            console.log(`[CACHE] [CACHE] Returning cached risk assessment for ${repo_scan_id}`);
+        if (existingAssessment && force) {
+            // Force re-classify: delete existing assessment (cascades to FinalRiskAssessment + ComplianceReport)
+            console.log(`[FORCE] Deleting existing assessment ${existingAssessment.id} for re-classification`);
+            await prisma.riskAssessment.delete({ where: { id: existingAssessment.id } });
+            console.log(`[FORCE] Cascade deleted assessment + downstream data`);
+        } else if (existingAssessment) {
+            console.log(`[CACHE] Returning cached risk assessment for ${repo_scan_id}`);
             return NextResponse.json({
                 cached: true,
                 message: 'Risk assessment already exists',
@@ -213,7 +218,8 @@ export async function POST(request: NextRequest) {
 
                 if (aiSystem) {
                     const previousClassification = aiSystem.risk_classification;
-                    const classificationChanged = previousClassification !== assessment.risk_classification;
+                    const previousScore = aiSystem.risk_score;
+                    const classificationChanged = previousClassification != null && previousClassification !== assessment.risk_classification;
 
                     await prisma.aiSystem.update({
                         where: { id: aiSystem.id },
@@ -225,7 +231,7 @@ export async function POST(request: NextRequest) {
                         }
                     });
 
-                    // Phase 1.2: Update scan history with classification
+                    // Update scan history with classification
                     await prisma.aiSystemScan.updateMany({
                         where: {
                             ai_system_id: aiSystem.id,
@@ -239,9 +245,14 @@ export async function POST(request: NextRequest) {
                         }
                     });
 
+                    // Store comparison data for the API response
+                    (assessment as any)._previousClassification = previousClassification;
+                    (assessment as any)._previousScore = previousScore;
+                    (assessment as any)._classificationChanged = classificationChanged;
+
                     console.log(`[SUCCESS] [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
                     if (classificationChanged) {
-                        console.log(`[HISTORY] [HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
+                        console.log(`[HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
                     }
                 }
             }
@@ -253,6 +264,7 @@ export async function POST(request: NextRequest) {
         // 9. Return assessment with constraint validation data
         return NextResponse.json({
             cached: false,
+            reclassified: !!force,
             assessment_id: assessment.id,
             repo_scan_id: assessment.repo_scan_id,
             risk_classification: assessment.risk_classification,
@@ -276,6 +288,10 @@ export async function POST(request: NextRequest) {
             constraint_validation: result.constraint_validation,
             // GPAI Classification (Chapter V, Articles 51-55)
             gpai_classification: result.gpai_classification,
+            // Comparison data for re-scans
+            previous_classification: (assessment as any)._previousClassification || null,
+            previous_score: (assessment as any)._previousScore || null,
+            classification_changed: (assessment as any)._classificationChanged || false,
         });
 
     } catch (error) {

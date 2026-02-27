@@ -54,7 +54,42 @@ export async function GET(
             );
         }
 
-        // 4. Return assessment
+        // 4. Fetch scan history for comparison data
+        let previousClassification: string | null = null;
+        let previousScore: number | null = null;
+        let classificationChanged = false;
+
+        try {
+            const scanHistory = await prisma.aiSystemScan.findFirst({
+                where: { repo_scan_id },
+                select: {
+                    previous_classification: true,
+                    risk_score: true,
+                    classification_changed: true,
+                },
+            });
+            if (scanHistory) {
+                previousClassification = scanHistory.previous_classification;
+                classificationChanged = scanHistory.classification_changed ?? false;
+                // Get previous score from the prior scan if available
+                if (scanHistory.previous_classification) {
+                    const priorScan = await prisma.aiSystemScan.findFirst({
+                        where: {
+                            repo_scan_id: { not: repo_scan_id },
+                            risk_classification: scanHistory.previous_classification,
+                        },
+                        orderBy: { scanned_at: 'desc' },
+                        select: { risk_score: true },
+                    });
+                    previousScore = priorScan?.risk_score ?? null;
+                }
+            }
+        } catch (e) {
+            // Non-fatal: scan history lookup failed
+            console.error('[WARN] Failed to fetch scan history for comparison:', e);
+        }
+
+        // 5. Return assessment
         return NextResponse.json({
             assessment_id: assessment.id,
             repo_scan_id: assessment.repo_scan_id,
@@ -78,6 +113,10 @@ export async function GET(
             manual_review_reason: assessment.manual_review_reason,
             assessed_at: assessment.assessed_at,
             assessment_version: assessment.assessment_version,
+            // Comparison data
+            previous_classification: previousClassification,
+            previous_score: previousScore,
+            classification_changed: classificationChanged,
         });
 
     } catch (error) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye, Globe, Shield, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye, Globe, Shield, AlertTriangle, CheckCircle, Info, RefreshCw } from 'lucide-react';
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
@@ -64,6 +64,10 @@ interface AssessmentData {
         summary: string;
     };
     evidence?: any[];
+    previous_classification?: string | null;
+    previous_score?: number | null;
+    classification_changed?: boolean;
+    reclassified?: boolean;
 }
 
 interface AnalysisData {
@@ -86,6 +90,7 @@ export default function RiskClassifierPage() {
     const [isClassifying, setIsClassifying] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPro, setIsPro] = useState(false);
+    const [isReclassifying, setIsReclassifying] = useState(false);
 
     // Fetch capability analysis data
     useEffect(() => {
@@ -172,6 +177,32 @@ export default function RiskClassifierPage() {
             setError(err instanceof Error ? err.message : 'Classification failed');
         } finally {
             setIsClassifying(false);
+        }
+    };
+
+    // Force re-classify
+    const handleReclassify = async () => {
+        try {
+            setIsReclassifying(true);
+            setError(null);
+
+            const response = await fetch('/api/classify-risk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repo_scan_id, force: true }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Re-classification failed');
+            }
+
+            setAssessment(data);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Re-classification failed');
+        } finally {
+            setIsReclassifying(false);
         }
     };
 
@@ -296,17 +327,34 @@ export default function RiskClassifierPage() {
                     {/* Assessment exists - show proceed button */}
                     {assessment && (
                         <div className="p-6 bg-white flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-2 font-mono text-xs text-[#555]">
-                                <span>ASSESSED:</span>
-                                <span>{new Date(assessment.assessed_at).toLocaleString()}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 font-mono text-xs text-[#555]">
+                                    <span>ASSESSED:</span>
+                                    <span>{new Date(assessment.assessed_at).toLocaleString()}</span>
+                                </div>
                             </div>
 
-                            <Button
-                                onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
-                                className="bg-[#FF4F00] hover:bg-black text-white rounded-none h-10 px-6 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
-                            >
-                                Verify_Context <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={handleReclassify}
+                                    disabled={isReclassifying || isClassifying}
+                                    variant="outline"
+                                    className="rounded-none h-10 px-4 font-mono text-xs uppercase tracking-widest border-black hover:bg-[#F5F5F5] transition-all"
+                                >
+                                    {isReclassifying ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin mr-2" />Re-classifying...</>
+                                    ) : (
+                                        <><RefreshCw className="w-4 h-4 mr-2" />Re-classify</>
+                                    )}
+                                </Button>
+
+                                <Button
+                                    onClick={() => router.push(`/dashboard/context-verifier/${repo_scan_id}`)}
+                                    className="bg-[#FF4F00] hover:bg-black text-white rounded-none h-10 px-6 font-mono text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                                >
+                                    Verify_Context <ArrowRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -319,6 +367,38 @@ export default function RiskClassifierPage() {
                     <div className="flex-1">
                         <h3 className="font-serif text-lg font-bold text-[#FF4F00]">Classification Failed</h3>
                         <p className="font-mono text-xs text-black mt-1 mb-0">{error}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Classification Change Banner */}
+            {assessment?.classification_changed && assessment.previous_classification && (
+                <div className="mb-8 border-2 border-[#FF4F00] bg-[#FFF5F0] p-6">
+                    <div className="flex items-start gap-4">
+                        <AlertTriangle className="w-6 h-6 text-[#FF4F00] flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <h4 className="font-serif text-lg font-bold text-[#FF4F00] mb-2">Classification Changed</h4>
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-white border border-[#E5E5E5] px-3 py-2 text-center">
+                                        <p className="font-mono text-[10px] text-[#999] uppercase tracking-widest">Previous</p>
+                                        <p className="font-mono text-sm font-bold text-black">{assessment.previous_classification?.replace('_', ' ')}</p>
+                                        {assessment.previous_score != null && (
+                                            <p className="font-mono text-xs text-[#555]">Score: {assessment.previous_score}</p>
+                                        )}
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-[#FF4F00]" />
+                                    <div className="bg-white border-2 border-[#FF4F00] px-3 py-2 text-center">
+                                        <p className="font-mono text-[10px] text-[#FF4F00] uppercase tracking-widest">Current</p>
+                                        <p className="font-mono text-sm font-bold text-[#FF4F00]">{assessment.risk_classification.replace('_', ' ')}</p>
+                                        <p className="font-mono text-xs text-[#555]">Score: {assessment.risk_score}</p>
+                                    </div>
+                                </div>
+                                <p className="font-mono text-xs text-black">
+                                    Risk classification has changed since the last scan. Review the updated findings and verify context if necessary.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
