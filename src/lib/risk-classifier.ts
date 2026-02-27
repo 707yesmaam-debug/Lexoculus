@@ -13,6 +13,7 @@ import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAICons
 import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
+import { findLibraryByName } from './ai-library-database';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -101,9 +102,25 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     const capabilities = (analysis.capabilities || []) as string[];
     const detectedModelTypes = (analysis.detected_model_types || []) as string[];
 
-    // We expect these to be populated from dependency-scanner
+    // We expect these to be populated from dependency-scanner or LLM.
+    // The LLM returns plain strings (e.g. ["openai", "anthropic"]),
+    // so we normalize them into objects and enrich with AI Library DB metadata.
     type LibraryData = { name?: string; matched_string?: string; source?: string; version?: string; risk_indicators?: string[]; category?: string; };
-    const rawLibraries = (analysis.libraries || []) as LibraryData[];
+    const rawLibInput = (analysis.libraries || []) as (string | LibraryData)[];
+    const rawLibraries: LibraryData[] = rawLibInput.map(item => {
+        if (typeof item === 'string') {
+            // Look up in the AI Library Database for rich metadata
+            const dbEntry = findLibraryByName(item);
+            return {
+                name: item,
+                matched_string: item,
+                source: 'LLM detection',
+                risk_indicators: dbEntry?.risk_indicators || [],
+                category: dbEntry?.category || 'unknown',
+            };
+        }
+        return item;
+    });
     const evidenceList: RiskEvidence[] = [];
 
     // ========================================
