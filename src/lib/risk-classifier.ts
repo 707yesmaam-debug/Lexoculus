@@ -513,6 +513,38 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     }
 
     // ========================================
+    // STEP 6.5: Catch-all Evidence for Detected Libraries
+    // ========================================
+    // Ensure every detected AI library appears in the Evidence Trail,
+    // even if no specific Annex III article was matched (e.g. Constraint Engine escalation).
+    const alreadyEvidenced = new Set(evidenceList.map(e => e.name));
+    rawLibraries.forEach(lib => {
+        const libName = lib.name || lib.matched_string || '';
+        if (libName && !alreadyEvidenced.has(libName)) {
+            const libRiskIndicators = (lib.risk_indicators || []) as string[];
+            // Determine severity based on risk indicators
+            let severity: 'info' | 'medium' | 'high' | 'critical' = 'info';
+            if (libRiskIndicators.some(r => r.includes('biometric') || r.includes('critical'))) {
+                severity = 'high';
+            } else if (libRiskIndicators.some(r => r.includes('generative') || r.includes('nlp') || r.includes('decision'))) {
+                severity = 'medium';
+            } else if (libRiskIndicators.length > 0) {
+                severity = 'medium';
+            }
+
+            evidenceList.push({
+                type: 'dependency',
+                name: libName,
+                source_file: lib.source || 'unknown',
+                version: lib.version,
+                risk_indicators: libRiskIndicators,
+                triggered_articles: [],
+                severity,
+            });
+        }
+    });
+
+    // ========================================
     // STEP 7: Default to MINIMAL_RISK if no matches
     // ========================================
 
