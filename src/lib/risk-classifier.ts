@@ -12,6 +12,7 @@ import { LlmCapabilityAnalysis } from '@prisma/client';
 import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAIConstraint } from './annex-iii-articles';
 import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
+import { RiskEvidence } from './risk-evidence';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -80,6 +81,9 @@ export interface RiskAssessmentResult {
 
     // GPAI Classification (Chapter V, Articles 51-55)
     gpai_classification?: GPAIClassification;
+
+    // Evidence Traceability (Phase 3)
+    evidence: RiskEvidence[];
 }
 
 /**
@@ -97,9 +101,10 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     const capabilities = (analysis.capabilities || []) as string[];
     const detectedModelTypes = (analysis.detected_model_types || []) as string[];
 
-    // ========================================
-    // STEP 1: Check UNACCEPTABLE RISK
-    // ========================================
+    // We expect these to be populated from dependency-scanner
+    type LibraryData = { name?: string; matched_string?: string; source?: string; version?: string; risk_indicators?: string[]; category?: string; };
+    const rawLibraries = (analysis.libraries || []) as LibraryData[];
+    const evidenceList: RiskEvidence[] = [];
 
     // ========================================
     // STEP 1: Check UNACCEPTABLE RISK
@@ -143,6 +148,21 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'HIGH_RISK';
             }
             keyFindings.push('Biometric processing detected - HIGH RISK');
+
+            // Build evidence
+            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_biometric_processing') ||
+                l.category === 'biometrics');
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: ['uses_biometric_processing'],
+                    triggered_articles: [article.article],
+                    severity: 'high',
+                });
+            });
         }
     }
 
@@ -165,6 +185,19 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'HIGH_RISK';
             }
             keyFindings.push('Emotion recognition with biometrics - HIGH RISK');
+            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition') ||
+                l.category === 'biometrics');
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: ['uses_emotion_recognition', 'uses_biometric_processing'],
+                    triggered_articles: [article.article],
+                    severity: 'high',
+                });
+            });
         }
     }
 
@@ -187,6 +220,18 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'HIGH_RISK';
             }
             keyFindings.push('Critical infrastructure involvement - HIGH RISK');
+            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_critical_infrastructure'));
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: ['uses_critical_infrastructure'],
+                    triggered_articles: [article.article],
+                    severity: 'high',
+                });
+            });
         }
     }
 
@@ -215,6 +260,11 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 reasoning: 'System has classification/decision capability - if used for employment decisions, requires HIGH RISK assessment',
                 requirements: article.requirements,
             });
+            // DO NOT ESCALATE riskClassification to HIGH_RISK here.
+            // Wait for context verification.
+            if (riskClassification === 'MINIMAL_RISK') {
+                riskClassification = 'LIMITED_RISK';
+            }
             keyFindings.push('Potential employment decision system - verify use case in Feature 4');
             unmatchedIndicators.push('employment_decision_capability');
         }
@@ -243,6 +293,11 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 reasoning: 'System has financial/risk assessment capability - if used for credit/insurance decisions, requires HIGH RISK assessment',
                 requirements: article.requirements,
             });
+            // DO NOT ESCALATE riskClassification to HIGH_RISK here.
+            // Wait for context verification.
+            if (riskClassification === 'MINIMAL_RISK') {
+                riskClassification = 'LIMITED_RISK';
+            }
             keyFindings.push('Potential financial decision system - verify use case in Feature 4');
             unmatchedIndicators.push('financial_decision_capability');
         }
@@ -277,6 +332,20 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
             riskClassification = 'HIGH_RISK';
         }
         keyFindings.push('Autonomous vehicle system detected - HIGH RISK');
+
+        const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_computer_vision') ||
+            l.category === 'computer_vision');
+        relatedLibs.forEach(lib => {
+            evidenceList.push({
+                type: 'dependency',
+                name: lib.name || lib.matched_string || 'unknown',
+                source_file: lib.source || 'unknown',
+                version: lib.version,
+                risk_indicators: ['uses_computer_vision'],
+                triggered_articles: [article.article],
+                severity: 'high',
+            });
+        });
     }
 
     // ========================================
@@ -302,6 +371,18 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'LIMITED_RISK';
             }
             keyFindings.push('Emotion recognition system - LIMITED RISK (requires transparency)');
+            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition'));
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: ['uses_emotion_recognition'],
+                    triggered_articles: [article.article],
+                    severity: 'medium',
+                });
+            });
         }
     }
 
@@ -340,6 +421,19 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'LIMITED_RISK';
             }
             keyFindings.push('Generative AI system - LIMITED RISK (requires AI-generated content labeling)');
+            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_generative_ai') ||
+                l.category === 'generative_ai');
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: ['uses_generative_ai'],
+                    triggered_articles: [article.article],
+                    severity: 'medium',
+                });
+            });
         }
     }
 
@@ -369,6 +463,19 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
                 riskClassification = 'LIMITED_RISK';
             }
             keyFindings.push('Recommendation system - LIMITED RISK (requires transparency)');
+            // For recommendation systems, any data processing / ML ops might be evidence
+            const relatedLibs = rawLibraries.filter(l => l.category === 'data_processing' || l.category === 'mlops');
+            relatedLibs.forEach(lib => {
+                evidenceList.push({
+                    type: 'dependency',
+                    name: lib.name || lib.matched_string || 'unknown',
+                    source_file: lib.source || 'unknown',
+                    version: lib.version,
+                    risk_indicators: [],
+                    triggered_articles: [article.article],
+                    severity: 'medium',
+                });
+            });
         }
     }
 
@@ -469,6 +576,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
         manual_review_needed: manualReviewNeeded,
         manual_review_reason: manualReviewReason,
         risk_narrative: riskNarrative,
+        evidence: evidenceList,
     };
 }
 
@@ -503,6 +611,12 @@ function calculateRiskScore(
         a.riskTier === 'HIGH_RISK' && a.applicable === true
     ).length;
     score += Math.min(confirmedHighRisk * 3, 10);
+
+    // Conditional high risk should not add penalty points until confirmed
+    // const conditionalHighRisk = matchedArticles.filter(a =>
+    //     a.riskTier === 'HIGH_RISK' && a.applicable === 'conditional'
+    // ).length;
+    // score += Math.min(conditionalHighRisk * 1, 5);
 
     // Adjust for code structure
     if (analysis.has_ml_pipeline) score += 3;
@@ -795,10 +909,6 @@ export function classifyRiskFull(
             gpaiFindings.push(`GPAI Deployer: integrates models from ${providers}`);
         }
 
-        if (gpaiResult.is_systemic_risk) {
-            gpaiFindings.push('[WARNING] Uses systemic risk GPAI models (≥10^25 FLOPs)');
-        }
-
         if (gpaiResult.open_source_exception) {
             gpaiFindings.push('Open-source exception may apply (Article 53(2))');
         }
@@ -821,8 +931,22 @@ export function classifyRiskFull(
             ];
         }
 
-        // Enhance risk narrative with GPAI context
-        baseResult.risk_narrative = `${baseResult.risk_narrative} ${gpaiResult.summary}`;
+        // Enhance risk narrative with GPAI context and obligation separation
+        let enhancedNarrative = `${baseResult.risk_narrative}\n\n${gpaiResult.summary}`;
+
+        // Add explicit sections for separated obligations
+        const providerObligations = gpaiResult.obligations.filter(o => o.applies_to === 'provider');
+        const deployerObligations = gpaiResult.obligations.filter(o => o.applies_to === 'deployer');
+
+        if (deployerObligations.length > 0) {
+            enhancedNarrative += `\n\nYour Obligations:\n` + deployerObligations.map(o => `- ${o.title}: ${o.description}`).join('\n');
+        }
+
+        if (providerObligations.length > 0) {
+            enhancedNarrative += `\n\nProvider Obligations (for your information):\n` + providerObligations.map(o => `- ${o.title}: ${o.description}`).join('\n');
+        }
+
+        baseResult.risk_narrative = enhancedNarrative;
     }
 
     // Step 4: Attach full GPAI classification

@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
                 risk_narrative: existingAssessment.risk_narrative,
                 matched_annex_iii_articles: existingAssessment.matched_annex_iii_articles,
                 unmatched_risk_indicators: existingAssessment.unmatched_risk_indicators,
+                evidence: existingAssessment.evidence,
                 key_findings: existingAssessment.key_findings,
                 preliminary_assessment: {
                     is_unacceptable: existingAssessment.is_unacceptable,
@@ -155,6 +156,7 @@ export async function POST(request: NextRequest) {
                     risk_narrative: result.risk_narrative,
                     matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
                     unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
+                    evidence: result.evidence as unknown as object[],
                     key_findings: result.key_findings as unknown as object[],
                     tailored_questions: tailoredQuestions as unknown as object[],
                     is_unacceptable: result.preliminary_assessment.is_unacceptable,
@@ -179,6 +181,7 @@ export async function POST(request: NextRequest) {
                     risk_narrative: result.risk_narrative,
                     matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
                     unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
+                    evidence: result.evidence as unknown as object[],
                     key_findings: result.key_findings as unknown as object[],
                     // tailored_questions OMITTED in fallback
                     is_unacceptable: result.preliminary_assessment.is_unacceptable,
@@ -257,6 +260,7 @@ export async function POST(request: NextRequest) {
             risk_narrative: assessment.risk_narrative,
             matched_annex_iii_articles: assessment.matched_annex_iii_articles,
             unmatched_risk_indicators: assessment.unmatched_risk_indicators,
+            evidence: assessment.evidence,
             key_findings: assessment.key_findings,
             preliminary_assessment: {
                 is_unacceptable: assessment.is_unacceptable,

@@ -339,6 +339,78 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
         }
 
         // ==========================================
+        // PAGE 5.5: RISK EVIDENCE TRAIL (Phase 3)
+        // ==========================================
+        const riskEvidence = data.preliminary?.evidence || [];
+        if (riskEvidence.length > 0) {
+            yPos = addFormattedPage('Risk Evidence Trail');
+
+            doc.fontSize(18).font('Times-Bold').fillColor(PRIMARY).text('Risk Evidence Trail', 60, yPos);
+            yPos += 25;
+            doc.moveTo(60, yPos).lineTo(535, yPos).lineWidth(1).stroke(BORDER);
+            yPos += 15;
+
+            // Description
+            doc.fontSize(11).font('Helvetica').fillColor(GRAY).text(
+                'The following technical dependencies and artifacts were detected and identified as contributing to the assigned risk classification.',
+                60, yPos, { width: 475 }
+            );
+            yPos += 30;
+
+            riskEvidence.forEach((item: any) => {
+                if (yPos > 650) { yPos = addFormattedPage('Risk Evidence Trail'); }
+
+                // Item Header
+                doc.fontSize(12).font('Times-Bold').fillColor(PRIMARY).text(item.name || 'Unknown', 60, yPos);
+
+                // Severity badge text
+                const severityText = (item.severity || 'info').toUpperCase();
+                let sevColor = GRAY;
+                if (severityText === 'HIGH' || severityText === 'CRITICAL') sevColor = ACCENT;
+                doc.fontSize(9).font('Courier-Bold').fillColor(sevColor).text(`[${severityText}]`, 60, doc.y + 2);
+
+                yPos = doc.y + 5;
+
+                // Source & Version
+                doc.fontSize(10).font('Courier').fillColor(GRAY);
+                const metaParts = [];
+                if (item.source_file) metaParts.push(`SOURCE: ${item.source_file}`);
+                if (item.type) metaParts.push(`TYPE: ${item.type}`);
+                if (item.version) metaParts.push(`VERSION: ${item.version}`);
+
+                doc.text(metaParts.join(' | '), 60, yPos, { width: 475 });
+                yPos = doc.y + 10;
+
+                // Triggered Articles
+                const articles = item.triggered_articles || [];
+                if (articles.length > 0) {
+                    doc.fontSize(10).font('Helvetica-Bold').fillColor(PRIMARY)
+                        .text('Triggered Articles:', 60, yPos);
+
+                    doc.fontSize(10).font('Helvetica').fillColor(GRAY)
+                        .text(stripMarkdown(articles.join(', ')), 160, yPos);
+                    yPos = doc.y + 5;
+                }
+
+                // Risk Indicators
+                const indicators = item.risk_indicators || [];
+                if (indicators.length > 0) {
+                    doc.fontSize(10).font('Helvetica-Bold').fillColor(PRIMARY)
+                        .text('Risk Indicators:', 60, yPos);
+
+                    doc.fontSize(10).font('Helvetica').fillColor(GRAY)
+                        .text(stripMarkdown(indicators.map((i: string) => i.replace(/_/g, ' ')).join(', ')), 145, yPos);
+                    yPos = doc.y + 5;
+                }
+
+                yPos += 15;
+                // Separator
+                doc.moveTo(60, yPos).lineTo(535, yPos).lineWidth(0.5).stroke(BORDER);
+                yPos += 15;
+            });
+        }
+
+        // ==========================================
         // PAGE 6: COMPLIANCE ROADMAP
         // ==========================================
         yPos = addFormattedPage('Compliance Roadmap');

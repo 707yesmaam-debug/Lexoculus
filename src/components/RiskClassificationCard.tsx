@@ -15,6 +15,8 @@ interface MatchedArticle {
     requirements?: string[];
 }
 
+import { RiskEvidence } from '@/lib/risk-evidence';
+
 interface RiskClassificationCardProps {
     classification: RiskClassification;
     score: number;
@@ -23,6 +25,7 @@ interface RiskClassificationCardProps {
     keyFindings: string[];
     manualReviewNeeded: boolean;
     manualReviewReason?: string;
+    evidence?: RiskEvidence[];
 }
 
 function getRiskIcon(classification: RiskClassification) {
@@ -50,6 +53,19 @@ function getRiskColor(classification: RiskClassification) {
     }
 }
 
+function getSeverityColor(severity: string) {
+    switch (severity) {
+        case 'critical':
+        case 'high':
+            return 'bg-[#FFF5F0] border-[#FF4F00] text-[#FF4F00]';
+        case 'medium':
+            return 'bg-[#F5F5F5] border-black text-black';
+        case 'info':
+        default:
+            return 'bg-[#F9F9F9] border-[#E5E5E5] text-[#555]';
+    }
+}
+
 export default function RiskClassificationCard({
     classification,
     score,
@@ -58,6 +74,7 @@ export default function RiskClassificationCard({
     keyFindings,
     manualReviewNeeded,
     manualReviewReason,
+    evidence = [],
 }: RiskClassificationCardProps) {
 
     return (
@@ -177,6 +194,62 @@ export default function RiskClassificationCard({
                     </ul>
                 </div>
             </div>
+
+            {/* Evidence Trail */}
+            {evidence.length > 0 && (
+                <div className="border-2 border-black bg-white mt-8">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <ShieldAlert className="w-5 h-5 text-black" />
+                            <h3 className="font-serif text-xl font-bold text-black">Evidence Trail</h3>
+                        </div>
+                        <span className="font-mono text-xs text-white bg-black px-2 py-1 uppercase tracking-widest">
+                            {evidence.length} Item{evidence.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {evidence.map((item, i) => (
+                                <div key={i} className={`p-4 border ${getSeverityColor(item.severity)} flex flex-col gap-2`}>
+                                    <div className="flex justify-between items-start">
+                                        <span className="font-mono text-sm font-bold truncate max-w-[80%]">{item.name}</span>
+                                        {item.version && (
+                                            <span className="font-mono text-[10px] px-1.5 py-0.5 border border-current opacity-70">
+                                                v{item.version}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="font-mono text-xs opacity-80 grid gap-1">
+                                        <div>
+                                            <span className="font-bold opacity-70 mr-1">Source:</span>
+                                            {item.source_file}
+                                        </div>
+                                        <div>
+                                            <span className="font-bold opacity-70 mr-1">Type:</span>
+                                            {item.type}
+                                        </div>
+                                    </div>
+
+                                    {(item.triggered_articles.length > 0 || item.risk_indicators.length > 0) && (
+                                        <div className="mt-2 pt-2 border-t border-current border-opacity-20 flex flex-wrap gap-1">
+                                            {item.triggered_articles.map((art, j) => (
+                                                <span key={`art-${j}`} className="font-mono text-[9px] px-1 py-0.5 bg-black text-white">
+                                                    {art}
+                                                </span>
+                                            ))}
+                                            {item.risk_indicators.map((ind, j) => (
+                                                <span key={`ind-${j}`} className="font-mono text-[9px] px-1 py-0.5 border border-current opacity-70">
+                                                    {ind.replace(/_/g, ' ')}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

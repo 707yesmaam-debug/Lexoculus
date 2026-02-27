@@ -299,7 +299,11 @@ const GPAI_DEPLOYER_TRANSPARENCY_OBLIGATIONS: string[] = [
  * @returns GPAIClassification with full obligation mapping
  */
 export function classifyGPAI(analysis: LlmCapabilityAnalysis): GPAIClassification {
-    const libraries = (analysis.libraries as string[]) || [];
+    const librariesRaw = (analysis.libraries as any[]) || [];
+
+    // Extract strings whether libraries are strings or objects like { name: 'openai' }
+    const libraries = librariesRaw.map(l => typeof l === 'string' ? l : (l.name || l.matched_string || ''));
+
     const frameworks = (analysis.ai_frameworks as string[]) || [];
     const capabilities = (analysis.capabilities as string[]) || [];
     const modelTypes = (analysis.detected_model_types as string[]) || [];

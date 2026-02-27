@@ -66,6 +66,7 @@ export async function GET(
             risk_narrative: assessment.risk_narrative,
             matched_annex_iii_articles: assessment.matched_annex_iii_articles,
             unmatched_risk_indicators: assessment.unmatched_risk_indicators,
+            evidence: assessment.evidence,
             key_findings: assessment.key_findings,
             preliminary_assessment: {
                 is_unacceptable: assessment.is_unacceptable,

@@ -36,6 +36,9 @@ export interface DetectedLibrary {
     /** Version if detected */
     version?: string;
 
+    /** Line number where it was found (Phase 3 Evidence Traceability) */
+    source_line?: number;
+
     /** Detection layer (1 = known DB, 2 = pattern, 3 = LLM) */
     detection_layer: 1 | 2 | 3;
 }
@@ -293,10 +296,11 @@ function detectCandidateLibraries(
 function parseRequirementsTxt(content: string): { name: string; version?: string }[] {
     if (!content) return [];
 
-    const results: { name: string; version?: string }[] = [];
+    const results: { name: string; version?: string; source_line?: number }[] = [];
     const lines = content.split('\n');
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         const trimmed = line.trim();
 
         // Skip comments and empty lines
@@ -316,7 +320,8 @@ function parseRequirementsTxt(content: string): { name: string; version?: string
         if (match) {
             results.push({
                 name: match[1],
-                version: match[3]?.trim()
+                version: match[3]?.trim(),
+                source_line: i + 1, // 1-indexed line number
             });
         }
     }
@@ -339,6 +344,7 @@ function parsePackageJson(content: unknown): { name: string; version?: string }[
         const deps = pkg[section];
         if (deps && typeof deps === 'object') {
             for (const [name, version] of Object.entries(deps as Record<string, string>)) {
+                // Line numbers aren't easily extracted from parsed JSON, so we leave it omitted
                 results.push({
                     name,
                     version: typeof version === 'string' ? version.replace(/[\^~]/, '') : undefined
@@ -621,7 +627,7 @@ function findModelFiles(fileTree: unknown): string[] {
  * Match detected packages against AI library database (Layer 1)
  */
 function matchLibraries(
-    packages: { name: string; version?: string }[],
+    packages: { name: string; version?: string; source_line?: number }[],
     source: DetectedLibrary['source']
 ): DetectedLibrary[] {
     const detected: DetectedLibrary[] = [];
@@ -635,6 +641,7 @@ function matchLibraries(
                 source,
                 matched_string: pkg.name,
                 version: pkg.version,
+                source_line: pkg.source_line,
                 detection_layer: 1, // Layer 1: Known database match
             });
         }
@@ -837,10 +844,10 @@ export function scanDependencies(repoScan: RepoScan): DependencyScanResult {
     const detectedLibraries: DetectedLibrary[] = [];
     const candidateLibraries: CandidateLibrary[] = [];
     const sampledImports: string[] = [];
-    const allPackages: { name: string; version?: string; source: DetectedLibrary['source'] }[] = [];
+    const allPackages: { name: string; version?: string; source_line?: number; source: DetectedLibrary['source'] }[] = [];
 
     // Helper to collect all packages for Layer 3 LLM fallback
-    const collectPackages = (pkgs: { name: string; version?: string }[], source: DetectedLibrary['source']) => {
+    const collectPackages = (pkgs: { name: string; version?: string; source_line?: number }[], source: DetectedLibrary['source']) => {
         for (const pkg of pkgs) {
             allPackages.push({ ...pkg, source });
         }

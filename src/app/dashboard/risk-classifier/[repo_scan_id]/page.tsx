@@ -63,6 +63,7 @@ interface AssessmentData {
         article_references: string[];
         summary: string;
     };
+    evidence?: any[];
 }
 
 interface AnalysisData {
@@ -333,6 +334,7 @@ export default function RiskClassifierPage() {
                         keyFindings={assessment.key_findings}
                         manualReviewNeeded={assessment.manual_review_needed}
                         manualReviewReason={assessment.manual_review_reason}
+                        evidence={assessment.evidence}
                     />
                 </div>
             )}
