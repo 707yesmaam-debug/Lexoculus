@@ -435,9 +435,13 @@ export default function RiskClassifierPage() {
                                 </span>
                             </div>
                             <div className="flex items-center gap-2">
-                                {assessment.gpai_classification.is_systemic_risk ? (
+                                {assessment.gpai_classification.is_gpai_provider && assessment.gpai_classification.is_systemic_risk ? (
                                     <span className="font-mono text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 tracking-widest uppercase flex items-center gap-1">
-                                        <AlertTriangle className="w-3 h-3" /> Systemic Risk
+                                        <AlertTriangle className="w-3 h-3" /> Systemic Risk Provider
+                                    </span>
+                                ) : assessment.gpai_classification.is_gpai_deployer ? (
+                                    <span className="font-mono text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 tracking-widest uppercase flex items-center gap-1">
+                                        <Globe className="w-3 h-3" /> GPAI Deployer
                                     </span>
                                 ) : (
                                     <span className="font-mono text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 tracking-widest uppercase flex items-center gap-1">
@@ -451,7 +455,12 @@ export default function RiskClassifierPage() {
                         <div className="px-6 py-3 bg-blue-50 border-b border-blue-100">
                             <p className="font-mono text-[11px] text-blue-800 leading-relaxed">
                                 <strong>What is GPAI?</strong> General-Purpose AI (GPAI) models are AI systems like ChatGPT, Claude, or Gemini that can perform a wide range of tasks.
-                                If your code calls these models via API, you are a <strong>GPAI Deployer</strong> and must follow specific EU AI Act rules starting August 2025.
+                                {assessment.gpai_classification.is_gpai_deployer && !assessment.gpai_classification.is_gpai_provider && (
+                                    <> You integrate these models via API — making you a <strong>GPAI Deployer</strong>. Your obligations are limited to <strong>Article 50 transparency</strong>: inform users they are interacting with AI. Article 53/55 obligations (technical docs, adversarial testing) apply to the model <strong>provider</strong> (e.g. OpenAI, Anthropic), not to you.</>
+                                )}
+                                {assessment.gpai_classification.is_gpai_provider && (
+                                    <> You train or host AI models — making you a <strong>GPAI Provider</strong>. You have significant obligations under Articles 53–55 of the EU AI Act.</>
+                                )}
                             </p>
                         </div>
 
@@ -503,10 +512,10 @@ export default function RiskClassifierPage() {
                                                 </div>
                                                 <p className="font-mono text-[10px] text-[#777] mt-2 leading-relaxed">
                                                     {provider.systemic_risk
-                                                        ? `${provider.provider_name} is classified as having systemic risk — extra obligations apply (model evaluation, incident reporting).`
+                                                        ? `${provider.provider_name} is a systemic risk GPAI model (≥10^25 FLOPs). Article 55 obligations (adversarial testing, incident reporting) apply to ${provider.provider_name} as the provider — not to you as a deployer.`
                                                         : provider.open_source
-                                                            ? `${provider.provider_name} provides open-source models. Some obligations may be reduced, but transparency rules still apply.`
-                                                            : `${provider.provider_name} was detected via ${provider.matched_by} analysis. Standard GPAI deployer obligations apply.`
+                                                            ? `${provider.provider_name} provides open-source models. Some obligations may be reduced, but Article 50 transparency rules still apply.`
+                                                            : `${provider.provider_name} was detected via ${provider.matched_by} analysis. Your obligation as deployer: inform users they are interacting with AI (Article 50).`
                                                     }
                                                 </p>
                                             </div>
