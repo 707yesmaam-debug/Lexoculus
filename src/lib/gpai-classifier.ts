@@ -566,11 +566,11 @@ function generateGPAISummary(
 
     if (isDeployer) {
         const providerNames = providers.map(p => p.provider_name).join(', ');
-        parts.push(`GPAI Deployer detected: integrates models from ${providerNames || 'unknown provider'}.`);
+        parts.push(`Your system integrates AI models from ${providerNames || 'an external provider'}. Under the EU AI Act, this classifies you as a deployer of General-Purpose AI (GPAI).`);
     }
 
     if (isProvider) {
-        parts.push('GPAI Provider detected: trains or hosts general-purpose AI models.');
+        parts.push('Your system trains or hosts general-purpose AI models. Under the EU AI Act, this classifies you as a GPAI provider with significant compliance obligations.');
     }
 
     if (hasSystemicRisk && isProvider) {
