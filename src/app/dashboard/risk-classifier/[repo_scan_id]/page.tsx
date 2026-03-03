@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye, Globe, S
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
+import { PURPOSE_OPTIONS } from '@/lib/purpose-categories';
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -68,6 +69,7 @@ interface AssessmentData {
     previous_score?: number | null;
     classification_changed?: boolean;
     reclassified?: boolean;
+    intended_purpose?: string;
 }
 
 interface AnalysisData {
@@ -92,22 +94,6 @@ export default function RiskClassifierPage() {
     const [isPro, setIsPro] = useState(false);
     const [isReclassifying, setIsReclassifying] = useState(false);
     const [intendedPurpose, setIntendedPurpose] = useState<string>('');
-
-    const PURPOSE_OPTIONS = [
-        { value: '', label: 'General Purpose / Other (Default)' },
-        { value: 'developer_tool', label: 'Developer Tool / API Middleware' },
-        { value: 'chatbot', label: 'Chatbot / Virtual Assistant' },
-        { value: 'data_analytics', label: 'Data Analytics / Visualization' },
-        { value: 'content_generation', label: 'Content / Code Generation' },
-        { value: 'financial_services', label: 'Financial Services (Credit/Loans/Insurance)' },
-        { value: 'healthcare', label: 'Healthcare / Medical' },
-        { value: 'hr_recruitment', label: 'HR / Recruitment / Employment' },
-        { value: 'education', label: 'Education / Student Assessment' },
-        { value: 'law_enforcement', label: 'Law Enforcement / Justice' },
-        { value: 'biometrics', label: 'Biometrics / Emotion Recognition' },
-        { value: 'migration_border', label: 'Migration / Border Control' },
-        { value: 'autonomous_vehicles', label: 'Autonomous Vehicles / Safety Components' }
-    ];
 
     // Fetch capability analysis data
     useEffect(() => {
@@ -371,7 +357,7 @@ export default function RiskClassifierPage() {
                                     <div className="flex items-center gap-2">
                                         <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">Purpose:</span>
                                         <span className="font-mono text-xs font-bold text-black bg-[#F5F5F5] px-2 py-1">
-                                            {PURPOSE_OPTIONS.find(p => p.value === (assessment as any).intended_purpose)?.label || 'General Purpose / Other'}
+                                            {PURPOSE_OPTIONS.find(p => p.value === assessment.intended_purpose)?.label || 'General Purpose / Other'}
                                         </span>
                                     </div>
                                 </div>

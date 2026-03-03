@@ -15,31 +15,7 @@ import {
     ANNEX_III_CONSTRAINTS,
     LIMITED_RISK_CONSTRAINTS
 } from './annex-iii-articles';
-
-/**
- * Purpose-category mapping for filtering HIGH_RISK constraints.
- * Maps intended purpose to eligible Annex III categories.
- * Empty array = no high-risk categories eligible.
- * null/undefined = all categories eligible (no filtering).
- */
-const PURPOSE_ELIGIBLE_CATEGORIES: Record<string, string[] | null> = {
-    'developer_tool': [],
-    'api_middleware': [],
-    'chatbot': [],
-    'data_analytics': [],
-    'content_generation': [],
-    'critical_infrastructure': ['Critical Infrastructure'],
-    'financial_services': ['Essential Services Access'],
-    'healthcare': ['Critical Infrastructure'],
-    'hr_recruitment': ['Employment & Worker Management'],
-    'law_enforcement': ['Law Enforcement'],
-    'education': ['Education & Vocational Training'],
-    'biometrics': ['Remote Biometric Identification', 'Biometric Categorization', 'Emotion Recognition'],
-    'migration_border': ['Migration, Asylum & Border Control'],
-    'justice_legal': ['Administration of Justice'],
-    'autonomous_vehicles': ['Autonomous Vehicles'],
-    'general': null,
-};
+import { PURPOSE_CATEGORY_MAP } from './purpose-categories';
 
 // =============================================================================
 // TYPES
@@ -110,7 +86,7 @@ export class ConstraintEngine {
 
         // Determine eligible categories based on intended purpose
         const eligibleCategories = intendedPurpose
-            ? PURPOSE_ELIGIBLE_CATEGORIES[intendedPurpose]
+            ? PURPOSE_CATEGORY_MAP[intendedPurpose]
             : null; // null = no filtering
 
         for (const constraint of this.constraints) {

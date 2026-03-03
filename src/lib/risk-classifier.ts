@@ -14,43 +14,7 @@ import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from 
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
 import { findLibraryByName } from './ai-library-database';
-
-// =============================================================================
-// PURPOSE-CATEGORY MAPPING (EU AI Act: classification by intended purpose)
-// =============================================================================
-
-/**
- * Maps user-declared intended purposes to eligible Annex III high-risk categories.
- * If a purpose maps to an empty array, NO high-risk categories can match.
- * If a purpose maps to null, ALL categories are eligible (no filtering).
- * LIMITED_RISK (Article 50) is NEVER filtered — transparency always applies.
- */
-const PURPOSE_CATEGORY_MAP: Record<string, string[] | null> = {
-    'developer_tool': [],                              // No high-risk
-    'api_middleware': [],                              // No high-risk
-    'chatbot': [],                              // No high-risk (Article 50 still applies)
-    'data_analytics': [],                              // No high-risk
-    'content_generation': [],                              // No high-risk
-    'critical_infrastructure': ['Critical Infrastructure'],
-    'financial_services': ['Essential Services Access'],
-    'healthcare': ['Critical Infrastructure'],
-    'hr_recruitment': ['Employment & Worker Management'],
-    'law_enforcement': ['Law Enforcement'],
-    'education': ['Education & Vocational Training'],
-    'biometrics': ['Remote Biometric Identification', 'Biometric Categorization', 'Emotion Recognition'],
-    'migration_border': ['Migration, Asylum & Border Control'],
-    'justice_legal': ['Administration of Justice'],
-    'autonomous_vehicles': ['Autonomous Vehicles'],
-    'general': null,                           // No filtering
-};
-
-/** Check if a high-risk category should be skipped based on intended purpose */
-function shouldSkipHighRiskCategory(category: string, intendedPurpose?: string): boolean {
-    if (!intendedPurpose) return false; // No purpose declared = no filtering
-    const eligible = PURPOSE_CATEGORY_MAP[intendedPurpose];
-    if (eligible === undefined || eligible === null) return false; // Unknown or 'general' = no filtering
-    return !eligible.includes(category);
-}
+import { shouldSkipHighRiskCategory } from './purpose-categories';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
