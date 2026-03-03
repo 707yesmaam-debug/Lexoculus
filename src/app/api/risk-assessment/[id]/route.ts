@@ -99,6 +99,7 @@ export async function GET(
             risk_classification: assessment.risk_classification,
             risk_score: assessment.risk_score,
             risk_narrative: assessment.risk_narrative,
+            intended_purpose: assessment.intended_purpose,
             matched_annex_iii_articles: assessment.matched_annex_iii_articles,
             unmatched_risk_indicators: assessment.unmatched_risk_indicators,
             evidence: assessment.evidence,
