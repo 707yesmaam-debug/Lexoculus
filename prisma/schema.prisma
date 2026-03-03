@@ -140,6 +140,7 @@ model RiskAssessment {
   matched_annex_iii_articles Json                  @default("[]")
   unmatched_risk_indicators  Json                  @default("[]")
   evidence                   Json                  @default("[]")
+  intended_purpose           String?
   is_unacceptable            Boolean               @default(false)
   is_high_risk               Boolean               @default(false)
   is_limited_risk            Boolean               @default(false)

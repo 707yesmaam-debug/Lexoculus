@@ -91,6 +91,23 @@ export default function RiskClassifierPage() {
     const [error, setError] = useState<string | null>(null);
     const [isPro, setIsPro] = useState(false);
     const [isReclassifying, setIsReclassifying] = useState(false);
+    const [intendedPurpose, setIntendedPurpose] = useState<string>('');
+
+    const PURPOSE_OPTIONS = [
+        { value: '', label: 'General Purpose / Other (Default)' },
+        { value: 'developer_tool', label: 'Developer Tool / API Middleware' },
+        { value: 'chatbot', label: 'Chatbot / Virtual Assistant' },
+        { value: 'data_analytics', label: 'Data Analytics / Visualization' },
+        { value: 'content_generation', label: 'Content / Code Generation' },
+        { value: 'financial_services', label: 'Financial Services (Credit/Loans/Insurance)' },
+        { value: 'healthcare', label: 'Healthcare / Medical' },
+        { value: 'hr_recruitment', label: 'HR / Recruitment / Employment' },
+        { value: 'education', label: 'Education / Student Assessment' },
+        { value: 'law_enforcement', label: 'Law Enforcement / Justice' },
+        { value: 'biometrics', label: 'Biometrics / Emotion Recognition' },
+        { value: 'migration_border', label: 'Migration / Border Control' },
+        { value: 'autonomous_vehicles', label: 'Autonomous Vehicles / Safety Components' }
+    ];
 
     // Fetch capability analysis data
     useEffect(() => {
@@ -163,7 +180,7 @@ export default function RiskClassifierPage() {
             const response = await fetch('/api/classify-risk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ repo_scan_id }),
+                body: JSON.stringify({ repo_scan_id, intended_purpose: intendedPurpose || undefined }),
             });
 
             const data = await response.json();
@@ -189,7 +206,7 @@ export default function RiskClassifierPage() {
             const response = await fetch('/api/classify-risk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ repo_scan_id, force: true }),
+                body: JSON.stringify({ repo_scan_id, force: true, intended_purpose: intendedPurpose || undefined }),
             });
 
             const data = await response.json();
@@ -301,9 +318,27 @@ export default function RiskClassifierPage() {
                         <div className="p-8 flex flex-col items-center text-center">
                             <Scale className="w-16 h-16 text-black mb-6" />
                             <h3 className="font-serif text-2xl font-bold text-black mb-2">Ready to Classify</h3>
-                            <p className="font-mono text-sm text-[#555] mb-8 max-w-md">
+                            <p className="font-mono text-sm text-[#555] mb-6 max-w-md">
                                 Perform risk mapping against EU AI Act Database of High-Risk Systems.
                             </p>
+
+                            <div className="w-full max-w-xs mb-8 text-left">
+                                <label className="block font-mono text-xs font-bold text-black uppercase tracking-widest mb-2">
+                                    Intended Purpose
+                                </label>
+                                <select
+                                    value={intendedPurpose}
+                                    onChange={(e) => setIntendedPurpose(e.target.value)}
+                                    className="w-full h-12 border-2 border-black bg-white px-3 font-mono text-sm text-black focus:outline-none focus:border-[#FF4F00]"
+                                >
+                                    {PURPOSE_OPTIONS.map(opt => (
+                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
+                                </select>
+                                <p className="font-mono text-[10px] text-[#555] mt-2">
+                                    EU AI Act classifies risk based on intended purpose.
+                                </p>
+                            </div>
 
                             <Button
                                 onClick={handleClassify}
@@ -328,13 +363,34 @@ export default function RiskClassifierPage() {
                     {assessment && (
                         <div className="p-6 bg-white flex flex-col md:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 font-mono text-xs text-[#555]">
-                                    <span>ASSESSED:</span>
-                                    <span>{new Date(assessment.assessed_at).toLocaleString()}</span>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 font-mono text-xs text-[#555] mb-2">
+                                        <span>ASSESSED:</span>
+                                        <span>{new Date(assessment.assessed_at).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">Purpose:</span>
+                                        <span className="font-mono text-xs font-bold text-black bg-[#F5F5F5] px-2 py-1">
+                                            {PURPOSE_OPTIONS.find(p => p.value === (assessment as any).intended_purpose)?.label || 'General Purpose / Other'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col md:flex-row items-center gap-3">
+                                <div className="flex items-center gap-2 bg-[#F5F5F5] border border-[#E5E5E5] p-1 pr-2">
+                                    <select
+                                        value={intendedPurpose}
+                                        onChange={(e) => setIntendedPurpose(e.target.value)}
+                                        className="h-8 border-none bg-transparent px-2 font-mono text-xs text-black focus:outline-none max-w-[150px] truncate"
+                                    >
+                                        <option value="" disabled>Change Purpose...</option>
+                                        {PURPOSE_OPTIONS.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label.split('/')[0].trim()}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <Button
                                     onClick={handleReclassify}
                                     disabled={isReclassifying || isClassifying}

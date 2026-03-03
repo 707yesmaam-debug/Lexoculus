@@ -15,6 +15,43 @@ import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
 import { findLibraryByName } from './ai-library-database';
 
+// =============================================================================
+// PURPOSE-CATEGORY MAPPING (EU AI Act: classification by intended purpose)
+// =============================================================================
+
+/**
+ * Maps user-declared intended purposes to eligible Annex III high-risk categories.
+ * If a purpose maps to an empty array, NO high-risk categories can match.
+ * If a purpose maps to null, ALL categories are eligible (no filtering).
+ * LIMITED_RISK (Article 50) is NEVER filtered — transparency always applies.
+ */
+const PURPOSE_CATEGORY_MAP: Record<string, string[] | null> = {
+    'developer_tool': [],                              // No high-risk
+    'api_middleware': [],                              // No high-risk
+    'chatbot': [],                              // No high-risk (Article 50 still applies)
+    'data_analytics': [],                              // No high-risk
+    'content_generation': [],                              // No high-risk
+    'critical_infrastructure': ['Critical Infrastructure'],
+    'financial_services': ['Essential Services Access'],
+    'healthcare': ['Critical Infrastructure'],
+    'hr_recruitment': ['Employment & Worker Management'],
+    'law_enforcement': ['Law Enforcement'],
+    'education': ['Education & Vocational Training'],
+    'biometrics': ['Remote Biometric Identification', 'Biometric Categorization', 'Emotion Recognition'],
+    'migration_border': ['Migration, Asylum & Border Control'],
+    'justice_legal': ['Administration of Justice'],
+    'autonomous_vehicles': ['Autonomous Vehicles'],
+    'general': null,                           // No filtering
+};
+
+/** Check if a high-risk category should be skipped based on intended purpose */
+function shouldSkipHighRiskCategory(category: string, intendedPurpose?: string): boolean {
+    if (!intendedPurpose) return false; // No purpose declared = no filtering
+    const eligible = PURPOSE_CATEGORY_MAP[intendedPurpose];
+    if (eligible === undefined || eligible === null) return false; // Unknown or 'general' = no filtering
+    return !eligible.includes(category);
+}
+
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 
@@ -90,7 +127,7 @@ export interface RiskAssessmentResult {
 /**
  * Main risk classification function
  */
-export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentResult {
+export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: string): RiskAssessmentResult {
     const matchedArticles: AnnexIIIMatch[] = [];
     const keyFindings: string[] = [];
     const unmatchedIndicators: string[] = [];
@@ -219,7 +256,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     }
 
     // Article 15: Critical Infrastructure
-    if (indicators.uses_critical_infrastructure) {
+    if (indicators.uses_critical_infrastructure && !shouldSkipHighRiskCategory('Critical Infrastructure', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(2)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 15');
 
@@ -263,7 +300,8 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     if (analysis.has_ml_pipeline &&
         analysis.has_training_code &&
         analysis.has_inference_code &&
-        hasClassificationCapability) {
+        hasClassificationCapability &&
+        !shouldSkipHighRiskCategory('Employment & Worker Management', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(4)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 21');
 
@@ -288,15 +326,21 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis): RiskAssessmentRes
     }
 
     // Article 22: Essential Services (conditional)
-    const hasFinancialCapability = capabilities.some(c =>
-        c.toLowerCase().includes('credit') ||
-        c.toLowerCase().includes('risk') ||
-        c.toLowerCase().includes('insurance') ||
-        c.toLowerCase().includes('loan') ||
-        c.toLowerCase().includes('eligibility')
-    );
+    const hasFinancialCapability = capabilities.some(c => {
+        const lower = c.toLowerCase();
+        return lower.includes('credit_scoring') ||
+            lower.includes('credit scoring') ||
+            lower.includes('loan_decision') ||
+            lower.includes('loan decision') ||
+            lower.includes('insurance_underwriting') ||
+            lower.includes('insurance underwriting') ||
+            lower.includes('benefit_eligibility') ||
+            lower.includes('benefit eligibility') ||
+            lower.includes('mortgage') ||
+            lower.includes('welfare_assessment');
+    });
 
-    if (hasFinancialCapability && analysis.has_ml_pipeline) {
+    if (hasFinancialCapability && analysis.has_ml_pipeline && !shouldSkipHighRiskCategory('Essential Services Access', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(5)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 22');
 
@@ -738,10 +782,11 @@ function generateRiskNarrative(
  * 4. Adds legal citations and audit trail
  */
 export function classifyRiskWithConstraintValidation(
-    analysis: LlmCapabilityAnalysis
+    analysis: LlmCapabilityAnalysis,
+    intendedPurpose?: string
 ): RiskAssessmentResult {
     // Step 1: Run standard LLM-based classification
-    const baseResult = classifyRisk(analysis);
+    const baseResult = classifyRisk(analysis, intendedPurpose);
 
     // Try constraint validation, but fall back to base result if it fails
     try {
@@ -768,14 +813,16 @@ export function classifyRiskWithConstraintValidation(
         if (riskIndicators.high_impact_decision_making) patterns.push('high_impact_decision', 'scoring');
 
         // Step 4: Run constraint matching
-        const constraintResult = engine.matchConstraints(libraries, patterns);
+        const constraintResult = engine.matchConstraints(libraries, patterns, undefined, intendedPurpose);
 
         // Step 5: Validate LLM classification against constraints
         const validation = engine.validateLLMClassification(
             baseResult.risk_classification,
             baseResult.risk_score,
             libraries,
-            patterns
+            patterns,
+            undefined,
+            intendedPurpose
         );
 
         // Step 6: Build legal citations
@@ -940,10 +987,11 @@ function generateEnhancedNarrative(
  * GPAI classification is a separate, parallel track.
  */
 export function classifyRiskFull(
-    analysis: LlmCapabilityAnalysis
+    analysis: LlmCapabilityAnalysis,
+    intendedPurpose?: string
 ): RiskAssessmentResult {
     // Step 1: Run existing constraint-validated classification
-    const baseResult = classifyRiskWithConstraintValidation(analysis);
+    const baseResult = classifyRiskWithConstraintValidation(analysis, intendedPurpose);
 
     // Step 2: Run GPAI classification
     const gpaiResult = classifyGPAI(analysis);

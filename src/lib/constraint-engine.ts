@@ -16,6 +16,31 @@ import {
     LIMITED_RISK_CONSTRAINTS
 } from './annex-iii-articles';
 
+/**
+ * Purpose-category mapping for filtering HIGH_RISK constraints.
+ * Maps intended purpose to eligible Annex III categories.
+ * Empty array = no high-risk categories eligible.
+ * null/undefined = all categories eligible (no filtering).
+ */
+const PURPOSE_ELIGIBLE_CATEGORIES: Record<string, string[] | null> = {
+    'developer_tool': [],
+    'api_middleware': [],
+    'chatbot': [],
+    'data_analytics': [],
+    'content_generation': [],
+    'critical_infrastructure': ['Critical Infrastructure'],
+    'financial_services': ['Essential Services Access'],
+    'healthcare': ['Critical Infrastructure'],
+    'hr_recruitment': ['Employment & Worker Management'],
+    'law_enforcement': ['Law Enforcement'],
+    'education': ['Education & Vocational Training'],
+    'biometrics': ['Remote Biometric Identification', 'Biometric Categorization', 'Emotion Recognition'],
+    'migration_border': ['Migration, Asylum & Border Control'],
+    'justice_legal': ['Administration of Justice'],
+    'autonomous_vehicles': ['Autonomous Vehicles'],
+    'general': null,
+};
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -69,7 +94,8 @@ export class ConstraintEngine {
     matchConstraints(
         detectedLibraries: string[],
         detectedPatterns: string[],
-        deploymentContext?: string
+        deploymentContext?: string,
+        intendedPurpose?: string
     ): ConstraintMatchResult {
         const allIndicators = [
             ...detectedLibraries.map(l => l.toLowerCase()),
@@ -82,7 +108,25 @@ export class ConstraintEngine {
 
         const matches: ConstraintMatch[] = [];
 
+        // Determine eligible categories based on intended purpose
+        const eligibleCategories = intendedPurpose
+            ? PURPOSE_ELIGIBLE_CATEGORIES[intendedPurpose]
+            : null; // null = no filtering
+
         for (const constraint of this.constraints) {
+            // Purpose-based filtering: skip HIGH_RISK constraints whose category
+            // doesn't match the declared purpose. UNACCEPTABLE and LIMITED_RISK
+            // are never filtered — safety bans and transparency always apply.
+            if (
+                intendedPurpose &&
+                eligibleCategories !== null &&
+                eligibleCategories !== undefined &&
+                constraint.risk_level === 'HIGH_RISK' &&
+                !eligibleCategories.includes(constraint.category)
+            ) {
+                continue;
+            }
+
             const matchResult = this.matchSingleConstraint(
                 constraint,
                 allIndicators,
@@ -294,13 +338,15 @@ export class ConstraintEngine {
         llmRiskScore: number,
         detectedLibraries: string[],
         detectedPatterns: string[],
-        deploymentContext?: string
+        deploymentContext?: string,
+        intendedPurpose?: string
     ): LLMValidationResult {
-        // Run constraint matching
+        // Run constraint matching (with purpose-aware filtering)
         const matchResult = this.matchConstraints(
             detectedLibraries,
             detectedPatterns,
-            deploymentContext
+            deploymentContext,
+            intendedPurpose
         );
 
         const validatedRisk = matchResult.highest_risk;

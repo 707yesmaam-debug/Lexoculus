@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
         // 2. Parse request body
         const body = await request.json();
-        const { repo_scan_id, force } = body;
+        const { repo_scan_id, force, intended_purpose } = body;
 
         if (!repo_scan_id) {
             return NextResponse.json(
@@ -109,8 +109,8 @@ export async function POST(request: NextRequest) {
 
         console.log(`[TARGET] [RISK] Classifying risk for ${llmAnalysis.repo_scan.repo_owner}/${llmAnalysis.repo_scan.repo_name}`);
 
-        // 7. Run risk classification with Constraint Engine validation
-        const result = classifyRiskFull(llmAnalysis);
+        // 7. Run risk classification with Constraint Engine validation (purpose-aware)
+        const result = classifyRiskFull(llmAnalysis, intended_purpose);
 
         console.log(`[SUCCESS] [RISK] Classification: ${result.risk_classification} (score: ${result.risk_score})`);
         console.log(`   Articles matched: ${result.matched_annex_iii_articles.length}`);
@@ -162,6 +162,7 @@ export async function POST(request: NextRequest) {
                     matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
                     unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
                     evidence: result.evidence as unknown as object[],
+                    intended_purpose,
                     key_findings: result.key_findings as unknown as object[],
                     tailored_questions: tailoredQuestions as unknown as object[],
                     is_unacceptable: result.preliminary_assessment.is_unacceptable,
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
                     matched_annex_iii_articles: result.matched_annex_iii_articles as unknown as object[],
                     unmatched_risk_indicators: result.unmatched_risk_indicators as unknown as object[],
                     evidence: result.evidence as unknown as object[],
+                    intended_purpose,
                     key_findings: result.key_findings as unknown as object[],
                     // tailored_questions OMITTED in fallback
                     is_unacceptable: result.preliminary_assessment.is_unacceptable,
