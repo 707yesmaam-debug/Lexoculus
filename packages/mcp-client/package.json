@@ -1,5 +1,5 @@
 {
-    "name": "@lexoculus/mcp-client",
+    "name": "@lex-oculus/mcp-client",
     "version": "1.0.0",
     "description": "LexOculus MCP Client — EU AI Act compliance engine for AI coding assistants",
     "license": "MIT",
