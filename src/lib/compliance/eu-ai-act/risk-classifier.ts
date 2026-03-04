@@ -13,7 +13,7 @@ import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAICons
 import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
-import { findLibraryByName } from './ai-library-database';
+import { findLibraryByName } from '../../analysis/ai-library-database';
 import { shouldSkipHighRiskCategory } from './purpose-categories';
 
 // Types

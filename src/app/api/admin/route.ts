@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { checkAdminAccess } from '@/lib/admin';
-import prisma from '@/lib/prisma';
-import { grantProSubscription, revokeElevatedSubscription, TIER_LIMITS } from '@/lib/subscription';
-import logger from '@/lib/logger';
+import { checkAdminAccess } from '@/lib/platform/admin';
+import prisma from '@/lib/infra/prisma';
+import { grantProSubscription, revokeElevatedSubscription, TIER_LIMITS } from '@/lib/platform/subscription';
+import logger from '@/lib/infra/logger';
 
 /**
  * GET /api/admin

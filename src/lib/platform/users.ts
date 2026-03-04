@@ -1,4 +1,4 @@
-import prisma from './prisma';
+import prisma from '../infra/prisma';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
 /**

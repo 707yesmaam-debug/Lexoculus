@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkGroqHealth } from '@/lib/groq';
+import { checkGroqHealth } from '@/lib/analysis/groq';
 
 /**
  * GET /api/llm-health

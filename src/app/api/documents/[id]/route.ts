@@ -1,9 +1,9 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { extractMissingFields, calculateCompletion } from '@/lib/document-generator';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { extractMissingFields, calculateCompletion } from '@/lib/output/document-generator';
 
 interface RouteContext {
     params: Promise<{ id: string }>;

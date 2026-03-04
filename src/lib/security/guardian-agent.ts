@@ -1,5 +1,5 @@
 
-import { RiskTier } from './annex-iii-articles';
+import { RiskTier } from '../compliance/eu-ai-act/annex-iii-articles';
 import { TripwireResult } from './tripwire';
 
 /**

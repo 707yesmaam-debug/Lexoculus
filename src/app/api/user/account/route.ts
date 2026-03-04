@@ -1,7 +1,7 @@
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/infra/supabase-server';
 import { createClient } from '@supabase/supabase-js';
-import { prisma } from '@/lib/prisma';
-import { dodo } from '@/lib/dodo';
+import { prisma } from '@/lib/infra/prisma';
+import { dodo } from '@/lib/platform/dodo';
 import { NextResponse } from 'next/server';
 
 export async function DELETE() {

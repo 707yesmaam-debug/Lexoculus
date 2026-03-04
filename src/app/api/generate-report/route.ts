@@ -6,12 +6,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { generateComplianceReport } from '@/lib/pdf-generator';
-import { signReport } from '@/lib/report-signer';
-import { uploadReportToSupabase, checkStorageUsage } from '@/lib/storage';
-import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { generateComplianceReport } from '@/lib/output/pdf-generator';
+import { signReport } from '@/lib/output/report-signer';
+import { uploadReportToSupabase, checkStorageUsage } from '@/lib/infra/storage';
+import { checkUsageLimit, incrementUsage } from '@/lib/platform/subscription';
 
 export async function POST(req: NextRequest) {
     try {

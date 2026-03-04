@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { checkStorageUsage } from '@/lib/storage';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { checkStorageUsage } from '@/lib/infra/storage';
 
 export async function GET(req: NextRequest) {
     try {

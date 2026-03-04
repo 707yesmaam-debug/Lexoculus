@@ -1,7 +1,7 @@
 'use server';
 
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
 
 export interface PRScanResult {
     id: string;

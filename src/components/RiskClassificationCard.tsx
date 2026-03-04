@@ -15,7 +15,7 @@ interface MatchedArticle {
     requirements?: string[];
 }
 
-import { RiskEvidence } from '@/lib/risk-evidence';
+import { RiskEvidence } from '@/lib/compliance/eu-ai-act/risk-evidence';
 
 interface RiskClassificationCardProps {
     classification: RiskClassification;

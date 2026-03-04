@@ -1,4 +1,4 @@
-import { sendPasswordResetEmail } from './src/lib/email';
+import { sendPasswordResetEmail } from '../src/lib/platform/email';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 

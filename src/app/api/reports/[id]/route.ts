@@ -4,9 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { deleteReportFromSupabase, getReportDownloadUrl } from '@/lib/storage';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { deleteReportFromSupabase, getReportDownloadUrl } from '@/lib/infra/storage';
 
 export async function GET(
     req: NextRequest,

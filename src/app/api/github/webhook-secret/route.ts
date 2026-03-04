@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { deriveRepoSecret } from '@/lib/github-security';
-import { getUsageStatus } from '@/lib/subscription';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { deriveRepoSecret } from '@/lib/github/github-security';
+import { getUsageStatus } from '@/lib/platform/subscription';
 
 export async function GET(request: NextRequest) {
     try {

@@ -1,10 +1,10 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { calculateComplianceTimeline, getAllDeadlines } from '@/lib/compliance-timeline';
-import { classifyGPAI } from '@/lib/gpai-classifier';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { calculateComplianceTimeline, getAllDeadlines } from '@/lib/compliance/eu-ai-act/compliance-timeline';
+import { classifyGPAI } from '@/lib/compliance/eu-ai-act/gpai-classifier';
 
 interface RouteContext {
     params: Promise<{ ai_system_id: string }>;

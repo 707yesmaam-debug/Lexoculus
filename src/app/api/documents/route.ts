@@ -1,13 +1,13 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
 import {
     generateDocument,
     DOCUMENT_TYPES,
     DocumentType
-} from '@/lib/document-generator';
+} from '@/lib/output/document-generator';
 
 /**
  * GET /api/documents

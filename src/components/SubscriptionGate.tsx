@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Loader2, Lock, CheckCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/infra/supabase';
 
 export default function SubscriptionGate({ children }: { children: React.ReactNode }) {
     const router = useRouter();

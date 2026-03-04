@@ -1,7 +1,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/infra/prisma';
 
 interface RouteContext {
     params: Promise<{ shareId: string }>;

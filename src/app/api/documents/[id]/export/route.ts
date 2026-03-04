@@ -1,8 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { generateDocumentPDF } from '@/lib/pdf-generator';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { generateDocumentPDF } from '@/lib/output/pdf-generator';
 import { marked } from 'marked';
 
 // Configure marked for professional output

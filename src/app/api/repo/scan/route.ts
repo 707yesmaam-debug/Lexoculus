@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { decrypt } from '@/lib/encryption';
-import { scanRepository, isTokenExpired } from '@/lib/github';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
-import { checkUsageLimit, incrementUsage } from '@/lib/subscription';
-import prisma from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { decrypt } from '@/lib/security/encryption';
+import { scanRepository, isTokenExpired } from '@/lib/github/github';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
+import { checkUsageLimit, incrementUsage } from '@/lib/platform/subscription';
+import prisma from '@/lib/infra/prisma';
 
 export const maxDuration = 300; // Allow 5 minutes for large repo cloning.
 

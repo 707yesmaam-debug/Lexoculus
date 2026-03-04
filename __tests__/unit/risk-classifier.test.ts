@@ -1,8 +1,8 @@
 import { LlmCapabilityAnalysis } from '@prisma/client';
-import { classifyRiskFull } from '../../src/lib/risk-classifier';
+import { classifyRiskFull } from '../../src/lib/compliance/eu-ai-act/risk-classifier';
 
 // Mock dependencies
-jest.mock('../../src/lib/constraint-engine', () => ({
+jest.mock('../../src/lib/compliance/eu-ai-act/constraint-engine', () => ({
     getConstraintEngine: () => ({
         matchConstraints: jest.fn().mockReturnValue({ matches: [], risk_score: 0, requires_manual_review: false, contextual_questions: [] }),
         validateLLMClassification: jest.fn().mockImplementation((classification) => ({ validated_risk: classification, was_overridden: false, matched_constraints: [], override_reason: null, audit_trail: {} }))

@@ -1,7 +1,7 @@
 
 import { config } from 'dotenv';
 import path from 'path';
-import { deriveRepoSecret } from '@/lib/github-security';
+import { deriveRepoSecret } from '../src/lib/github/github-security';
 
 // Load env
 config({ path: path.resolve(process.cwd(), '.env.local') });

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { generateContextQuestions } from '@/lib/context-questions';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { generateContextQuestions } from '@/lib/compliance/eu-ai-act/context-questions';
 
 /**
  * GET /api/context-questions/:id

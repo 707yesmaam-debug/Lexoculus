@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/infra/supabase-server';
 import {
     getUsageStatus,
     checkUsageLimit,
@@ -14,7 +14,7 @@ import {
     getCustomerPortalUrl,
     PRICING,
     TIER_LIMITS,
-} from '@/lib/subscription';
+} from '@/lib/platform/subscription';
 
 /**
  * GET /api/subscription

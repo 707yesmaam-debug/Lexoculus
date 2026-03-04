@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllArticles, UNACCEPTABLE_RISKS } from '@/lib/annex-iii-articles';
+import { getAllArticles, UNACCEPTABLE_RISKS } from '@/lib/compliance/eu-ai-act/annex-iii-articles';
 
 /**
  * GET /api/annex-iii-articles

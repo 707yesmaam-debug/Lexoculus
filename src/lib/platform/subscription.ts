@@ -5,8 +5,8 @@
  * Payment-ready: includes fields for payment integration when credentials are available.
  */
 
-import prisma from './prisma';
-import logger from './logger';
+import prisma from '../infra/prisma';
+import logger from '../infra/logger';
 
 // =============================================================================
 // TYPES

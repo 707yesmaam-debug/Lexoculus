@@ -4,7 +4,7 @@ import {
     ANNEX_III_CONSTRAINTS,
     LIMITED_RISK_CONSTRAINTS,
     EUAIConstraint
-} from './annex-iii-articles';
+} from '../compliance/eu-ai-act/annex-iii-articles';
 
 // =============================================================================
 // TRIPWIRE CONFIGURATION

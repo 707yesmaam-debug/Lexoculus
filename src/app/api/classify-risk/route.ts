@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { classifyRiskFull } from '@/lib/risk-classifier';
-import { generateTailoredQuestions } from '@/lib/groq';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { classifyRiskFull } from '@/lib/compliance/eu-ai-act/risk-classifier';
+import { generateTailoredQuestions } from '@/lib/analysis/groq';
 
-import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
 
 // ... (retain imports)
 

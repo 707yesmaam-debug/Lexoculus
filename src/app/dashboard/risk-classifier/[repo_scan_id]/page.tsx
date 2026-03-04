@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, AlertCircle, Scale, ArrowRight, Lock, Eye, Globe, S
 import RiskClassificationCard from '@/components/RiskClassificationCard';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { PURPOSE_OPTIONS } from '@/lib/purpose-categories';
+import { PURPOSE_OPTIONS } from '@/lib/compliance/eu-ai-act/purpose-categories';
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { sendPasswordResetEmail } from '@/lib/email';
-import logger from '@/lib/logger';
+import { sendPasswordResetEmail } from '@/lib/platform/email';
+import logger from '@/lib/infra/logger';
 
 export async function POST(req: NextRequest) {
     try {

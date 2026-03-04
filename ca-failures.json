@@ -1,0 +1,22 @@
+[
+  {
+    "test": "should require Notified Body for Biometrics (Category 1)",
+    "err": "TypeError: (0 , _conformityassessment.requiresNotifiedBody) is not a function\n    at Object.<anonymous> (C:\\Users\\varad\\complianceAI\\__tests__\\unit\\conformity-assessment.test.ts:12:48)\n    at Promise.finally.completed (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1497:10)"
+  },
+  {
+    "test": "should NOT require Notified Body for other High-Risk categories by default",
+    "err": "TypeError: (0 , _conformityassessment.requiresNotifiedBody) is not a function\n    at Object.<anonymous> (C:\\Users\\varad\\complianceAI\\__tests__\\unit\\conformity-assessment.test.ts:19:48)\n    at Promise.finally.completed (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1497:10)"
+  },
+  {
+    "test": "should extract correct category number from article reference",
+    "err": "TypeError: (0 , _conformityassessment.getAnnexIIICategory) is not a function\n    at Object.<anonymous> (C:\\Users\\varad\\complianceAI\\__tests__\\unit\\conformity-assessment.test.ts:28:45)\n    at Promise.finally.completed (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1497:10)"
+  },
+  {
+    "test": "should return NOT REQUIRED for MINIMAL_RISK",
+    "err": "Error: expect(received).toBe(expected) // Object.is equality\nExpected: 0\nReceived: 2\n    at Object.toBe (C:\\Users\\varad\\complianceAI\\__tests__\\unit\\conformity-assessment.test.ts:43:42)\n    at Promise.finally.completed (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)"
+  },
+  {
+    "test": "should return NOT REQUIRED for UNACCEPTABLE risk",
+    "err": "Error: expect(received).toContain(expected) // indexOf\nExpected substring: \"prohibited\"\nReceived string:    \"This AI practice is BANNED under the EU AI Act. It cannot be placed on or used in the EU market.\"\n    at Object.toContain (C:\\Users\\varad\\complianceAI\\__tests__\\unit\\conformity-assessment.test.ts:56:38)\n    at Promise.finally.completed (C:\\Users\\varad\\complianceAI\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)"
+  }
+]

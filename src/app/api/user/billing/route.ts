@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { getCustomerPortalUrl } from '@/lib/subscription';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { getCustomerPortalUrl } from '@/lib/platform/subscription';
 
 export async function GET() {
     try {

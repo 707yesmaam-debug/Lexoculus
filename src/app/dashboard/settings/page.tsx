@@ -1,5 +1,5 @@
-import { createServerClient } from '@/lib/supabase-server';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { prisma } from '@/lib/infra/prisma';
 import { redirect } from 'next/navigation';
 import SettingsTabs, { TabsContent } from '@/components/settings/SettingsTabs';
 import ProfileSection from '@/components/settings/ProfileSection';

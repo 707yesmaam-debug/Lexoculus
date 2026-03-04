@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { decrypt } from '@/lib/encryption';
-import { getUserRepos, isTokenExpired } from '@/lib/github';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
-import prisma from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { decrypt } from '@/lib/security/encryption';
+import { getUserRepos, isTokenExpired } from '@/lib/github/github';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
+import prisma from '@/lib/infra/prisma';
 
 export const dynamic = 'force-dynamic';
 

@@ -4,8 +4,8 @@
  * Protects admin routes - only allows access to ADMIN_EMAIL
  */
 
-import { createServerClient } from './supabase-server';
-import logger from './logger';
+import { createServerClient } from '../infra/supabase-server';
+import logger from '../infra/logger';
 
 // Admin email is set in environment variable for security
 // Add ADMIN_EMAIL=your@email.com to .env.local

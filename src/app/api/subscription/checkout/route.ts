@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { createCheckoutSession } from '@/lib/subscription';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { createCheckoutSession } from '@/lib/platform/subscription';
+import { prisma } from '@/lib/infra/prisma';
 
 export async function POST(req: Request) {
     try {

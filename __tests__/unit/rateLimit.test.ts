@@ -1,7 +1,7 @@
 /**
  * Smoke Test: Rate Limiter Logic
  */
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/security/rateLimit';
 
 // Mock Recis to force fallback or use memory
 jest.mock('@upstash/redis', () => ({

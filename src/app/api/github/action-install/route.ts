@@ -5,10 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { getUsageStatus } from '@/lib/subscription';
-import { deriveRepoSecret } from '@/lib/github-security';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { getUsageStatus } from '@/lib/platform/subscription';
+import { deriveRepoSecret } from '@/lib/github/github-security';
 
 /**
  * GET /api/github/action-install

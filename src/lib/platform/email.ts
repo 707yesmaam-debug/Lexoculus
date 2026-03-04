@@ -6,7 +6,7 @@
  */
 
 import nodemailer from 'nodemailer';
-import logger from './logger';
+import logger from '../infra/logger';
 
 const FOUNDER_EMAIL = process.env.LEADS_EMAIL || 'founder@lexoculus.com';
 const NO_REPLY_EMAIL = process.env.SMTP_FROM || 'onboarding@lexoculus.com';

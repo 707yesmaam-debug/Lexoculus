@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { Check, X, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
-import { PRICING_CONFIG } from '@/lib/pricing-config';
+import { PRICING_CONFIG } from '@/lib/platform/pricing-config';
 import OpticalLogo from '@/components/OpticalLogo';
 import { useSearchParams } from 'next/navigation';
 
@@ -31,7 +31,7 @@ function PricingContent() {
 
     useEffect(() => {
         // Check session
-        import('@/lib/supabase').then(({ createClient }) => {
+        import('@/lib/infra/supabase').then(({ createClient }) => {
             const supabase = createClient();
             supabase.auth.getSession().then(({ data: { session } }) => {
                 setIsLoggedIn(!!session);

@@ -1,15 +1,15 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
 import {
     determineConformityPathway,
     calculateCompletionPercent,
     getCurrentStep,
     getStepById
-} from '@/lib/conformity-assessment';
-import { classifyGPAI } from '@/lib/gpai-classifier';
+} from '@/lib/compliance/eu-ai-act/conformity-assessment';
+import { classifyGPAI } from '@/lib/compliance/eu-ai-act/gpai-classifier';
 
 interface RouteContext {
     params: Promise<{ ai_system_id: string }>;

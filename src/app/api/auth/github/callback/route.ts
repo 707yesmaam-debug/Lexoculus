@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { exchangeCodeForToken, getUserInfo } from '@/lib/github';
-import { encrypt } from '@/lib/encryption';
-import prisma from '@/lib/prisma';
-import { createServerClient } from '@/lib/supabase-server';
+import { exchangeCodeForToken, getUserInfo } from '@/lib/github/github';
+import { encrypt } from '@/lib/security/encryption';
+import prisma from '@/lib/infra/prisma';
+import { createServerClient } from '@/lib/infra/supabase-server';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;

@@ -1,9 +1,9 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { verifyAuditChain } from '@/lib/audit-logger';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { verifyAuditChain } from '@/lib/security/audit-logger';
 
 /**
  * GET /api/audit-logs

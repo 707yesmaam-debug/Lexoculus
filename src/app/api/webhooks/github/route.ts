@@ -13,17 +13,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/infra/prisma';
 
 // Allow Vercel functions to run for up to 60 seconds (Hobby limit) to accommodate LLM analysis
 export const maxDuration = 60;
 
-import { deriveRepoSecret } from '@/lib/github-security';
+import { deriveRepoSecret } from '@/lib/github/github-security';
 import crypto from 'crypto'; // Needed for local verifyWebhookSignature
-import { scanDiffs, TripwireResult } from '@/lib/tripwire';
-import { decrypt } from '@/lib/encryption';
-import { analyzeDiffWithLLM } from '@/lib/guardian-agent';
-import { RiskTier } from '@/lib/annex-iii-articles';
+import { scanDiffs, TripwireResult } from '@/lib/security/tripwire';
+import { decrypt } from '@/lib/security/encryption';
+import { analyzeDiffWithLLM } from '@/lib/security/guardian-agent';
+import { RiskTier } from '@/lib/compliance/eu-ai-act/annex-iii-articles';
 
 // Types for GitHub webhook payloads
 interface GitHubPRPayload {

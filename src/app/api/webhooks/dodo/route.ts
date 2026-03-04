@@ -1,8 +1,8 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { dodo } from '@/lib/dodo';
-import { prisma } from '@/lib/prisma';
-import { TIER_LIMITS } from '@/lib/subscription';
+import { dodo } from '@/lib/platform/dodo';
+import { prisma } from '@/lib/infra/prisma';
+import { TIER_LIMITS } from '@/lib/platform/subscription';
 
 // Disable next.js body parsing (not needed in app router, just read text)
 // But we need the raw body for signature verification.

@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { sendDemoRequestNotification } from '@/lib/email';
-import logger from '@/lib/logger';
+import prisma from '@/lib/infra/prisma';
+import { sendDemoRequestNotification } from '@/lib/platform/email';
+import logger from '@/lib/infra/logger';
 
 export async function POST(request: NextRequest) {
     try {

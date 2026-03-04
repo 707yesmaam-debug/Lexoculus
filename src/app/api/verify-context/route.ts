@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import prisma from '@/lib/prisma';
-import { refineWithContext, ContextAnswers } from '@/lib/context-refiner';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import prisma from '@/lib/infra/prisma';
+import { refineWithContext, ContextAnswers } from '@/lib/compliance/eu-ai-act/context-refiner';
 
-import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rateLimit';
 
 /**
  * POST /api/verify-context

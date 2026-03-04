@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { uploadEvidenceToSupabase } from '@/lib/storage';
+import { createServerClient } from '@/lib/infra/supabase-server';
+import { uploadEvidenceToSupabase } from '@/lib/infra/storage';
 
 export async function POST(request: NextRequest) {
     try {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. Check Subscription Tier
-        const { getOrCreateSubscription } = await import('@/lib/subscription');
+        const { getOrCreateSubscription } = await import('@/lib/platform/subscription');
         const subscription = await getOrCreateSubscription(user.id);
         const isPro = subscription && (subscription.tier === 'pro' || subscription.tier === 'enterprise');
 

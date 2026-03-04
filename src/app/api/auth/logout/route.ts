@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/infra/supabase-server';
 
 export async function POST() {
     try {

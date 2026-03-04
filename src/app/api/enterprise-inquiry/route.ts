@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEnterpriseInquiryNotification } from '@/lib/email';
-import { prisma } from '@/lib/prisma';
+import { sendEnterpriseInquiryNotification } from '@/lib/platform/email';
+import { prisma } from '@/lib/infra/prisma';
 import { z } from 'zod';
 
 const inquirySchema = z.object({

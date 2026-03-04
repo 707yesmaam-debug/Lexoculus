@@ -7,7 +7,7 @@
 import {
     scanDependencies,
     getScanSummary,
-} from '../../src/lib/dependency-scanner';
+} from '../../src/lib/analysis/dependency-scanner';
 
 import {
     findLibraryByName,
@@ -15,7 +15,7 @@ import {
     getLibrariesByCategory,
     isModelFile,
     LIBRARY_STATS,
-} from '../../src/lib/ai-library-database';
+} from '../../src/lib/analysis/ai-library-database';
 
 // Mock RepoScan data for testing
 const createMockRepoScan = (overrides: Record<string, unknown> = {}) => ({
