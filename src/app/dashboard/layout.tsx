@@ -151,6 +151,13 @@ export default function DashboardLayout({
             disabled: !!activeScanId,
             isActive: pathname.startsWith('/dashboard/settings')
         },
+        {
+            name: '08_CONFIGURE_MCP',
+            href: '/dashboard/configure-mcp',
+            status: activeScanId ? '[LOCKED]' : '[CONNECT]',
+            disabled: !!activeScanId,
+            isActive: pathname.startsWith('/dashboard/configure-mcp')
+        },
     ];
 
 
