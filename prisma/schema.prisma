@@ -28,6 +28,7 @@ model User {
   risk_assessments        RiskAssessment[]
   subscription            Subscription?
   github_repos            UserGithubRepo[]
+  mcp_api_keys            McpApiKey[]
 
   @@index([email])
   @@map("users")
@@ -552,4 +553,20 @@ model EnterpriseInquiry {
   created_at  DateTime @default(now())
 
   @@map("enterprise_inquiries")
+}
+
+model McpApiKey {
+  id           String    @id @default(cuid())
+  user_id      String
+  key_hash     String    @unique    // SHA-256 hash of the full key
+  key_prefix   String               // First 8 chars for display (e.g. "lx_a1b2...")
+  name         String    @default("Default")
+  created_at   DateTime  @default(now())
+  last_used_at DateTime?
+  revoked_at   DateTime?            // Soft-delete: null = active
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([key_hash])
+  @@map("mcp_api_keys")
 }
