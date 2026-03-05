@@ -105,6 +105,7 @@ export default function ConfigureMCPPage() {
       "command": "npx",
       "args": ["-y", "@lex-oculus/mcp-client@latest"],
       "env": {
+        "LEXOCULUS_API_URL": "https://www.lexoculus.com",
         "LEXOCULUS_API_KEY": "${keyPlaceholder}"
       }
     }
@@ -117,6 +118,7 @@ export default function ConfigureMCPPage() {
       "command": "npx",
       "args": ["-y", "@lex-oculus/mcp-client@latest"],
       "env": {
+        "LEXOCULUS_API_URL": "https://www.lexoculus.com",
         "LEXOCULUS_API_KEY": "${keyPlaceholder}"
       }
     }
@@ -304,7 +306,7 @@ export default function ConfigureMCPPage() {
                                     <li>Select <b>Command (stdio)</b></li>
                                     <li>Command: <code className="text-green-600">npx</code></li>
                                     <li>Args: <code className="text-green-600">-y @lex-oculus/mcp-client@latest</code></li>
-                                    <li>Set env: <code className="text-green-600">LEXOCULUS_API_KEY=lx_...</code></li>
+                                    <li>Set env: <code className="text-green-600">LEXOCULUS_API_KEY=lx_...</code> and <code className="text-green-600">LEXOCULUS_API_URL=https://www.lexoculus.com</code></li>
                                 </ol>
                             </div>
                         </div>
