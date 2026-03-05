@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-#!/usr/bin/env node
 "use strict";
 var __defProp = Object.defineProperty;
 var __export = (target, all) => {

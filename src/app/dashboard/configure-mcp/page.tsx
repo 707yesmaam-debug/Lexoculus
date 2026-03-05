@@ -103,7 +103,7 @@ export default function ConfigureMCPPage() {
   "mcpServers": {
     "lexoculus": {
       "command": "npx",
-      "args": ["-y", "@lex-oculus/mcp-client"],
+      "args": ["-y", "@lex-oculus/mcp-client@latest"],
       "env": {
         "LEXOCULUS_API_KEY": "${keyPlaceholder}"
       }
@@ -115,7 +115,7 @@ export default function ConfigureMCPPage() {
   "mcpServers": {
     "lexoculus": {
       "command": "npx",
-      "args": ["-y", "@lex-oculus/mcp-client"],
+      "args": ["-y", "@lex-oculus/mcp-client@latest"],
       "env": {
         "LEXOCULUS_API_KEY": "${keyPlaceholder}"
       }
@@ -303,7 +303,7 @@ export default function ConfigureMCPPage() {
                                     <li>Type <b>MCP: Add Server</b></li>
                                     <li>Select <b>Command (stdio)</b></li>
                                     <li>Command: <code className="text-green-600">npx</code></li>
-                                    <li>Args: <code className="text-green-600">-y @lex-oculus/mcp-client</code></li>
+                                    <li>Args: <code className="text-green-600">-y @lex-oculus/mcp-client@latest</code></li>
                                     <li>Set env: <code className="text-green-600">LEXOCULUS_API_KEY=lx_...</code></li>
                                 </ol>
                             </div>
