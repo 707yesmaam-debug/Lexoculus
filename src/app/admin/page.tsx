@@ -49,7 +49,7 @@ export default function AdminPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'feedback' | 'subscriptions' | 'leads'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'feedback' | 'subscriptions' | 'leads' | 'firms'>('overview');
 
     // Data
     const [stats, setStats] = useState<Stats | null>(null);
@@ -86,6 +86,20 @@ export default function AdminPage() {
     const [grantEmail, setGrantEmail] = useState('');
     const [grantDays, setGrantDays] = useState('30');
     const [grantReason, setGrantReason] = useState('');
+
+    // Firm onboarding state
+    interface Firm {
+        id: string;
+        name: string;
+        created_at: string;
+        members: { user_id: string; email: string; full_name: string | null; role: string; subscription: { status: string; tier: string; client_limit: number } | null }[];
+        clients: { id: string; client_name: string; status: string }[];
+        client_count: number;
+    }
+    const [firms, setFirms] = useState<Firm[]>([]);
+    const [firmEmail, setFirmEmail] = useState('');
+    const [firmSeats, setFirmSeats] = useState('1');
+    const [generatedLink, setGeneratedLink] = useState<string | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -138,6 +152,14 @@ export default function AdminPage() {
                 }
                 const data = await res.json();
                 setLeads(data.leads || []);
+            } else if (activeTab === 'firms') {
+                const res = await fetch('/api/admin?section=firms');
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to fetch firms');
+                }
+                const data = await res.json();
+                setFirms(data.firms || []);
             }
         } catch (err) {
             setError('Access denied or failed to load');
@@ -205,6 +227,38 @@ export default function AdminPage() {
         }
     };
 
+    const handleGenerateFirmLink = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setActionLoading(true);
+        setActionMessage(null);
+        setGeneratedLink(null);
+
+        try {
+            const res = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'generate_firm_link',
+                    user_email: firmEmail,
+                    seats: firmSeats,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setGeneratedLink(data.payment_url);
+                setActionMessage({ type: 'success', text: data.message });
+            } else {
+                setActionMessage({ type: 'error', text: data.error });
+            }
+        } catch (err) {
+            setActionMessage({ type: 'error', text: 'Failed to generate link' });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     // ... (rest of loading/error states)
     if (loading) {
         return (
@@ -246,7 +300,7 @@ export default function AdminPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-8 border-b border-gray-800">
-                    {['overview', 'users', 'feedback', 'subscriptions', 'leads'].map((tab) => (
+                    {['overview', 'users', 'firms', 'feedback', 'subscriptions', 'leads'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -268,6 +322,8 @@ export default function AdminPage() {
                             <StatCard label="Total Users" value={stats.total_users} />
                             <StatCard label="Pro Users" value={stats.pro_users} highlight />
                             <StatCard label="MRR" value={`€${stats.mrr}`} highlight />
+                            <StatCard label="Law Firms" value={(stats as any).total_firms || 0} highlight />
+                            <StatCard label="Firm Clients" value={(stats as any).total_firm_clients || 0} />
                             <StatCard label="Total Scans" value={stats.total_scans} />
                             <StatCard label="PR Scans" value={stats.total_pr_scans} />
                             <StatCard label="Reports" value={stats.total_reports} />
@@ -518,6 +574,136 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+
+                {/* Subscriptions Tab placeholder */}
+                {activeTab === 'subscriptions' && (
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                        <h2 className="text-xl font-bold text-white mb-4">Subscription Management</h2>
+                        <p className="text-gray-400">Subscription overview and management features coming soon.</p>
+                    </div>
+                )}
+
+                {/* Firms Tab */}
+                {activeTab === 'firms' && (
+                    <div className="space-y-8">
+                        {/* Firm Onboarding Area */}
+                        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                            <h2 className="text-xl font-bold text-white mb-4">Firm Onboarding</h2>
+                            <p className="text-gray-400 mb-6 text-sm">Generate a Dodo payment link for a law firm to purchase client seats.</p>
+                            
+                            <form onSubmit={handleGenerateFirmLink} className="flex flex-wrap gap-4 items-end">
+                                <div className="flex-1 min-w-[250px]">
+                                    <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Firm_Admin_Email</label>
+                                    <input
+                                        type="email"
+                                        placeholder="admin@lawfirm.com"
+                                        value={firmEmail}
+                                        onChange={(e) => setFirmEmail(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+                                    />
+                                </div>
+                                <div className="w-32">
+                                    <label className="block text-xs font-mono text-gray-500 mb-2 uppercase">Seat_Count</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={firmSeats}
+                                        onChange={(e) => setFirmSeats(e.target.value)}
+                                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                    {actionLoading ? 'Generating...' : 'Generate link ->'}
+                                </button>
+                            </form>
+
+                            {generatedLink && (
+                                <div className="mt-8 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                                    <p className="text-cyan-400 text-xs font-mono mb-2 uppercase tracking-widest">Generated_Payment_Link</p>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            readOnly 
+                                            value={generatedLink} 
+                                            className="flex-1 bg-black/40 border border-cyan-500/20 px-3 py-2 rounded text-cyan-300 text-sm font-mono"
+                                        />
+                                        <button 
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(generatedLink);
+                                                setActionMessage({ type: 'success', text: 'Link copied to clipboard' });
+                                            }}
+                                            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-500"
+                                        >
+                                            Copy
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-gray-500 text-[10px] leading-tight italic">
+                                        Send this link to the firm administrator. Once they pay, their account will be active with the specified seats.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Registered Firms List */}
+                        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
+                            <h2 className="text-xl font-bold text-white mb-4">Registered Firms ({firms.length})</h2>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="text-gray-400 border-b border-gray-800">
+                                            <th className="pb-2">Firm Name</th>
+                                            <th className="pb-2">Admin Email</th>
+                                            <th className="pb-2 text-center">Seats</th>
+                                            <th className="pb-2 text-center">Clients</th>
+                                            <th className="pb-2">Status</th>
+                                            <th className="pb-2 text-right">Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {firms.map((firm) => (
+                                            <tr key={firm.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                                                <td className="py-4 font-bold text-white">{firm.name}</td>
+                                                <td className="py-4 text-cyan-400 text-sm">
+                                                    {firm.members[0]?.email || 'N/A'}
+                                                </td>
+                                                <td className="py-4 text-center text-white">
+                                                    {firm.members[0]?.subscription?.client_limit || 0}
+                                                </td>
+                                                <td className="py-4 text-center text-gray-400">
+                                                    {firm.client_count}
+                                                </td>
+                                                <td className="py-4">
+                                                    <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold ${
+                                                        firm.members[0]?.subscription?.status === 'active' 
+                                                            ? 'bg-green-500/20 text-green-400' 
+                                                            : 'bg-yellow-500/20 text-yellow-400'
+                                                    }`}>
+                                                        {firm.members[0]?.subscription?.status || 'pending'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 text-gray-500 text-sm text-right">
+                                                    {new Date(firm.created_at).toLocaleDateString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {firms.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="py-8 text-center text-gray-500">
+                                                    No firms registered yet.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </div>
     );

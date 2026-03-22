@@ -15,6 +15,7 @@ export async function ensureUserExists(supabaseUser: SupabaseUser) {
                 id: supabaseUser.id,
                 email: supabaseUser.email,
                 full_name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || '',
+                account_type: supabaseUser.user_metadata?.account_type || 'individual',
             },
             update: {
                 // Keep email in sync if it changes in Auth

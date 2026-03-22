@@ -128,8 +128,8 @@ export default function ConfigureMCPPage() {
     return (
         <div className="flex flex-col min-h-screen bg-white">
             <header className="px-6 py-8 border-b-2 border-black bg-[#F5F5F5]">
-                <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">08_CONFIGURE_MCP</h1>
-                <p className="font-mono text-sm text-zinc-600">Connect AI Coding Assistants to the LexOculus Compliance Engine</p>
+                <h1 className="text-3xl font-black uppercase tracking-tighter mb-2">08_ENGINE_CONFIG</h1>
+                <p className="font-mono text-sm text-zinc-600">Connect AI Coding Assistants to the LexOculus Universal Compliance Engine</p>
             </header>
 
             <main className="flex-1 p-6 max-w-6xl w-full mx-auto pb-24">
@@ -138,10 +138,10 @@ export default function ConfigureMCPPage() {
                     <div>
                         <h2 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2 mb-2">
                             <Network className="w-5 h-5 text-[#FF4F00]" />
-                            MCP Cloud Relay
+                            Universal Engine Cloud Relay
                         </h2>
                         <p className="text-sm font-mono text-zinc-600">
-                            Your AI IDE connects to LexOculus via the Model Context Protocol. Generate an API key below.
+                            Your AI IDE connects to LexOculus via a secure API relay. Generate an engine key below.
                         </p>
                     </div>
                     <button
@@ -160,7 +160,7 @@ export default function ConfigureMCPPage() {
                         <section>
                             <h3 className="font-mono text-sm uppercase tracking-widest text-[#FF4F00] mb-4 flex items-center gap-2">
                                 <Key className="w-4 h-4" />
-                                01_API_Keys
+                                01_Universal_Engine_Keys
                             </h3>
 
                             {/* New key banner */}

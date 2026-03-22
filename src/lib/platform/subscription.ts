@@ -57,10 +57,10 @@ export interface UsageStatus {
 // =============================================================================
 export const TIER_LIMITS: Record<'pro' | 'enterprise', TierLimits> = {
     pro: {
-        repos_limit: 999999,
-        scans_limit: 999999,
-        pr_scans_limit: 999999,
-        reports_limit: 100,
+        repos_limit: 5,
+        scans_limit: 30,
+        pr_scans_limit: 50,
+        reports_limit: 20,
         features: {
             github_action: true,
             slack_notifications: true,
@@ -292,6 +292,7 @@ export async function grantProSubscription(
             scans_limit: TIER_LIMITS.pro.scans_limit,
             pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
             reports_limit: TIER_LIMITS.pro.reports_limit,
+            client_limit: 1, // Grant 1 seat by default for testing
             is_manual_grant: true,
             manual_grant_reason: reason,
             granted_by: grantedBy,
@@ -306,6 +307,7 @@ export async function grantProSubscription(
             scans_limit: TIER_LIMITS.pro.scans_limit,
             pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
             reports_limit: TIER_LIMITS.pro.reports_limit,
+            client_limit: 1, // Grant 1 seat by default for testing
             is_manual_grant: true,
             manual_grant_reason: reason,
             granted_by: grantedBy,
@@ -390,6 +392,46 @@ export async function createCheckoutSession(
     } catch (error: any) {
         logger.error({ error: error.message, userId }, '[ERROR] [DODO] Failed to create checkout session');
         return { url: null, error: error.message || 'Failed to initiate checkout.' };
+    }
+}
+
+/**
+ * Create Dodo checkout session for Firm subscription (Seat-based)
+ */
+export async function createFirmCheckoutSession(
+    userId: string,
+    userEmail: string,
+    quantity: number,
+    userName?: string,
+    returnUrl: string = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/firm/settings/billing?checkout=success`
+): Promise<{ url: string | null; error?: string }> {
+    try {
+        const productId = process.env.DODO_FIRM_PRODUCT_ID;
+
+        if (!productId) {
+            logger.warn(`[WARN] [DODO] No firm product ID configured in ENV (DODO_FIRM_PRODUCT_ID)`);
+            return { url: null, error: `Firm payment is not configured yet.` };
+        }
+
+        const session = await dodo.checkoutSessions.create({
+            product_cart: [{
+                product_id: productId,
+                quantity: quantity,
+            }],
+            customer: {
+                email: userEmail,
+                name: userName,
+            },
+            return_url: returnUrl,
+            metadata: {
+                userId: userId,
+            },
+        });
+
+        return { url: session.checkout_url ?? null };
+    } catch (error: any) {
+        logger.error({ error: error.message, userId }, '[ERROR] [DODO] Failed to create firm checkout session');
+        return { url: null, error: error.message || 'Failed to initiate firm checkout.' };
     }
 }
 

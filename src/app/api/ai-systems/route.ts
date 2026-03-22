@@ -8,7 +8,7 @@ import prisma from '@/lib/infra/prisma';
  * GET /api/ai-systems
  * List all AI systems for the authenticated user
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -17,11 +17,20 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { searchParams } = new URL(request.url);
+        const firmClientId = searchParams.get('firm_client_id');
+
+        const where: any = { status: 'active' };
+        
+        if (firmClientId) {
+            where.firm_client_id = firmClientId;
+        } else {
+            where.user_id = user.id;
+            where.firm_id = null;
+        }
+
         let aiSystems = await prisma.aiSystem.findMany({
-            where: {
-                user_id: user.id,
-                status: 'active'
-            },
+            where,
             include: {
                 latest_scan: {
                     select: {
@@ -36,8 +45,7 @@ export async function GET() {
             orderBy: { updated_at: 'desc' }
         });
 
-        // Auto-enable sharing for systems without a public_share_id
-        // This ensures all systems can be shared (required for LINK/BADGE buttons)
+        // Auto-enable sharing
         const systemsToUpdate = aiSystems.filter(s => !s.public_share_id);
         if (systemsToUpdate.length > 0) {
             await Promise.all(
@@ -52,12 +60,9 @@ export async function GET() {
                 )
             );
 
-            // Re-fetch systems with updated share IDs
+            // Re-fetch using the SAME 'where' clause
             aiSystems = await prisma.aiSystem.findMany({
-                where: {
-                    user_id: user.id,
-                    status: 'active'
-                },
+                where,
                 include: {
                     latest_scan: {
                         select: {
@@ -73,7 +78,6 @@ export async function GET() {
             });
         }
 
-        // Calculate summary stats
         const stats = {
             total: aiSystems.length,
             high_risk: aiSystems.filter(s => s.risk_classification === 'HIGH_RISK').length,
@@ -90,10 +94,7 @@ export async function GET() {
 
     } catch (error) {
         console.error('AI Systems list error:', error);
-        return NextResponse.json(
-            { error: 'Failed to fetch AI systems' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed' }, { status: 500 });
     }
 }
 

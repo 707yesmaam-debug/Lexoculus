@@ -21,7 +21,7 @@ function LoginForm() {
         setError(null);
 
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -30,7 +30,9 @@ function LoginForm() {
             setError(error.message);
             setLoading(false);
         } else {
-            router.push('/dashboard/scanner');
+            // Read account_type from user_metadata to avoid cookie race conditions with server APIs
+            const accountType = data.user?.user_metadata?.account_type || 'individual';
+            router.push(accountType === 'firm' ? '/firm/clients' : '/dashboard/scanner');
             router.refresh();
         }
     };
@@ -49,7 +51,7 @@ function LoginForm() {
                     </div>
                     <p className="font-mono text-xs text-[#555] max-w-[200px] leading-relaxed">
                         Access the LexOculus System.
-                        Secure session initiation required.
+                        Supports Individual and Firm accounts.
                     </p>
                 </div>
                 <div className="hidden md:block font-mono text-[10px] text-[#999]">

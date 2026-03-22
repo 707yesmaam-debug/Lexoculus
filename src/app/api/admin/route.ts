@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAdminAccess } from '@/lib/platform/admin';
 import prisma from '@/lib/infra/prisma';
-import { grantProSubscription, revokeElevatedSubscription, TIER_LIMITS } from '@/lib/platform/subscription';
+import { grantProSubscription, revokeElevatedSubscription, TIER_LIMITS, createFirmCheckoutSession } from '@/lib/platform/subscription';
 import logger from '@/lib/infra/logger';
 
 /**
@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
                 proUsers,
                 activeInstalls,
                 totalFeedback,
+                totalFirms,
+                totalFirmClients,
             ] = await Promise.all([
                 prisma.user.count(),
                 prisma.repoScan.count(),
@@ -48,6 +50,8 @@ export async function GET(request: NextRequest) {
                 prisma.subscription.count({ where: { tier: 'pro' } }),
                 prisma.gitHubActionInstall.count({ where: { status: 'active' } }),
                 prisma.feedback.count(),
+                prisma.firm.count(),
+                prisma.firmClient.count(),
             ]);
 
             // Recent activity
@@ -72,6 +76,8 @@ export async function GET(request: NextRequest) {
                     pro_users: proUsers,
                     active_github_installs: activeInstalls,
                     total_feedback: totalFeedback,
+                    total_firms: totalFirms,
+                    total_firm_clients: totalFirmClients,
                     mrr: proUsers * 49, // €49/month per Pro user
                 },
                 recent_scans: recentScans,
@@ -236,6 +242,56 @@ export async function GET(request: NextRequest) {
             });
         }
 
+        // Firms section
+        if (section === 'firms') {
+            const firms = await prisma.firm.findMany({
+                orderBy: { created_at: 'desc' },
+                include: {
+                    members: {
+                        include: {
+                            user: {
+                                select: { email: true, full_name: true },
+                                
+                            },
+                        },
+                    },
+                    clients: {
+                        select: {
+                            id: true,
+                            client_name: true,
+                            status: true,
+                        },
+                    },
+                },
+            });
+
+            // Get subscriptions for all firm users
+            const firmUserIds = firms.flatMap((f: any) => f.members.map((m: any) => m.user_id));
+            const firmSubscriptions = await prisma.subscription.findMany({
+                where: { user_id: { in: firmUserIds } },
+                select: { user_id: true, status: true, tier: true, client_limit: true },
+            });
+            const subMap = new Map(firmSubscriptions.map((s: any) => [s.user_id, s]));
+
+            return NextResponse.json({
+                firms: firms.map((f: any) => ({
+                    id: f.id,
+                    name: f.name,
+                    created_at: f.created_at,
+                    members: f.members.map((m: any) => ({
+                        user_id: m.user_id,
+                        email: m.user.email,
+                        full_name: m.user.full_name,
+                        role: m.role,
+                        subscription: subMap.get(m.user_id) || null,
+                    })),
+                    clients: f.clients,
+                    client_count: f.clients.length,
+                })),
+                count: firms.length,
+            });
+        }
+
         return NextResponse.json({ error: 'Invalid section' }, { status: 400 });
 
     } catch (error) {
@@ -369,6 +425,47 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: `User ${user_email || targetUserId} permanently deleted`,
+            });
+        }
+
+        // Generate Firm Payment Link
+        if (action === 'generate_firm_link') {
+            const { seats } = body;
+            const firmEmail = user_email;
+            const seatCount = parseInt(seats) || 1;
+
+            if (!firmEmail) {
+                return NextResponse.json({ error: 'user_email is required' }, { status: 400 });
+            }
+
+            const firmUser = await prisma.user.findUnique({ where: { email: firmEmail } });
+            if (!firmUser) {
+                return NextResponse.json({ error: `No user found with email: ${firmEmail}` }, { status: 404 });
+            }
+
+            const { user: adminUser } = await checkAdminAccess();
+            logger.info({
+                event: 'admin_generate_firm_link',
+                admin: adminUser?.email,
+                target: firmEmail,
+                seats: seatCount
+            }, `🟢 [ADMIN AUDIT] Firm payment link generated by ${adminUser?.email}`);
+
+            const { url, error: checkoutError } = await createFirmCheckoutSession(
+                firmUser.id,
+                firmUser.email,
+                seatCount,
+                firmUser.full_name || undefined
+            );
+
+            if (checkoutError || !url) {
+                return NextResponse.json({ error: checkoutError || 'Failed to create checkout link' }, { status: 500 });
+            }
+
+            return NextResponse.json({
+                success: true,
+                payment_url: url,
+                message: `Payment link generated for ${firmEmail} (${seatCount} seats)`,
             });
         }
 

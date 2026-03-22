@@ -16,6 +16,8 @@ export interface AuditLogEntry {
     metadata?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
+    firmId?: string;
+    firmClientId?: string;
 }
 
 /**
@@ -30,6 +32,8 @@ function generateHash(entry: AuditLogEntry, previousHash: string | null): string
         entityId: entry.entityId,
         description: entry.description,
         metadata: entry.metadata,
+        firmId: entry.firmId,
+        firmClientId: entry.firmClientId,
         previousHash,
         timestamp: new Date().toISOString(),
     });
@@ -65,6 +69,8 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<string> {
                 hash,
                 ip_address: entry.ipAddress,
                 user_agent: entry.userAgent,
+                firm_id: entry.firmId,
+                firm_client_id: entry.firmClientId,
             }
         });
 

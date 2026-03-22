@@ -255,6 +255,36 @@ export async function POST(request: NextRequest) {
                     console.log(`[SUCCESS] [AI_SYSTEM] Updated risk classification for ${repoScan.repo_name}`);
                     if (classificationChanged) {
                         console.log(`[HISTORY] Risk changed: ${previousClassification} → ${assessment.risk_classification}`);
+                        
+                        // Create a monitoring alert for the change
+                        try {
+                            // Find the Client ID if this is a Firm Client
+                            const firmClient = await prisma.firmClient.findFirst({
+                                where: {
+                                    github_repo_url: aiSystem.source_repo_url?.replace('https://github.com/', ''),
+                                }
+                            });
+                            
+                            await prisma.monitoringAlert.create({
+                                data: {
+                                    user_id: user.id,
+                                    ai_system_id: aiSystem.id,
+                                    category: 'classification_change',
+                                    severity: assessment.risk_classification === 'HIGH_RISK' || assessment.risk_classification === 'UNACCEPTABLE' ? 'high' : 'medium',
+                                    title: 'Risk Classification Changed',
+                                    message: `The risk classification for ${repoScan.repo_name} has changed from ${previousClassification?.replace(/_/g, ' ') || 'UNKNOWN'} to ${assessment.risk_classification.replace(/_/g, ' ')}.`,
+                                    status: 'unread',
+                                    metadata: {
+                                        previous_classification: previousClassification,
+                                        new_classification: assessment.risk_classification,
+                                        repo_scan_id: repo_scan_id,
+                                        firm_client_id: firmClient?.id
+                                    }
+                                }
+                            });
+                        } catch (alertError) {
+                            console.error('[WARN] Failed to create monitoring alert:', alertError);
+                        }
                     }
                 }
             }

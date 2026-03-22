@@ -81,41 +81,59 @@ async function handleSubscriptionUpdate(data: any) {
         return;
     }
 
-    // Upsert subscription
-    await prisma.subscription.upsert({
-        where: { user_id: user.id },
-        create: {
-            user_id: user.id,
-            tier: 'pro', // Assuming only Pro plan for now
-            status: 'active',
-            payment_provider: 'dodo',
-            payment_customer_id: data.customer.customer_id,
-            payment_subscription_id: data.subscription_id,
-            payment_product_id: data.product_id,
-            current_period_end: new Date(data.next_billing_date),
-            cancel_at_period_end: false,
-            repos_limit: TIER_LIMITS.pro.repos_limit,
-            scans_limit: TIER_LIMITS.pro.scans_limit,
-            pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
-            reports_limit: TIER_LIMITS.pro.reports_limit,
-        },
-        update: {
-            tier: 'pro',
-            status: 'active',
-            payment_provider: 'dodo',
-            payment_customer_id: data.customer.customer_id,
-            payment_subscription_id: data.subscription_id,
-            payment_product_id: data.product_id,
-            current_period_end: new Date(data.next_billing_date),
-            cancel_at_period_end: false,
-            repos_limit: TIER_LIMITS.pro.repos_limit,
-            scans_limit: TIER_LIMITS.pro.scans_limit,
-            pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit,
-            reports_limit: TIER_LIMITS.pro.reports_limit,
-        },
-    });
+    // Read quantity for seat-based firm billing (defaults to 1 for individuals)
+    const quantity = data.quantity || 1;
 
-    console.log(`Updated subscription for user ${user.id}`);
+    // Determine if this is a firm subscription
+    const isFirmProduct = data.product_id === process.env.DODO_FIRM_PRODUCT_ID;
+    const isFirmQuantity = quantity > 1;
+    const shouldBeFirmAccount = isFirmProduct || isFirmQuantity;
+
+    // Upsert subscription and update user account type if needed
+    await (prisma as any).$transaction([
+        (prisma as any).subscription.upsert({
+            where: { user_id: user.id },
+            create: {
+                user_id: user.id,
+                tier: 'pro',
+                status: 'active',
+                payment_provider: 'dodo',
+                payment_customer_id: data.customer.customer_id,
+                payment_subscription_id: data.subscription_id,
+                payment_product_id: data.product_id,
+                current_period_end: new Date(data.next_billing_date),
+                cancel_at_period_end: false,
+                client_limit: quantity as any,
+                repos_limit: TIER_LIMITS.pro.repos_limit * quantity,
+                scans_limit: TIER_LIMITS.pro.scans_limit * quantity,
+                pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit * quantity,
+                reports_limit: TIER_LIMITS.pro.reports_limit * quantity,
+            },
+            update: {
+                tier: 'pro',
+                status: 'active',
+                payment_provider: 'dodo',
+                payment_customer_id: data.customer.customer_id,
+                payment_subscription_id: data.subscription_id,
+                payment_product_id: data.product_id,
+                current_period_end: new Date(data.next_billing_date),
+                cancel_at_period_end: false,
+                client_limit: quantity as any,
+                repos_limit: TIER_LIMITS.pro.repos_limit * quantity,
+                scans_limit: TIER_LIMITS.pro.scans_limit * quantity,
+                pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit * quantity,
+                reports_limit: TIER_LIMITS.pro.reports_limit * quantity,
+            },
+        }),
+        ...(shouldBeFirmAccount && (user as any).account_type !== 'firm' ? [
+            (prisma as any).user.update({
+                where: { id: user.id },
+                data: { account_type: 'firm' as any }
+            })
+        ] : [])
+    ]);
+
+    console.log(`Updated subscription for user ${user.id} with ${quantity} seats`);
 }
 
 async function handleSubscriptionCancellation(data: any) {

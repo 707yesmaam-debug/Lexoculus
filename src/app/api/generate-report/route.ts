@@ -119,6 +119,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // 4b. Fetch firm details if user is a firm member
+        const firmMember = await prisma.firmMember.findUnique({
+            where: { user_id: user.id },
+            include: { firm: true }
+        });
+
         // 5. Generate PDF
         console.log(`[Generate Report] Generating PDF...`);
 
@@ -137,6 +143,10 @@ export async function POST(req: NextRequest) {
             repo: assessment.risk_assessment.repo_scan as any,
             capabilities: capabilities as any,
             preliminary: assessment.risk_assessment as any,
+            firm_branded: !!firmMember,
+            firm_name: firmMember?.firm?.name,
+            firm_custom_intro: firmMember?.firm?.custom_intro,
+            firm_logo_url: firmMember?.firm?.logo_url,
         });
 
         console.log(`[Generate Report] PDF generated: ${pdfBuffer.length} bytes`);
@@ -193,6 +203,11 @@ export async function POST(req: NextRequest) {
                 signed_at: timestamp,
                 version: 1,
                 expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                firm_id: firmMember?.firm_id,
+                firm_branded: !!firmMember,
+                firm_name: firmMember?.firm?.name,
+                firm_custom_intro: firmMember?.firm?.custom_intro,
+                firm_logo_url: firmMember?.firm?.logo_url,
             },
         });
 

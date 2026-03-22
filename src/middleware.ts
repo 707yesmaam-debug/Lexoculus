@@ -46,11 +46,21 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // Protect firm routes
+    if (request.nextUrl.pathname.startsWith('/firm')) {
+        if (!user) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/auth/login';
+            return NextResponse.redirect(url);
+        }
+    }
+
     // Redirect logged-in users from auth pages to dashboard, EXCEPT when they are updating their password
     if (request.nextUrl.pathname.startsWith('/auth')) {
         if (user && !request.nextUrl.pathname.startsWith('/auth/update-password') && !request.nextUrl.pathname.startsWith('/auth/reset-password') && !request.nextUrl.pathname.startsWith('/auth/callback')) {
+            const accountType = user.user_metadata?.account_type || 'individual';
             const url = request.nextUrl.clone();
-            url.pathname = '/dashboard/scanner';
+            url.pathname = accountType === 'firm' ? '/firm/clients' : '/dashboard/scanner';
             return NextResponse.redirect(url);
         }
     }
