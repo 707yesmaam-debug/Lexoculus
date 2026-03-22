@@ -8,7 +8,7 @@ import { logAuditEvent, AUDIT_ACTIONS, ENTITY_TYPES } from '@/lib/security/audit
 
 export const maxDuration = 300; // Allow 5 minutes for large repo cloning.
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }): Promise<NextResponse> {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
     try {
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const clientId = params.id;
+        const clientId = (await params).id;
 
         // Verify the user is part of the firm that owns this client
         const firmMember = await prisma.firmMember.findUnique({
