@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
         const user = await prisma.user.findUnique({
             where: { email },
-            include: { active_firm: true }
+            include: { firm_member: true }
         });
 
         if (!user) {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             message: 'Firm subscription granted successfully',
             user: user.email,
-            firm: user.active_firm?.firm_id,
+            firm: (user as any).firm_member?.firm_id,
             seats: subscription.client_limit
         });
 
