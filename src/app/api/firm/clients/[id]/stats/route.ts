@@ -40,10 +40,11 @@ export async function GET(
                 const { decrypt } = require('@/lib/security/encryption');
                 const token = decrypt(clientAccess.github_oauth_token);
                 
-                const repoRes = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+                const repoRes = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100&visibility=all&affiliation=owner,collaborator,organization_member', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
                     }
                 });
                 
