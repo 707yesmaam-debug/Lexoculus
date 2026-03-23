@@ -1,5 +1,6 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import GuardianActivity from '@/components/dashboard/GuardianActivity';
 import GitHubActionSetupModal from '@/components/GitHubActionSetupModal';

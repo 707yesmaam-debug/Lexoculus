@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/infra/prisma';
 import { createServerClient } from '@/lib/infra/supabase-server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -61,8 +63,27 @@ export async function GET(
         // Get Latest Scan for this client
         const latestScan = await prisma.repoScan.findFirst({
             where: { firm_client_id: id },
-            orderBy: { scanned_at: 'desc' }
+            orderBy: { scanned_at: 'desc' },
+            include: {
+                llm_analysis: {
+                    select: { id: true, is_ai_system: true, manual_review_needed: true }
+                },
+                risk_assessment: {
+                    select: { id: true, risk_classification: true }
+                },
+                final_risk_assessment: {
+                    select: { id: true, context_verified: true, approved_for_report: true, requires_manual_review: true }
+                }
+            }
         });
+
+        let hasReport = false;
+        if (latestScan?.final_risk_assessment?.id) {
+            const reportCount = await prisma.complianceReport.count({
+                where: { final_risk_assessment_id: latestScan.final_risk_assessment.id }
+            });
+            hasReport = reportCount > 0;
+        }
 
         // Get Conformity Tasks summary
         const totalTasks = 12;
@@ -80,6 +101,7 @@ export async function GET(
             monitoringEnabled: client.monitoring_enabled,
             aiSystemsCount,
             latestScan,
+            hasReport,
             totalTasks,
             completedTasks
         });

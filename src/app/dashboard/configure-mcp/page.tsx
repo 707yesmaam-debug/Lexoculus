@@ -1,5 +1,6 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { Network, Terminal, Copy, Check, Key, Plus, Trash2, Shield, AlertTriangle } from 'lucide-react';
 

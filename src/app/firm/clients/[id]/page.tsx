@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Shield, Activity, CheckCircle, Globe, Github } from 'lucide-react';
+import { Shield, Activity, CheckCircle, Globe, Github, ArrowRight } from 'lucide-react';
 
 export default function ClientOverviewPage() {
     const params = useParams();
@@ -169,20 +169,58 @@ export default function ClientOverviewPage() {
                                     <span>COMPLETED: {new Date(stats.latestScan.scanned_at).toLocaleString()}</span>
                                 </div>
                                 <div className="p-6 bg-white">
-                                    <div className="flex items-center gap-8">
-                                        <div>
-                                            <div className="text-xs font-mono text-gray-400 mb-1">SYSTEM_NAME</div>
-                                            <div className="text-xl font-black">{stats.latestScan.repo_name}</div>
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex items-center gap-8">
+                                            <div>
+                                                <div className="text-xs font-mono text-gray-400 mb-1">SYSTEM_NAME</div>
+                                                <div className="text-xl font-black">{stats.latestScan.repo_name}</div>
+                                            </div>
+                                            <div className="h-10 w-[2px] bg-gray-200"></div>
+                                            <div>
+                                                <div className="text-xs font-mono text-gray-400 mb-1">PRIMARY_LANGUAGE</div>
+                                                <div className="text-xl font-black font-mono">{stats.latestScan.primary_language}</div>
+                                            </div>
+                                            <div className="h-10 w-[2px] bg-gray-200"></div>
+                                            <div>
+                                                <div className="text-xs font-mono text-gray-400 mb-1">RISK_SCORE</div>
+                                                <div className="text-2xl font-black">
+                                                    {stats.latestScan?.risk_assessment?.risk_score ?? 'N/A'}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="h-10 w-[2px] bg-gray-200"></div>
-                                        <div>
-                                            <div className="text-xs font-mono text-gray-400 mb-1">PRIMARY_LANGUAGE</div>
-                                            <div className="text-xl font-black font-mono">{stats.latestScan.primary_language}</div>
-                                        </div>
-                                        <div className="h-10 w-[2px] bg-gray-200"></div>
-                                        <div>
-                                            <div className="text-xs font-mono text-gray-400 mb-1">RISK_SCORE</div>
-                                            <div className="text-2xl font-black">74/100</div>
+
+                                        {/* Pipeline Progress Indicator */}
+                                        <div className="mt-4 border-t border-gray-200 pt-6">
+                                            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#FF4F00] mb-4">
+                                                Pipeline Status
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs font-mono mb-2">
+                                                <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-hide">
+                                                    {[
+                                                        { label: 'Ingestion', active: true },
+                                                        { label: 'Analysis', active: !!stats.latestScan?.llm_analysis },
+                                                        { label: 'Classification', active: !!stats.latestScan?.risk_assessment },
+                                                        { label: 'Verification', active: !!stats.latestScan?.final_risk_assessment?.context_verified },
+                                                        { label: 'Report', active: !!stats.hasReport }
+                                                    ].map((stage, i) => (
+                                                        <div key={i} className="flex items-center gap-1 min-w-max">
+                                                            <div className={`px-2 py-1 border ${stage.active ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-400 border-gray-200'}`}>
+                                                                {i + 1}. {stage.label}
+                                                            </div>
+                                                            {i < 4 && <div className="w-4 h-px bg-gray-300 mx-1"></div>}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="mt-6 flex justify-end">
+                                                <button 
+                                                    onClick={() => window.location.href = `/dashboard/analyzer/${stats.latestScan.id}?firmClientId=${clientId}`}
+                                                    className="bg-white border-2 border-black px-6 py-3 font-mono text-xs font-bold uppercase hover:bg-black hover:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none flex items-center gap-2"
+                                                >
+                                                    Continue Analysis Pipeline <ArrowRight size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

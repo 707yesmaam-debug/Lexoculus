@@ -145,7 +145,7 @@ export async function getUserRepos(token: string): Promise<GitHubRepo[]> {
 
     while (true) {
         const response = await fetch(
-            `${GITHUB_API_BASE}/user/repos?per_page=${perPage}&page=${page}&sort=updated`,
+            `${GITHUB_API_BASE}/user/repos?per_page=${perPage}&page=${page}&sort=updated&visibility=all&affiliation=owner,collaborator,organization_member`,
             {
                 headers: {
                     'Authorization': `Bearer ${token}`,

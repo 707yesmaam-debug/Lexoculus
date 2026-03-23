@@ -1,6 +1,9 @@
 import { createServerClient } from '@/lib/infra/supabase-server';
 import { prisma } from '@/lib/infra/prisma';
 import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
 import SettingsTabs, { TabsContent } from '@/components/settings/SettingsTabs';
 import ProfileSection from '@/components/settings/ProfileSection';
 import SubscriptionSection from '@/components/settings/SubscriptionSection';

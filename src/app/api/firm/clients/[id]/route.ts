@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/infra/prisma';
 import { createServerClient } from '@/lib/infra/supabase-server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
