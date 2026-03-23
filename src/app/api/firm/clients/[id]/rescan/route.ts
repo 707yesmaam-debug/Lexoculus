@@ -73,6 +73,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
         // Scan the repository using the CLIENT'S delegated token
         console.log(`[Firm Rescan] Initiating delegated scan for ${targetRepoUrl}`);
+        console.log(`[DEBUG] Token starts with: ${token.substring(0, 7)}...`);
+        console.log(`[DEBUG] Owner: ${owner}, Repo: ${repo}`);
+        
         const scanData = await scanRepository(token, owner, repo);
 
         // Store in database under the firm user's account with strict firm/client tagging
