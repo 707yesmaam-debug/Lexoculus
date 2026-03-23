@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Shield, Activity, CheckCircle, Globe, Github, ArrowRight } from 'lucide-react';
+import { Shield, Activity, CheckCircle, Globe, Github, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function ClientOverviewPage() {
     const params = useParams();
@@ -135,7 +135,17 @@ export default function ClientOverviewPage() {
                                     </button>
                                 </div>
 
-                                {stats?.repositories && stats.repositories.length > 0 && (
+                                 {stats?.githubError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-sm flex items-start gap-2">
+                                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <div className="text-xs font-mono">
+                                            <p className="font-bold uppercase mb-1 text-[10px]">GitHub Sync Warning</p>
+                                            <p>{stats.githubError}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {stats?.repositories && stats.repositories.length > 0 ? (
                                     <div className="border-t border-black pt-6">
                                         <label className="text-xs font-mono text-gray-500 mb-2 block uppercase">Select Repository To Audit</label>
                                         <div className="grid grid-cols-1 gap-2">
@@ -153,6 +163,17 @@ export default function ClientOverviewPage() {
                                                     </button>
                                                 </div>
                                             ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="border-t border-black pt-6">
+                                        <div className="p-8 bg-gray-50 border border-dashed border-gray-300 text-center">
+                                            <Github className="w-8 h-8 mx-auto mb-3 text-gray-400 opacity-50" />
+                                            <p className="font-mono text-[10px] text-gray-500 uppercase tracking-widest leading-relaxed">
+                                                No specific repositories are visible to the auditor. 
+                                                <br/>
+                                                Click MANAGE_CONNECTION to grant access.
+                                            </p>
                                         </div>
                                     </div>
                                 )}

@@ -21,7 +21,8 @@ export async function GET(
         const client = await prisma.firmClient.findUnique({
             where: { id },
             include: {
-                firm: true
+                firm: true,
+                access: true
             }
         });
 
@@ -29,16 +30,13 @@ export async function GET(
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
-        // Get delegated access token for this client
-        const clientAccess = await (prisma as any).firmClientAccess.findFirst({
-            where: { firm_client_id: id }
-        });
-
         let repositories: any[] = [];
-        if (clientAccess?.github_oauth_token) {
+        let githubError: string | null = null;
+
+        if (client.access?.github_oauth_token) {
             try {
                 const { decrypt } = require('@/lib/security/encryption');
-                const token = decrypt(clientAccess.github_oauth_token);
+                const token = decrypt(client.access.github_oauth_token);
                 
                 const repoRes = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100&visibility=all&affiliation=owner,collaborator,organization_member', {
                     headers: {
@@ -50,10 +48,20 @@ export async function GET(
                 
                 if (repoRes.ok) {
                     repositories = await repoRes.json();
+                    if (repositories.length === 0) {
+                        githubError = "No repositories found. Ensure the GitHub App is installed on the correct repositories.";
+                    }
+                } else {
+                    const errorData = await repoRes.json().catch(() => ({}));
+                    githubError = errorData.message || `GitHub API error: ${repoRes.status}`;
+                    console.error('GitHub API error for client:', id, errorData);
                 }
             } catch (err) {
                 console.error('Failed to fetch repositories for client:', err);
+                githubError = "Failed to decrypt GitHub token or fetch repositories.";
             }
+        } else if (client.status === 'active') {
+            githubError = "GitHub connection record missing. Please reconnect.";
         }
 
         // Get AI Systems for this client
@@ -94,6 +102,7 @@ export async function GET(
             clientName: client.client_name,
             repoUrl: client.github_repo_url,
             onboardingToken: client.onboard_token,
+            githubError,
             repositories: repositories.map((r: any) => ({
                 name: r.name,
                 full_name: r.full_name,
