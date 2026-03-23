@@ -30,18 +30,33 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'User is not associated with a firm' }, { status: 403 });
         }
 
-        // Check Client Capacity Limits
-        const subscription = await (prisma as any).subscription.findUnique({
-            where: { user_id: user.id }
+        // Check Client Capacity Limits (FIRM-AWARE)
+        // Find if ANY member of this firm has an active pro/enterprise subscription
+        const allFirmMembers = await (prisma as any).firmMember.findMany({
+            where: { firm_id: (firmMember as any).firm_id },
+            select: { user_id: true }
         });
+
+        const memberIds = allFirmMembers.map((m: any) => m.user_id);
+
+        const subscriptions = await (prisma as any).subscription.findMany({
+            where: { 
+                user_id: { in: memberIds },
+                status: 'active',
+                tier: { in: ['pro', 'enterprise'] }
+            },
+            orderBy: { client_limit: 'desc' }
+        });
+
+        const primarySubscription = subscriptions[0];
 
         const currentClientCount = await (prisma as any).firmClient.count({
             where: { firm_id: (firmMember as any).firm_id }
         });
 
-        const clientLimit = (subscription as any)?.client_limit || 0;
+        const clientLimit = (primarySubscription as any)?.client_limit || 0;
 
-        if ((subscription as any)?.status !== 'active' || currentClientCount >= clientLimit) {
+        if (!primarySubscription || currentClientCount >= clientLimit) {
             return NextResponse.json({ 
                 error: 'Capacity Limit Reached', 
                 message: `Your firm is limited to ${clientLimit} clients. Please contact your account manager to purchase additional seats.`,

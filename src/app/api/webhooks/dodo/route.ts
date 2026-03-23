@@ -82,10 +82,12 @@ async function handleSubscriptionUpdate(data: any) {
     }
 
     // Read quantity for seat-based firm billing (defaults to 1 for individuals)
-    const quantity = data.quantity || 1;
-
-    // Determine if this is a firm subscription
+    // For Firms, we want a baseline of 5 clients even for a single "Pro" seat
+    // unless it's a specific seat-based purchase where quantity > 1.
     const isFirmProduct = data.product_id === process.env.DODO_FIRM_PRODUCT_ID;
+    const quantity = data.quantity || 1;
+    const clientLimit = isFirmProduct ? Math.max(5, quantity) : quantity;
+
     const isFirmQuantity = quantity > 1;
     const shouldBeFirmAccount = isFirmProduct || isFirmQuantity;
 
@@ -103,7 +105,7 @@ async function handleSubscriptionUpdate(data: any) {
                 payment_product_id: data.product_id,
                 current_period_end: new Date(data.next_billing_date),
                 cancel_at_period_end: false,
-                client_limit: quantity as any,
+                client_limit: clientLimit as any,
                 repos_limit: TIER_LIMITS.pro.repos_limit * quantity,
                 scans_limit: TIER_LIMITS.pro.scans_limit * quantity,
                 pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit * quantity,
@@ -118,7 +120,7 @@ async function handleSubscriptionUpdate(data: any) {
                 payment_product_id: data.product_id,
                 current_period_end: new Date(data.next_billing_date),
                 cancel_at_period_end: false,
-                client_limit: quantity as any,
+                client_limit: clientLimit as any,
                 repos_limit: TIER_LIMITS.pro.repos_limit * quantity,
                 scans_limit: TIER_LIMITS.pro.scans_limit * quantity,
                 pr_scans_limit: TIER_LIMITS.pro.pr_scans_limit * quantity,
