@@ -11,7 +11,17 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
 
         if (!error) {
-            return NextResponse.redirect(`${requestUrl.origin}${next}`);
+            // Fetch the user to determine where to redirect
+            const { data: { user } } = await supabase.auth.getUser();
+            const accountType = user?.user_metadata?.account_type || 'individual';
+            
+            // If 'next' is not provided, use the appropriate platform root
+            let redirectUrl = next;
+            if (next === '/dashboard/scanner') {
+                redirectUrl = accountType === 'firm' ? '/firm/clients' : '/dashboard/scanner';
+            }
+
+            return NextResponse.redirect(`${requestUrl.origin}${redirectUrl}`);
         } else {
             console.error('[AUTH CALLBACK] Exchange error:', error);
         }

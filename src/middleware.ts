@@ -37,20 +37,36 @@ export async function middleware(request: NextRequest) {
     // Vercel populates 'x-vercel-ip-country' with the 2-letter country code
     // const country = request.headers.get('x-vercel-ip-country');
 
-    // Protect dashboard routes
+    // Protect dashboard routes (Individual)
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
         if (!user) {
             const url = request.nextUrl.clone();
             url.pathname = '/auth/login';
             return NextResponse.redirect(url);
         }
+        
+        // Prevent firm accounts from accessing individual dashboard
+        const accountType = user.user_metadata?.account_type || 'individual';
+        if (accountType === 'firm') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/firm/clients';
+            return NextResponse.redirect(url);
+        }
     }
-
+ 
     // Protect firm routes
     if (request.nextUrl.pathname.startsWith('/firm')) {
         if (!user) {
             const url = request.nextUrl.clone();
             url.pathname = '/auth/login';
+            return NextResponse.redirect(url);
+        }
+
+        // Prevent individual accounts from accessing law firm platform
+        const accountType = user.user_metadata?.account_type || 'individual';
+        if (accountType === 'individual') {
+            const url = request.nextUrl.clone();
+            url.pathname = '/dashboard/scanner';
             return NextResponse.redirect(url);
         }
     }
