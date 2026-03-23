@@ -45,23 +45,26 @@ export default function ClientOverviewPage() {
             return;
         }
 
-        setLoading(true);
         try {
-            const res = await fetch(`/api/firm/clients/${clientId}/rescan`, {
+            const response = await fetch(`/api/firm/clients/${clientId}/rescan`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ repoUrl: targetRepo })
+                body: JSON.stringify({
+                    repo_url: repoUrl || stats?.repoUrl
+                })
             });
-            if (res.ok) {
-                // Refresh data
-                window.location.reload();
-            } else {
-                alert('Failed to trigger scan.');
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to trigger scan');
             }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+
+            const data = await response.json();
+            alert('Audit successfully triggered! Redirecting to analyzer...');
+            window.location.href = `/dashboard/analyzer/${data.repo_scan_id}?firmClientId=${clientId}`;
+        } catch (error: any) {
+            console.error('Audit trigger error:', error);
+            alert(error.message || 'Failed to trigger scan.');
         }
     };
 
