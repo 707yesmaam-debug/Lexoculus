@@ -37,8 +37,16 @@ export default function SubscriptionGate({ children }: { children: React.ReactNo
 
                 const data = await res.json();
                 const tier = data.subscription?.tier;
+                const accountType = session.user?.user_metadata?.account_type || 'individual';
 
-                // 3. Logic: Only allow 'pro' or 'enterprise'
+                // HARDENED CHECK: If they are a firm, they shouldn't even be here.
+                // Redirect them to the firm platform instead of showing pricing.
+                if (accountType === 'firm') {
+                    router.push('/firm/clients');
+                    return;
+                }
+
+                // 3. Logic: Only allow 'pro' or 'enterprise' for individuals
                 if (tier === 'pro' || tier === 'enterprise') {
                     setIsAllowed(true);
                     setIsPolling(false);

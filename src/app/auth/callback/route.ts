@@ -1,4 +1,5 @@
 import { createServerClient } from '@/lib/infra/supabase-server';
+import { prisma } from '@/lib/infra/prisma';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -13,7 +14,16 @@ export async function GET(request: Request) {
         if (!error) {
             // Fetch the user to determine where to redirect
             const { data: { user } } = await supabase.auth.getUser();
-            const accountType = user?.user_metadata?.account_type || 'individual';
+            let accountType = user?.user_metadata?.account_type;
+
+            // HARDENED FALLBACK: Check database if metadata is missing or if we want to be safe
+            if (!accountType && user?.id) {
+                const dbUser = await prisma.user.findUnique({
+                    where: { id: user.id },
+                    select: { account_type: true }
+                });
+                accountType = dbUser?.account_type;
+            }
             
             // If 'next' is not provided, use the appropriate platform root
             let redirectUrl = next;
