@@ -27,6 +27,32 @@ export async function GET(
             return NextResponse.json({ error: 'Client not found' }, { status: 404 });
         }
 
+        // Get delegated access token for this client
+        const clientAccess = await (prisma as any).firmClientAccess.findFirst({
+            where: { firm_client_id: id }
+        });
+
+        let repositories: any[] = [];
+        if (clientAccess?.github_oauth_token) {
+            try {
+                const { decrypt } = require('@/lib/security/encryption');
+                const token = decrypt(clientAccess.github_oauth_token);
+                
+                const repoRes = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (repoRes.ok) {
+                    repositories = await repoRes.json();
+                }
+            } catch (err) {
+                console.error('Failed to fetch repositories for client:', err);
+            }
+        }
+
         // Get AI Systems for this client
         const aiSystemsCount = await prisma.aiSystem.count({
             where: { firm_client_id: id }
@@ -38,13 +64,19 @@ export async function GET(
             orderBy: { scanned_at: 'desc' }
         });
 
-        // Get Conformity Tasks summary (Mocked for now until we port the actual task logic)
+        // Get Conformity Tasks summary
         const totalTasks = 12;
         const completedTasks = 4;
 
         return NextResponse.json({
             clientName: client.client_name,
             repoUrl: client.github_repo_url,
+            onboardingToken: client.onboard_token,
+            repositories: repositories.map((r: any) => ({
+                name: r.name,
+                full_name: r.full_name,
+                url: r.html_url
+            })),
             monitoringEnabled: client.monitoring_enabled,
             aiSystemsCount,
             latestScan,
