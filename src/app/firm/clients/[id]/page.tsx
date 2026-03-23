@@ -30,9 +30,9 @@ export default function ClientOverviewPage() {
     }, [clientId]);
 
     const handleManageConnection = () => {
-        // Redirect to the onboarding page for this client
+        // Redirect to the onboarding page for this client with reconnect forced
         if (stats?.onboardingToken) {
-            window.location.href = `/onboard/${stats.onboardingToken}`;
+            window.location.href = `/onboard/${stats.onboardingToken}?reconnect=true`;
         } else {
             alert('Onboarding token not found. Please contact support.');
         }

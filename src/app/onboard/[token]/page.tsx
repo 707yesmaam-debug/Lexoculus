@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { ShieldCheck, Github, AlertCircle } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo'; // Or a firm logo if configured later
 
-export default async function ClientOnboardingPage({ 
-    params 
-}: { 
-    params: Promise<{ token: string }> 
+export default async function ClientOnboardingPage(props: { 
+    params: Promise<{ token: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    const { token } = await params;
+    const { token } = await props.params;
+    const searchParams = await props.searchParams;
+    const forceReconnect = searchParams?.reconnect === 'true';
 
     // Fetch the client by token
     const client = await (prisma as any).firmClient.findUnique({
@@ -21,7 +22,7 @@ export default async function ClientOnboardingPage({
         return notFound();
     }
 
-    if ((client as any).status === 'active') {
+    if ((client as any).status === 'active' && !forceReconnect) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] p-6 text-black">
                 <div className="max-w-md w-full bg-white border border-black p-8 shadow-sm">
@@ -32,7 +33,13 @@ export default async function ClientOnboardingPage({
                     <p className="font-mono text-sm text-[#555] mb-8 leading-relaxed">
                         You have successfully authorized <strong>{(client as any).firm.name}</strong> to perform compliance audits on your selected repositories. No further action is required.
                     </p>
-                    <div className="pt-6 border-t border-[#E5E5E5] text-center">
+                    <div className="pt-6 border-t border-[#E5E5E5] flex flex-col items-center gap-4">
+                        <Link 
+                            href={`/onboard/${token}?reconnect=true`}
+                            className="font-mono text-[10px] text-[#FF4F00] uppercase tracking-widest hover:underline"
+                        >
+                            Update Permissions or Reconnect GitHub
+                        </Link>
                         <span className="font-mono text-xs text-[#999] uppercase tracking-widest">
                             SECURE_CONNECTION_ESTABLISHED
                         </span>
