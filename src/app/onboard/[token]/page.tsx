@@ -22,16 +22,23 @@ export default async function ClientOnboardingPage(props: {
         return notFound();
     }
 
+    const isReconnected = searchParams?.success === 'reconnected';
+
     if ((client as any).status === 'active' && !forceReconnect) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5] p-6 text-black">
                 <div className="max-w-md w-full bg-white border border-black p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6 text-green-700">
                         <ShieldCheck className="w-8 h-8" />
-                        <h1 className="font-serif text-2xl font-bold">Access Granted</h1>
+                        <h1 className="font-serif text-2xl font-bold">
+                            {isReconnected ? 'Connection Updated' : 'Access Granted'}
+                        </h1>
                     </div>
                     <p className="font-mono text-sm text-[#555] mb-8 leading-relaxed">
-                        You have successfully authorized <strong>{(client as any).firm.name}</strong> to perform compliance audits on your selected repositories. No further action is required.
+                        {isReconnected 
+                            ? `Your GitHub connection for ${(client as any).firm.name} has been successfully updated. You can now close this window.`
+                            : `You have successfully authorized ${(client as any).firm.name} to perform compliance audits on your selected repositories. No further action is required.`
+                        }
                     </p>
                     <div className="pt-6 border-t border-[#E5E5E5] flex flex-col items-center gap-4">
                         <Link 

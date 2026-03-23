@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     
     const scope = 'repo'; // We need repo scope for private repos
 
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}&prompt=consent`;
 
     return NextResponse.redirect(githubAuthUrl);
 }

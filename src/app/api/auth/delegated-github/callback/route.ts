@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
             });
         });
 
-        // Redirect back to the onboarding success page
-        return NextResponse.redirect(`${appUrl}/onboard/${state}`);
+        // Redirect back to the onboarding success page with a flag
+        return NextResponse.redirect(`${appUrl}/onboard/${state}?success=reconnected`);
 
     } catch (err) {
         console.error('Delegated GitHub OAuth callback error:', err);
