@@ -72,7 +72,7 @@ export function loadTemplate(documentType: DocumentType): string {
     const templateInfo = DOCUMENT_TYPES[documentType];
     const templatePath = path.join(
         process.cwd(),
-        'src/lib/document-templates',
+        'src/lib/output/document-templates',
         templateInfo.template
     );
 
