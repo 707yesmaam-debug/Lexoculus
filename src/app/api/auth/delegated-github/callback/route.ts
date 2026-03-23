@@ -40,14 +40,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(`${appUrl}/?error=client_not_found`);
         }
 
-        if ((client as any).status === 'active') {
-            return NextResponse.redirect(`${appUrl}/onboard/${state}`);
-        }
-
-        // Store delegated access token and update client status
+        // Store or update delegated access token and update client status
         await prisma.$transaction(async (tx) => {
-            await (tx as any).firmClientAccess.create({
-                data: {
+            await (tx as any).firmClientAccess.upsert({
+                where: { firm_client_id: client.id },
+                update: {
+                    github_oauth_token: encryptedToken,
+                    github_username: githubUser.login,
+                    granted_at: new Date(),
+                },
+                create: {
                     firm_client_id: client.id,
                     github_oauth_token: encryptedToken,
                     github_username: githubUser.login,
