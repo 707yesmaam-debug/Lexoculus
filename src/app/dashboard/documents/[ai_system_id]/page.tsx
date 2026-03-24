@@ -27,6 +27,9 @@ interface AiSystem {
         final_risk_assessment?: {
             id: string;
             repo_scan_id: string;
+            approved_for_report: boolean;
+            requires_manual_review: boolean;
+            final_risk_classification: string;
             compliance_report?: {
                 file_url?: string;
             } | null;
@@ -127,7 +130,14 @@ export default function DocumentsPage() {
     };
 
     const generateOfficialReport = async (regenerate = false) => {
-        if (!aiSystem?.latest_scan?.final_risk_assessment?.id) return;
+        const assessment = aiSystem?.latest_scan?.final_risk_assessment;
+        if (!assessment?.id) return;
+
+        // Extra guard: if not approved, don't even try to call API
+        if (!assessment.approved_for_report) {
+            alert('This assessment is not yet approved for report generation. Please complete all verification steps or wait for manual review.');
+            return;
+        }
 
         setGeneratingReport(true);
         try {
@@ -135,8 +145,8 @@ export default function DocumentsPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    final_risk_assessment_id: aiSystem.latest_scan.final_risk_assessment.id,
-                    repo_scan_id: aiSystem.latest_scan.final_risk_assessment.repo_scan_id,
+                    final_risk_assessment_id: assessment.id,
+                    repo_scan_id: assessment.repo_scan_id,
                     regenerate
                 }),
             });
@@ -258,6 +268,10 @@ export default function DocumentsPage() {
         return 'text-orange-600 bg-orange-100';
     };
 
+    const assessment = aiSystem?.latest_scan?.final_risk_assessment;
+    const isUnacceptable = assessment?.final_risk_classification === 'UNACCEPTABLE';
+    const isApproved = !!assessment?.approved_for_report;
+
     return (
         <div className="min-h-screen bg-white p-6">
             {/* Header */}
@@ -287,24 +301,26 @@ export default function DocumentsPage() {
                 ) : (
                     <div className="grid gap-4">
                         {/* Official Compliance Report Card */}
-                        <div className="border-2 border-black bg-[#FFF5F0] p-6 mb-4">
+                        <div className={`border-2 border-black ${isUnacceptable ? 'bg-red-50' : 'bg-[#FFF5F0]'} p-6 mb-4`}>
                             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className="px-2 py-0.5 bg-black text-white font-mono text-[10px] uppercase tracking-widest">
-                                            OFFICIAL_RECORD
+                                        <div className={`px-2 py-0.5 ${isUnacceptable ? 'bg-red-600' : 'bg-black'} text-white font-mono text-[10px] uppercase tracking-widest`}>
+                                            {isUnacceptable ? 'PROHIBITED_SYSTEM' : 'OFFICIAL_RECORD'}
                                         </div>
                                     </div>
                                     <h2 className="font-serif text-2xl font-bold text-black mb-1">
                                         Comprehensive Compliance Report
                                     </h2>
                                     <p className="font-mono text-xs text-[#666] max-w-xl">
-                                        Consolidated PDF containing the final risk assessment, capabilities analysis, and all evidentiary responses mapped to the EU AI Act.
+                                        {isUnacceptable
+                                            ? 'Under the EU AI Act, systems with UNACCEPTABLE risk are prohibited from deployment. Documentation for prohibited systems is for internal audit and cessation planning only.'
+                                            : 'Consolidated PDF containing the final risk assessment, capabilities analysis, and all evidentiary responses mapped to the EU AI Act.'}
                                     </p>
                                 </div>
 
                                 <div className="flex-shrink-0 w-full md:w-auto">
-                                    {aiSystem?.latest_scan?.final_risk_assessment?.id ? (
+                                    {assessment?.id ? (
                                         existingReportUrl ? (
                                             <div className="flex items-center gap-2">
                                                 <Button
@@ -317,7 +333,7 @@ export default function DocumentsPage() {
                                                         a.click();
                                                         document.body.removeChild(a);
                                                     }}
-                                                    className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-6 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
+                                                    className="bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-6 py-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[2px] transition-all"
                                                 >
                                                     <Download className="w-4 h-4 mr-2" />
                                                     DOWNLOAD_REPORT
@@ -330,7 +346,7 @@ export default function DocumentsPage() {
                                                             generateOfficialReport(true);
                                                         }
                                                     }}
-                                                    disabled={generatingReport}
+                                                    disabled={generatingReport || !isApproved}
                                                     className="text-[#999] hover:text-[#FF4F00] hover:bg-transparent px-2"
                                                     title="Regenerate from latest data"
                                                 >
@@ -338,23 +354,39 @@ export default function DocumentsPage() {
                                                 </Button>
                                             </div>
                                         ) : (
-                                            <Button
-                                                onClick={() => generateOfficialReport(false)}
-                                                disabled={generatingReport}
-                                                className="w-full bg-black hover:bg-[#FF4F00] text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 shadow-[4px_4px_0px_0px_rgba(255,79,0,0.2)] hover:shadow-none hover:translate-y-[2px] transition-all"
-                                            >
-                                                {generatingReport ? (
-                                                    <>
-                                                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                                                        GENERATING_PDF...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Download className="w-4 h-4 mr-2" />
-                                                        GENERATE_MASTER_REPORT
-                                                    </>
+                                            <div className="flex flex-col gap-2">
+                                                <Button
+                                                    onClick={() => generateOfficialReport(false)}
+                                                    disabled={generatingReport || !isApproved}
+                                                    className={`w-full ${isApproved ? 'bg-black hover:bg-[#FF4F00]' : 'bg-[#E5E5E5] text-[#999]'} text-white rounded-none font-mono text-xs uppercase tracking-widest px-8 py-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[2px] transition-all`}
+                                                >
+                                                    {generatingReport ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                                                            GENERATING_PDF...
+                                                        </>
+                                                    ) : isApproved ? (
+                                                        <>
+                                                            <Download className="w-4 h-4 mr-2" />
+                                                            GENERATE_MASTER_REPORT
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Lock className="w-4 h-4 mr-2" />
+                                                            GENERATION_LOCKED
+                                                        </>
+                                                    )}
+                                                </Button>
+                                                {!isApproved && (
+                                                    <p className="font-mono text-[10px] text-red-600 text-center uppercase tracking-tight max-w-[200px] mt-1">
+                                                        {isUnacceptable
+                                                            ? 'Prohibited Classification'
+                                                            : assessment?.requires_manual_review
+                                                                ? 'Pending Manual Review'
+                                                                : 'Verification Incomplete'}
+                                                    </p>
                                                 )}
-                                            </Button>
+                                            </div>
                                         )
                                     ) : (
                                         <Button

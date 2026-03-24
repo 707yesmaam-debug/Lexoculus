@@ -176,6 +176,8 @@ export default function ReportGeneratorPage() {
             </div>
         );
     }
+    const isUnacceptable = assessment?.final_risk_classification === 'UNACCEPTABLE';
+    const isApproved = !!assessment?.approved_for_report;
 
     return (
         <div className="max-w-6xl mx-auto p-8 md:p-12">
@@ -215,14 +217,18 @@ export default function ReportGeneratorPage() {
 
                     {/* Not approved warning */}
                     {!assessment.approved_for_report && (
-                        <div className="p-6 bg-[#FFF5F0] border-b border-[#FF4F00]/20 flex items-start gap-4">
-                            <AlertCircle className="w-6 h-6 text-[#FF4F00] flex-shrink-0" />
+                        <div className={`p-6 ${isUnacceptable ? 'bg-red-50 border-red-600' : 'bg-[#FFF5F0] border-[#FF4F00]/20'} border-b flex items-start gap-4`}>
+                            <AlertCircle className={`w-6 h-6 ${isUnacceptable ? 'text-red-600' : 'text-[#FF4F00]'} flex-shrink-0`} />
                             <div>
-                                <h3 className="font-serif text-lg font-bold text-[#FF4F00]">Approvals Pending</h3>
+                                <h3 className={`font-serif text-lg font-bold ${isUnacceptable ? 'text-red-600' : 'text-[#FF4F00]'}`}>
+                                    {isUnacceptable ? 'System Prohibited' : 'Approvals Pending'}
+                                </h3>
                                 <p className="font-mono text-xs text-black mt-1">
-                                    {assessment.requires_manual_review
-                                        ? 'Manual review required before generation.'
-                                        : 'Complete context verification to unlock generator.'}
+                                    {isUnacceptable
+                                        ? 'Under the EU AI Act, this system is classified as UNACCEPTABLE. Report generation is restricted to internal cessation planning.'
+                                        : assessment.requires_manual_review
+                                            ? 'Manual review required before generation.'
+                                            : 'Complete context verification to unlock generator.'}
                                 </p>
                             </div>
                         </div>
