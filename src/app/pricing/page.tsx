@@ -81,15 +81,23 @@ function PricingContent() {
                     </Link>
                     <div className="flex items-center gap-2 md:gap-6">
                         {isLoggedIn ? (
-                            <Link href="/dashboard" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors flex items-center gap-2">
-                                Dashboard <ArrowRight className="w-4 h-4" />
-                            </Link>
+                            <button 
+                                onClick={async () => {
+                                    const { createClient } = await import('@/lib/infra/supabase');
+                                    const supabase = createClient();
+                                    await supabase.auth.signOut();
+                                    window.location.href = '/';
+                                }}
+                                className="text-sm font-medium border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors uppercase tracking-widest font-mono"
+                            >
+                                Logout
+                            </button>
                         ) : (
                             <>
-                                <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors ml-2 md:ml-0">
+                                <Link href="/auth/login" className="text-sm font-medium hover:text-[#FF4F00] transition-colors ml-2 md:ml-0 font-mono uppercase tracking-widest">
                                     Login
                                 </Link>
-                                <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors">
+                                <Link href="/auth/signup" className="text-sm font-medium bg-black text-white px-4 py-2 hover:bg-[#FF4F00] transition-colors font-mono uppercase tracking-widest">
                                     Purchase
                                 </Link>
                             </>
