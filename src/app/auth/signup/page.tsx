@@ -4,16 +4,18 @@ import { createClient } from '@/lib/infra/supabase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Eye, EyeOff, Check, X as CloseIcon } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [fullName, setFullName] = useState('');
-    const [accountType, setAccountType] = useState<'individual' | 'firm'>('individual');
-    const [firmName, setFirmName] = useState('');
+    const [accountType] = useState<'individual' | 'firm'>('individual');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
@@ -21,18 +23,33 @@ export default function SignupPage() {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Password validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            setError('Password does not meet security requirements.');
+            setLoading(false);
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match.');
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         const supabase = createClient();
+        const trimmedEmail = email.trim();
         const { data, error } = await supabase.auth.signUp({
-            email,
+            email: trimmedEmail,
             password,
             options: {
                 data: {
                     full_name: fullName,
-                    account_type: accountType,
-                    ...(accountType === 'firm' && { firm_name: firmName }),
+                    account_type: 'individual',
                 },
                 emailRedirectTo: `${window.location.origin}/auth/callback`,
             },
@@ -65,8 +82,8 @@ export default function SignupPage() {
                         Initialize<br />Environment.
                     </div>
                     <p className="font-mono text-xs text-[#555] max-w-[200px] leading-relaxed">
-                        Create a new LexOculus tenant.
-                        Define admin credentials.
+                        Create a secure personal audit profile.
+                        Access your compliance dashboard.
                     </p>
                 </div>
                 <div className="hidden md:block font-mono text-[10px] text-[#999]">
@@ -90,41 +107,6 @@ export default function SignupPage() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-4 mb-8">
-                            <button
-                                type="button"
-                                onClick={() => setAccountType('individual')}
-                                className={`p-4 border font-mono text-xs text-left transition-all ${accountType === 'individual' ? 'border-[#FF4F00] bg-[#FF4F00]/5 text-[#FF4F00]' : 'border-gray-200 text-gray-500 hover:border-black'}`}
-                            >
-                                <div className="font-bold mb-1 tracking-wider uppercase">Individual</div>
-                                <div className="leading-relaxed opacity-80">I am scanning my own projects.</div>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setAccountType('firm')}
-                                className={`p-4 border font-mono text-xs text-left transition-all ${accountType === 'firm' ? 'border-[#FF4F00] bg-[#FF4F00]/5 text-[#FF4F00]' : 'border-gray-200 text-gray-500 hover:border-black'}`}
-                            >
-                                <div className="font-bold mb-1 tracking-wider uppercase">Law Firm</div>
-                                <div className="leading-relaxed opacity-80">I am auditing clients.</div>
-                            </button>
-                        </div>
-
-                        {accountType === 'firm' && (
-                            <div className="space-y-4 pt-2 pb-4 border-b border-gray-100">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="firmName">Firm_Name</label>
-                                    <input
-                                        id="firmName"
-                                        type="text"
-                                        value={firmName}
-                                        onChange={(e) => setFirmName(e.target.value)}
-                                        className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none placeholder:text-gray-300"
-                                        placeholder="Acme Legal"
-                                        required={accountType === 'firm'}
-                                    />
-                                </div>
-                            </div>
-                        )}
 
                         <div className="space-y-2">
                             <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="name">Officer_Name</label>
@@ -154,14 +136,60 @@ export default function SignupPage() {
 
                         <div className="space-y-2">
                             <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="password">Passkey_Set</label>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            
+                            {/* Password hints */}
+                            <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                                {[
+                                    { label: '8+ Characters', met: password.length >= 8 },
+                                    { label: 'Uppercase', met: /[A-Z]/.test(password) },
+                                    { label: 'Lowercase', met: /[a-z]/.test(password) },
+                                    { label: 'Number', met: /\d/.test(password) },
+                                    { label: 'Special (@$!%*?&)', met: /[@$!%*?&]/.test(password) },
+                                ].map((req, i) => (
+                                    <div key={i} className={`flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-tighter ${req.met ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {req.met ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full border border-gray-300" />}
+                                        {req.label}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 mt-4">
+                            <label className="text-xs font-mono font-bold uppercase tracking-wider" htmlFor="confirmPassword">Confirm_Passkey</label>
+                            <div className="relative">
+                                <input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                                >
+                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex items-start gap-2 pt-2">

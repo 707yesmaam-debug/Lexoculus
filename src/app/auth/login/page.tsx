@@ -4,13 +4,14 @@ import { createClient } from '@/lib/infra/supabase';
 import { useRouter } from 'next/navigation';
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import OpticalLogo from '@/components/OpticalLogo';
 
 function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const router = useRouter();
@@ -21,18 +22,19 @@ function LoginForm() {
         setError(null);
 
         const supabase = createClient();
+        const trimmedEmail = email.trim();
         const { data, error } = await supabase.auth.signInWithPassword({
-            email,
+            email: trimmedEmail,
             password,
         });
 
         if (error) {
+            console.error('[AUTH LOGIN] Error object:', error);
             setError(error.message);
             setLoading(false);
         } else {
-            // Read account_type from user_metadata to avoid cookie race conditions with server APIs
-            const accountType = data.user?.user_metadata?.account_type || 'individual';
-            router.push(accountType === 'firm' ? '/firm/clients' : '/dashboard/scanner');
+            // Force redirect to individual dashboard, bypassing the firm flow entry point
+            router.push('/dashboard/scanner');
             router.refresh();
         }
     };
@@ -51,7 +53,7 @@ function LoginForm() {
                     </div>
                     <p className="font-mono text-xs text-[#555] max-w-[200px] leading-relaxed">
                         Access the LexOculus System.
-                        Supports Individual and Firm accounts.
+                        Secure individual audit entry point.
                     </p>
                 </div>
                 <div className="hidden md:block font-mono text-[10px] text-[#999]">
@@ -105,14 +107,23 @@ function LoginForm() {
                                     RESET_CREDENTIALS
                                 </button>
                             </div>
-                            <input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full bg-white border border-black p-4 text-black font-mono text-sm focus:outline-none focus:ring-1 focus:ring-[#FF4F00] focus:border-[#FF4F00] transition-none rounded-none"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex items-start gap-2 pt-2">

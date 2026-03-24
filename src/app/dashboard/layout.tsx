@@ -24,23 +24,6 @@ export default function DashboardLayout({
     const repo_scan_id = params?.repo_scan_id as string | undefined;
     const [persistentScanId, setPersistentScanId] = useState<string | null>(null);
 
-    const [firmClientId, setFirmClientId] = useState<string | null>(null);
-
-    function FirmClientTracker() {
-        const searchParams = useSearchParams();
-        const firmClientIdParam = searchParams.get('firmClientId');
-        
-        useEffect(() => {
-            if (firmClientIdParam) {
-                setFirmClientId(firmClientIdParam);
-                localStorage.setItem('active_firm_client_id', firmClientIdParam);
-            } else {
-                const stored = localStorage.getItem('active_firm_client_id');
-                if (stored) setFirmClientId(stored);
-            }
-        }, [firmClientIdParam]);
-        return null;
-    }
 
     // PERSISTENCE: Track the last active scan ID so users can return to it
     useEffect(() => {
@@ -183,7 +166,6 @@ export default function DashboardLayout({
 
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white"><div className="font-mono text-xs">LOADING_INTERFACE...</div></div>}>
-            <FirmClientTracker />
             <SubscriptionGate>
                 <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
 
@@ -231,16 +213,6 @@ export default function DashboardLayout({
                             </div>
 
 
-                            {firmClientId && (
-                                <div className="mb-4 pt-4 border-t border-[#E5E5E5]">
-                                    <Link 
-                                        href={`/firm/clients/${firmClientId}`}
-                                        className="w-full bg-[#FF4F00] text-white p-3 font-mono text-xs uppercase tracking-widest hover:bg-black transition-colors block text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
-                                    >
-                                        ← RETURN_TO_CLIENT
-                                    </Link>
-                                </div>
-                            )}
 
                             <div className="font-mono text-xs mb-4 pt-4 border-t border-[#E5E5E5] text-[#555]">
                                 <div className="flex justify-between mb-2">
