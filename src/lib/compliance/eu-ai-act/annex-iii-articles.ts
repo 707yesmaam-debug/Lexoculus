@@ -663,6 +663,35 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
             "Sentencing recommendation systems"
         ]
     },
+    {
+        constraint_id: "annex3_8b",
+        regulation_source: "Annex III(8)(b)",
+        official_text: "AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour of natural persons in the exercise of their rights in the context of elections or referenda",
+        risk_level: "HIGH_RISK",
+        category: "Administration of Justice",
+        description: "AI intended to influence elections or voting behavior",
+        code_indicators: [
+            "election_influence", "voting_behavior", "voter_targeting",
+            "political_campaigning", "voter_profiling", "opinion_manipulation"
+        ],
+        detection_method: "context",
+        contextual_questions: [
+            "Is the system used to influence election or referendum outcomes?",
+            "Does it target individuals to influence their voting behavior?",
+            "Is it used in the context of political campaigns?"
+        ],
+        requirements: [
+            "Transparency to voters",
+            "High robustness / cybersecurity",
+            "Human oversight",
+            "Logging of all operations"
+        ],
+        examples: [
+            "Micro-targeting based on political leanings",
+            "AI-driven political message optimization",
+            "Voter behavior prediction for campaigning"
+        ]
+    },
 
     // Category 9: Autonomous Vehicles (Article 26 equivalent)
     {
