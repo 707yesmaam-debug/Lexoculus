@@ -182,9 +182,10 @@ function PricingContent() {
                         </button>
 
                         <div className="mt-8 space-y-4">
-                            <FeatureItem included dark>Unlimited Scans</FeatureItem>
-                            <FeatureItem included dark>Private Repositories</FeatureItem>
-                            <FeatureItem included dark>PDF Compliance Reports</FeatureItem>
+                            <FeatureItem included dark>5 Private Repositories</FeatureItem>
+                            <FeatureItem included dark>30 Repository Scans /mo</FeatureItem>
+                            <FeatureItem included dark>50 PR Scans /mo</FeatureItem>
+                            <FeatureItem included dark>20 PDF Compliance Reports /mo</FeatureItem>
                             <FeatureItem included dark>Context Verification</FeatureItem>
                             <FeatureItem included dark>GitHub Action Integration</FeatureItem>
                             <FeatureItem included dark>Priority Support</FeatureItem>
@@ -209,12 +210,13 @@ function PricingContent() {
                         </button>
 
                         <div className="mt-8 space-y-4">
-                            <FeatureItem included>Everything in Pro</FeatureItem>
+                            <FeatureItem included>Unlimited Repository Scans</FeatureItem>
+                            <FeatureItem included>Unlimited PR Scans</FeatureItem>
+                            <FeatureItem included>Unlimited PDF Reports</FeatureItem>
                             <FeatureItem included>Headless API Access</FeatureItem>
                             <FeatureItem included>Custom Policy Engine</FeatureItem>
-                            <FeatureItem included>Unlimited Team Seats</FeatureItem>
-                            <FeatureItem included>Priority Support Channel</FeatureItem>
                             <FeatureItem included>Audit Logs & RBAC</FeatureItem>
+                            <FeatureItem included>Priority Support Channel</FeatureItem>
                         </div>
                     </div>
                 </div>
