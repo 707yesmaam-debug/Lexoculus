@@ -48,7 +48,13 @@ export async function POST(request: NextRequest) {
             where: { repo_scan_id },
         });
 
+        let purpose_changed_from: string | null = null;
+
         if (existingAssessment && force) {
+            if (existingAssessment.intended_purpose && intended_purpose && existingAssessment.intended_purpose !== intended_purpose) {
+                purpose_changed_from = existingAssessment.intended_purpose;
+                console.log(`[PURPOSE] Purpose changed from ${purpose_changed_from} to ${intended_purpose}`);
+            }
             // Force re-classify: delete existing assessment (cascades to FinalRiskAssessment + ComplianceReport)
             console.log(`[FORCE] Deleting existing assessment ${existingAssessment.id} for re-classification`);
             await prisma.riskAssessment.delete({ where: { id: existingAssessment.id } });
@@ -72,7 +78,11 @@ export async function POST(request: NextRequest) {
                     is_high_risk: existingAssessment.is_high_risk,
                     is_limited_risk: existingAssessment.is_limited_risk,
                     is_minimal_risk: existingAssessment.is_minimal_risk,
+                    also_has_high_risk_elements: Array.isArray(existingAssessment.matched_annex_iii_articles) && 
+                        existingAssessment.matched_annex_iii_articles.some((a: any) => a.riskTier === 'HIGH_RISK' && a.applicable === true),
                 },
+                prohibition_reasons: [], // Derived on the fly for cached assessments if needed
+
                 manual_review_needed: existingAssessment.manual_review_needed,
                 manual_review_reason: existingAssessment.manual_review_reason,
                 assessed_at: existingAssessment.assessed_at,
@@ -312,11 +322,15 @@ export async function POST(request: NextRequest) {
                 is_high_risk: assessment.is_high_risk,
                 is_limited_risk: assessment.is_limited_risk,
                 is_minimal_risk: assessment.is_minimal_risk,
+                also_has_high_risk_elements: result.preliminary_assessment.also_has_high_risk_elements,
             },
+            prohibition_reasons: result.prohibition_reasons ?? [],
+
             manual_review_needed: assessment.manual_review_needed,
             manual_review_reason: assessment.manual_review_reason,
             assessed_at: assessment.assessed_at,
             rate_limit_remaining: rateLimit.remaining,
+            purpose_changed_from,
             // Constraint Engine validation data
             constraint_validation: result.constraint_validation,
             // GPAI Classification (Chapter V, Articles 51-55)

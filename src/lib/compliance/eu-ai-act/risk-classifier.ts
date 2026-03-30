@@ -9,12 +9,12 @@
  */
 
 import { LlmCapabilityAnalysis } from '@prisma/client';
-import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAIConstraint } from './annex-iii-articles';
+import { HIGH_RISK_ARTICLES, LIMITED_RISK_ARTICLES, UNACCEPTABLE_RISKS, EUAIConstraint, ARTICLE_5_CONSTRAINTS, ANNEX_III_CONSTRAINTS } from './annex-iii-articles';
 import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from './constraint-engine';
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
 import { findLibraryByName } from '../../analysis/ai-library-database';
-import { shouldSkipHighRiskCategory } from './purpose-categories';
+import { shouldSkipHighRiskCategory, PURPOSE_CATEGORY_MAP } from './purpose-categories';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -52,7 +52,21 @@ export interface RiskAssessmentResult {
         is_high_risk: boolean;
         is_limited_risk: boolean;
         is_minimal_risk: boolean;
+        /** NEW: true even when UNACCEPTABLE overrides, if any Annex III articles were matched */
+        also_has_high_risk_elements: boolean;
     };
+    /** NEW: Structured list of reasons WHY this system is prohibited (Article 5 violations).
+     *  Only populated when risk_classification === 'UNACCEPTABLE'.
+     *  Separate from matched_annex_iii_articles which covers HIGH/LIMITED_RISK.
+     */
+    prohibition_reasons?: {
+        article: string;
+        category: string;
+        description: string;
+        official_text: string;
+        exceptions_exist: boolean;
+        exception_questions?: string[];
+    }[];
     manual_review_needed: boolean;
     manual_review_reason?: string;
     risk_narrative: string;
@@ -79,6 +93,13 @@ export interface RiskAssessmentResult {
             detected_patterns: string[];
             constraint_matches: string[];
         };
+        // NEW: shows what the declared purpose filtered out
+        purpose_filter?: {
+            declared_purpose: string;
+            categories_evaluated: string[] | 'ALL';
+            categories_skipped: string[];
+            note: string;
+        } | null;
     };
 
     // GPAI Classification (Chapter V, Articles 51-55)
@@ -89,7 +110,19 @@ export interface RiskAssessmentResult {
 }
 
 /**
- * Main risk classification function
+ * Base risk classification — DO NOT CALL DIRECTLY in production paths.
+ * 
+ * @internal
+ * @deprecated Use `classifyRiskFull()` which includes all 8 Article 5 prohibition
+ * checks via the Constraint Engine. This function only detects
+ * `targets_vulnerable_persons` (art5_1b) from UNACCEPTABLE risk; the other
+ * 7 prohibitions (subliminal manipulation, social scoring, real-time biometric
+ * ID, etc.) require the Constraint Engine wrapper.
+ * 
+ * Safe call chains:
+ *   classifyRiskFull()
+ *     → classifyRiskWithConstraintValidation()
+ *       → classifyRisk()   ← here
  */
 export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: string): RiskAssessmentResult {
     const matchedArticles: AnnexIIIMatch[] = [];
@@ -142,12 +175,39 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         manualReviewReason = 'UNACCEPTABLE risk detected - requires legal review';
     }
 
+    // STEP 1B: Check Article 5(1)(f) — Workplace / Education Emotion Recognition
+    // This is UNACCEPTABLE regardless of biometric processing
+    if (indicators.uses_emotion_recognition) {
+        const workplaceContextKeywords = ['workplace', 'employee', 'worker', 'student', 'education', 'school', 'classroom'];
+        const hasWorkplaceContext = workplaceContextKeywords.some(kw =>
+            (intendedPurpose || '').toLowerCase().includes(kw) ||
+            (analysis.analysis_notes || '').toLowerCase().includes(kw)
+        );
+
+        if (hasWorkplaceContext ||
+            intendedPurpose === 'worker_monitoring' ||
+            intendedPurpose === 'education') {
+            matchedArticles.push({
+                article: 'Article 5(1)(f)',
+                category: 'Workplace/Education Emotion Recognition',
+                description: ARTICLE_5_CONSTRAINTS.find(c => c.constraint_id === 'art5_1f')?.description || 
+                             'Emotion recognition prohibited in workplace and education settings',
+                applicable: true,
+                riskTier: 'UNACCEPTABLE',
+                reasoning: 'Emotion recognition in workplace/education context is PROHIBITED under Article 5(1)(f), except for medical/safety purposes',
+            });
+            riskClassification = 'UNACCEPTABLE';
+            keyFindings.push('PROHIBITED: Workplace/Education Emotion Recognition (Article 5(1)(f))');
+            manualReviewReason = 'UNACCEPTABLE risk — emotion recognition in workplace/education is banned';
+        }
+    }
+
     // ========================================
     // STEP 2: Check HIGH RISK (Articles 6-27)
     // ========================================
 
     // Article 6-9: Biometric Identification & Categorization
-    if (indicators.uses_biometric_processing) {
+    if (indicators.uses_biometric_processing && !shouldSkipHighRiskCategory('Remote Biometric Identification', intendedPurpose)) {
         // Map to Annex III(1)(a) - Remote Biometric Identification (most severe)
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(a)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9'); // Fallback
@@ -184,25 +244,25 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         }
     }
 
-    // Article 6-9: Emotion Recognition (HIGH_RISK if for access control)
-    if (indicators.uses_emotion_recognition && indicators.uses_biometric_processing) {
+    // Article 6-9: Emotion Recognition (Annex III(1)(c))
+    if (indicators.uses_emotion_recognition && !shouldSkipHighRiskCategory('Emotion Recognition', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(c)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9');
 
         if (article) {
             matchedArticles.push({
                 article: article.article,
-                category: 'Emotion Recognition for Access Control',
-                description: 'Emotion recognition combined with biometric identification',
+                category: 'Emotion Recognition',
+                description: 'AI system for emotion recognition (Annex III(1)(c))',
                 applicable: true,
                 riskTier: 'HIGH_RISK',
-                reasoning: 'Emotion recognition used with biometric processing indicates access control use case',
+                reasoning: 'Emotion recognition systems are classified as HIGH RISK unless strictly for medical or safety purposes (which requires specific context verification)',
                 requirements: article.requirements,
             });
             if (riskClassification !== 'UNACCEPTABLE') {
                 riskClassification = 'HIGH_RISK';
             }
-            keyFindings.push('Emotion recognition with biometrics - HIGH RISK');
+            keyFindings.push('Emotion recognition capability detected - HIGH RISK');
             const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition') ||
                 l.category === 'biometrics');
             relatedLibs.forEach(lib => {
@@ -211,7 +271,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
                     name: lib.name || lib.matched_string || 'unknown',
                     source_file: lib.source || 'unknown',
                     version: lib.version,
-                    risk_indicators: ['uses_emotion_recognition', 'uses_biometric_processing'],
+                    risk_indicators: ['uses_emotion_recognition'],
                     triggered_articles: [article.article],
                     severity: 'high',
                 });
@@ -342,7 +402,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             t.toLowerCase().includes('segmentation')
         );
 
-    if (hasAutonomousCapability) {
+    if (hasAutonomousCapability && !shouldSkipHighRiskCategory('Autonomous Vehicles', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Article 26')!;
         matchedArticles.push({
             article: article.article,
@@ -377,8 +437,8 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
     // STEP 3: Check LIMITED RISK (Articles 37-40)
     // ========================================
 
-    // Article 37: Emotion Recognition (not for access control)
-    if (indicators.uses_emotion_recognition && !indicators.uses_biometric_processing) {
+    // Article 50(3): Emotion Recognition Transparency (Applies globally when Emotion Recognition is used)
+    if (indicators.uses_emotion_recognition) {
         const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 50(3)') ||
             LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 37');
 
@@ -389,25 +449,14 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
                 description: article.description,
                 applicable: true,
                 riskTier: 'LIMITED_RISK',
-                reasoning: 'Emotion recognition without biometric identification - requires transparency',
+                reasoning: 'Emotion recognition systems are subject to transparency obligations (Article 50(3)), requiring users to be informed of the system\'s operation.',
                 requirements: article.requirements,
             });
+            // This is additive, do not downgrade if already UNACCEPTABLE or HIGH_RISK
             if (riskClassification === 'MINIMAL_RISK') {
                 riskClassification = 'LIMITED_RISK';
             }
-            keyFindings.push('Emotion recognition system - LIMITED RISK (requires transparency)');
-            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition'));
-            relatedLibs.forEach(lib => {
-                evidenceList.push({
-                    type: 'dependency',
-                    name: lib.name || lib.matched_string || 'unknown',
-                    source_file: lib.source || 'unknown',
-                    version: lib.version,
-                    risk_indicators: ['uses_emotion_recognition'],
-                    triggered_articles: [article.article],
-                    severity: 'medium',
-                });
-            });
+            keyFindings.push('Emotion recognition transparency obligation (Article 50(3)) applies');
         }
     }
 
@@ -629,6 +678,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             is_high_risk: riskClassification === 'HIGH_RISK',
             is_limited_risk: riskClassification === 'LIMITED_RISK',
             is_minimal_risk: riskClassification === 'MINIMAL_RISK',
+            also_has_high_risk_elements: matchedArticles.some(a => a.riskTier === 'HIGH_RISK' && a.applicable === true),
         },
         manual_review_needed: manualReviewNeeded,
         manual_review_reason: manualReviewReason,
@@ -796,6 +846,18 @@ export function classifyRiskWithConstraintValidation(
             official_text: match.constraint.official_text
         }));
 
+        // NEW: Build prohibition_reasons from UNACCEPTABLE constraint matches
+        const prohibitionReasons = constraintResult.matches
+            .filter(m => m.constraint.risk_level === 'UNACCEPTABLE')
+            .map(m => ({
+                article: m.constraint.regulation_source,
+                category: m.constraint.category,
+                description: m.constraint.description,
+                official_text: m.constraint.official_text,
+                exceptions_exist: (m.constraint.exceptions?.length ?? 0) > 0,
+                exception_questions: m.constraint.exceptions?.flatMap(e => e.verification_questions) || [],
+            }));
+
         // Step 7: Determine final classification (constraint engine is source of truth)
         const finalClassification = validation.validated_risk;
         const wasOverridden = validation.was_overridden;
@@ -854,14 +916,32 @@ export function classifyRiskWithConstraintValidation(
                 is_high_risk: finalClassification === 'HIGH_RISK',
                 is_limited_risk: finalClassification === 'LIMITED_RISK',
                 is_minimal_risk: finalClassification === 'MINIMAL_RISK',
+                also_has_high_risk_elements: baseResult.matched_annex_iii_articles
+                    .some(a => a.riskTier === 'HIGH_RISK' && a.applicable === true),
             },
+            ...(prohibitionReasons.length > 0 ? { prohibition_reasons: prohibitionReasons } : {}),
             constraint_validation: {
                 was_overridden: wasOverridden,
                 override_reason: validation.override_reason,
                 matched_constraint_ids: validation.matched_constraints,
                 legal_citations: legalCitations,
                 contextual_questions: constraintResult.contextual_questions,
-                audit_trail: validation.audit_trail
+                audit_trail: validation.audit_trail,
+                purpose_filter: intendedPurpose ? {
+                    declared_purpose: intendedPurpose,
+                    categories_evaluated: PURPOSE_CATEGORY_MAP[intendedPurpose] ?? 'ALL',
+                    categories_skipped: (() => {
+                        const eligible = PURPOSE_CATEGORY_MAP[intendedPurpose];
+                        if (!eligible) return [];
+                        return ANNEX_III_CONSTRAINTS
+                            .map((c: EUAIConstraint) => c.category)
+                            .filter((cat: string, i: number, arr: string[]) => arr.indexOf(cat) === i)
+                            .filter((cat: string) => !eligible.includes(cat));
+                    })(),
+                    note: `Purpose '${intendedPurpose}' filters evaluation to: ${
+                        (PURPOSE_CATEGORY_MAP[intendedPurpose] as string[])?.join(', ') || 'none — all blocked'
+                    }`,
+                } : null,
             }
         };
     } catch (error) {
@@ -881,7 +961,8 @@ export function classifyRiskWithConstraintValidation(
                     detected_libraries: [],
                     detected_patterns: [],
                     constraint_matches: []
-                }
+                },
+                purpose_filter: null
             }
         };
     }

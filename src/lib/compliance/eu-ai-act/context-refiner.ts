@@ -58,6 +58,8 @@ export interface ContextSummary {
     intended_use: string;
     target_users: string;
     deployment_region: string;
+    purpose_mismatch: boolean;
+    purpose_mismatch_reason?: string;
     has_human_oversight: boolean;
     has_testing_procedure: boolean;
     has_transparency_statement: boolean;
@@ -131,6 +133,24 @@ export function refineWithContext(
     let escalationReason: string | undefined;
 
     const preliminaryArticles = (preliminary.matched_annex_iii_articles as unknown as PreliminaryArticle[]) || [];
+    
+    // ========================================
+    // STEP 0: Purpose Mismatch Detection
+    // ========================================
+    const intendedPurpose = (preliminary as any).intended_purpose as string | undefined | null;
+    const mismatchCheck = detectPurposeMismatch(intendedPurpose, answers);
+    if (mismatchCheck.has_mismatch) {
+        evidenceItems.push({
+            category: 'ISSUE: Purpose Mismatch',
+            description: mismatchCheck.reason || 'Declared purpose does not match context answers',
+            supports_classification: 'ESCALATES_RISK',
+            user_provided: true,
+            confidence: 'HIGH',
+            action_item: 'REQUIRED: Update declared purpose or correct context answers before report generation',
+        });
+        requiresManualReview = true;
+        escalationReason = mismatchCheck.reason;
+    }
 
     // ========================================
     // STEP 1: Generate Use Case Evidence
@@ -506,6 +526,8 @@ export function refineWithContext(
         has_architecture_diagram: hasArchitectureDiagram,
         has_human_policy_document: hasHumanPolicy,
         has_data_policy_document: hasDataPolicy,
+        purpose_mismatch: mismatchCheck.has_mismatch,
+        purpose_mismatch_reason: mismatchCheck.reason,
     };
 
     // ========================================
@@ -515,7 +537,8 @@ export function refineWithContext(
     const approvedForReport =
         finalClassification !== 'UNACCEPTABLE' &&
         !requiresManualReview &&
-        complianceReadiness.overall_readiness !== 'NON_COMPLIANCE';
+        complianceReadiness.overall_readiness !== 'NON_COMPLIANCE' &&
+        !mismatchCheck.has_mismatch;
 
     // ========================================
     // STEP 10: Generate Final Narrative
@@ -767,3 +790,37 @@ function getReadableValue(value: string | undefined, mapping: Record<string, str
     if (!value) return 'Not specified';
     return mapping[value] || value;
 }
+
+/**
+ * Phase 4: Detect mismatches between declared purpose and context answers
+ */
+export function detectPurposeMismatch(
+    declaredPurpose: string | null | undefined, 
+    answers: Record<string, any>
+): { has_mismatch: boolean; reason?: string } {
+    if (!declaredPurpose || declaredPurpose === 'general') return { has_mismatch: false };
+    
+    // Check if declared non-HR but answers say it's for hiring
+    if (declaredPurpose !== 'hr_recruitment' && answers.uses_for_hiring === 'yes') {
+        return { has_mismatch: true, reason: 'Declared purpose is not HR/Recruitment, but context indicates use for hiring decisions.' };
+    }
+
+    // Check if declared non-Finance but answers say it's for credit/loans
+    if (declaredPurpose !== 'financial_services' && answers.financial_decisions === 'yes') {
+        return { has_mismatch: true, reason: 'Declared purpose is not Financial Services, but context indicates use for financial/credit decisions.' };
+    }
+
+    // Check if non-biometrics, but uses biometrics
+    if (declaredPurpose !== 'biometrics' && answers.uses_biometrics === 'yes') {
+        // Warning: This could be valid (e.g., healthcare with biometrics), but we should flag manual review
+        return { has_mismatch: true, reason: 'System uses biometrics but purpose is not explicitly Biometrics (ensure Annex III constraints are met).' };
+    }
+
+    // Check if developer tool but public access
+    if (declaredPurpose === 'developer_tool' && answers.primary_users === 'public') {
+        return { has_mismatch: true, reason: 'Developer tool intended for public/consumer use rather than developers.' };
+    }
+
+    return { has_mismatch: false };
+}
+

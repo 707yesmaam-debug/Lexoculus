@@ -17,9 +17,20 @@ export const PURPOSE_CATEGORY_MAP: Record<string, string[] | null> = {
     'content_generation': [],
     'critical_infrastructure': ['Critical Infrastructure'],
     'financial_services': ['Essential Services Access'],
-    'healthcare': ['Critical Infrastructure'],
+    'healthcare': [
+        'Critical Infrastructure',         // Annex III(2)
+        'Essential Services Access',        // Annex III(5)
+        'Remote Biometric Identification',  // Annex III(1)(a)
+        'Emotion Recognition',              // Annex III(1)(c)
+    ],
     'hr_recruitment': ['Employment & Worker Management'],
     'worker_monitoring': ['Employment & Worker Management'],
+    'medical_device': [
+        'Critical Infrastructure',
+        'Essential Services Access',
+        'Remote Biometric Identification',
+        'Emotion Recognition',
+    ],
     'law_enforcement': ['Law Enforcement'],
     'education': ['Education & Vocational Training'],
     'biometrics': ['Remote Biometric Identification', 'Biometric Categorization', 'Emotion Recognition'],
@@ -45,6 +56,7 @@ export const PURPOSE_OPTIONS = [
     { value: 'public_benefits', label: 'Public Assistance / Social Security Eligibility' },
     { value: 'insurance_pricing', label: 'Life & Health Insurance (Risk & Pricing)' },
     { value: 'healthcare', label: 'Healthcare / Medical' },
+    { value: 'medical_device', label: 'Medical Device / Clinical Decision Support' },
     { value: 'hr_recruitment', label: 'HR / Recruitment / Employment' },
     { value: 'worker_monitoring', label: 'Employee / Student Monitoring & Surveillance' },
     { value: 'education', label: 'Education / Student Assessment' },

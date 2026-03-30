@@ -70,6 +70,7 @@ interface AssessmentData {
     classification_changed?: boolean;
     reclassified?: boolean;
     intended_purpose?: string;
+    purpose_changed_from?: string | null;
 }
 
 interface AnalysisData {
@@ -414,6 +415,20 @@ export default function RiskClassifierPage() {
             )}
 
             {/* Classification Change Banner */}
+            {assessment?.purpose_changed_from && (
+                <div className="mb-8 border-2 border-[#FF4F00] bg-[#FFF5F0] p-6">
+                    <div className="flex items-start gap-4">
+                        <AlertTriangle className="w-6 h-6 text-[#FF4F00] flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <h4 className="font-serif text-lg font-bold text-[#FF4F00] mb-2">Purpose Modification Detected</h4>
+                            <p className="font-mono text-xs text-black">
+                                The AI system's intended purpose was changed from <strong>{assessment.purpose_changed_from}</strong> to <strong>{assessment.intended_purpose}</strong>. 
+                                The risk mapping has been updated accordingly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
             {assessment?.classification_changed && assessment.previous_classification && (
                 <div className="mb-8 border-2 border-[#FF4F00] bg-[#FFF5F0] p-6">
                     <div className="flex items-start gap-4">

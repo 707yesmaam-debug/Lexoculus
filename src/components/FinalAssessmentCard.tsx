@@ -25,6 +25,8 @@ interface ContextSummary {
     has_transparency_statement: boolean;
     has_appeal_mechanism: boolean;
     has_data_safeguards: boolean;
+    purpose_mismatch?: boolean;
+    purpose_mismatch_reason?: string;
 }
 
 interface ComplianceReadinessData {
@@ -82,6 +84,19 @@ export default function FinalAssessmentCard({
                         <h3 className="font-serif text-xl font-bold text-[#047857]">Ready for Compliance Report</h3>
                         <p className="font-mono text-sm text-[#064E3B] mt-1">
                             Context verified. System authorized for report generation.
+                        </p>
+                    </div>
+                </div>
+            ) : contextSummary.purpose_mismatch ? (
+                <div className="bg-[#FFF5F0] border-2 border-[#FF4F00] p-6 flex items-start gap-4">
+                    <AlertTriangle className="w-8 h-8 text-[#FF4F00] flex-shrink-0" />
+                    <div>
+                        <h3 className="font-serif text-xl font-bold text-[#FF4F00]">Report Blocked: Purpose Mismatch</h3>
+                        <p className="font-mono text-sm text-black mt-1">
+                            {contextSummary.purpose_mismatch_reason || 'Declared intended purpose conflicts with verified context.'}
+                        </p>
+                        <p className="font-mono text-xs text-[#555] mt-2 uppercase tracking-widest">
+                            Required Action: Update intended purpose in Risk Classifier or correct context answers.
                         </p>
                     </div>
                 </div>

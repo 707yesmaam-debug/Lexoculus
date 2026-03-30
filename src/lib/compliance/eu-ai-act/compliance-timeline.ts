@@ -13,7 +13,7 @@
 // TYPES
 // =============================================================================
 
-export type DeadlineStatus = 'passed' | 'critical' | 'upcoming' | 'future';
+export type DeadlineStatus = 'passed' | 'critical' | 'upcoming' | 'future' | 'proposed';
 
 export interface ComplianceDeadline {
     id: string;
@@ -25,6 +25,7 @@ export interface ComplianceDeadline {
     status: DeadlineStatus;
     days_remaining: number;
     penalties?: string;
+    is_proposed?: boolean;
 }
 
 export interface TimelineSummary {
@@ -112,6 +113,24 @@ const EU_AI_ACT_DEADLINES_RAW = [
         applies_to: ['HIGH_RISK', 'EMBEDDED_AI'],
         penalties: 'Up to €15M or 3% global annual turnover',
     },
+    {
+        id: 'digital_omnibus_annex_iii',
+        date: '2027-12-02',
+        title: 'Digital Omnibus Framework (Proposed)',
+        description: 'Proposed amendments aligning EU product safety legislation with the EU AI Act for standalone and embedded systems.',
+        article: 'Digital Omnibus Proposal',
+        applies_to: ['HIGH_RISK', 'EMBEDDED_AI'],
+        is_proposed: true,
+    },
+    {
+        id: 'digital_omnibus_embedded',
+        date: '2028-08-02',
+        title: 'Digital Omnibus Application (Proposed)',
+        description: 'Anticipated enforcement date for Digital Omnibus amendments affecting AI systems embedded in regulated products.',
+        article: 'Digital Omnibus Proposal',
+        applies_to: ['EMBEDDED_AI'],
+        is_proposed: true,
+    },
 ];
 
 // =============================================================================
@@ -121,12 +140,13 @@ const EU_AI_ACT_DEADLINES_RAW = [
 /**
  * Calculate deadline status and days remaining from today
  */
-function calculateDeadlineStatus(dateStr: string, referenceDate?: Date): { status: DeadlineStatus; daysRemaining: number } {
+function calculateDeadlineStatus(dateStr: string, is_proposed?: boolean, referenceDate?: Date): { status: DeadlineStatus; daysRemaining: number } {
     const deadline = new Date(dateStr);
     const now = referenceDate || new Date();
     const diffMs = deadline.getTime() - now.getTime();
     const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
+    if (is_proposed) return { status: 'proposed', daysRemaining };
     if (daysRemaining <= 0) return { status: 'passed', daysRemaining };
     if (daysRemaining <= 90) return { status: 'critical', daysRemaining };
     if (daysRemaining <= 365) return { status: 'upcoming', daysRemaining };
@@ -186,7 +206,7 @@ export function calculateComplianceTimeline(
     const applicableDeadlines: ComplianceDeadline[] = EU_AI_ACT_DEADLINES_RAW
         .filter(dl => isDeadlineApplicable(dl, riskClassification, isGpaiDeployer, isGpaiProvider, isEmbeddedAI))
         .map(dl => {
-            const { status, daysRemaining } = calculateDeadlineStatus(dl.date, referenceDate);
+            const { status, daysRemaining } = calculateDeadlineStatus(dl.date, (dl as any).is_proposed, referenceDate);
             return {
                 id: dl.id,
                 date: dl.date,
@@ -197,6 +217,7 @@ export function calculateComplianceTimeline(
                 status,
                 days_remaining: daysRemaining,
                 penalties: dl.penalties,
+                is_proposed: (dl as any).is_proposed,
             };
         })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -237,7 +258,7 @@ export function calculateComplianceTimeline(
  */
 export function getAllDeadlines(referenceDate?: Date): ComplianceDeadline[] {
     return EU_AI_ACT_DEADLINES_RAW.map(dl => {
-        const { status, daysRemaining } = calculateDeadlineStatus(dl.date, referenceDate);
+        const { status, daysRemaining } = calculateDeadlineStatus(dl.date, (dl as any).is_proposed, referenceDate);
         return {
             id: dl.id,
             date: dl.date,
@@ -248,6 +269,7 @@ export function getAllDeadlines(referenceDate?: Date): ComplianceDeadline[] {
             status,
             days_remaining: daysRemaining,
             penalties: dl.penalties,
+            is_proposed: (dl as any).is_proposed,
         };
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }

@@ -120,8 +120,11 @@ export function registerClassifyRiskTool(server: McpServer): void {
                         was_overridden: result.constraint_validation.was_overridden,
                         override_reason: result.constraint_validation.override_reason,
                         legal_citations: result.constraint_validation.legal_citations,
+                        purpose_filter: result.constraint_validation.purpose_filter,
                     }
                     : null,
+                prohibition_reasons: result.prohibition_reasons,
+                also_has_high_risk_elements: result.preliminary_assessment?.also_has_high_risk_elements ?? false,
             };
 
             return {
