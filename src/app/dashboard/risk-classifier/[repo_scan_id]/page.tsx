@@ -34,6 +34,7 @@ interface AssessmentData {
         is_high_risk: boolean;
         is_limited_risk: boolean;
         is_minimal_risk: boolean;
+        also_has_high_risk_elements: boolean;
     };
     manual_review_needed: boolean;
     manual_review_reason?: string;
@@ -71,6 +72,11 @@ interface AssessmentData {
     reclassified?: boolean;
     intended_purpose?: string;
     purpose_changed_from?: string | null;
+    prohibition_reasons?: {
+        article: string;
+        reason: string;
+        description: string;
+    }[];
 }
 
 interface AnalysisData {
@@ -472,6 +478,8 @@ export default function RiskClassifierPage() {
                         manualReviewNeeded={assessment.manual_review_needed}
                         manualReviewReason={assessment.manual_review_reason}
                         evidence={assessment.evidence}
+                        prohibition_reasons={assessment.prohibition_reasons}
+                        also_has_high_risk_elements={assessment.preliminary_assessment?.also_has_high_risk_elements}
                     />
                 </div>
             )}

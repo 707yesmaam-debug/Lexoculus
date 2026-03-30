@@ -26,6 +26,12 @@ interface RiskClassificationCardProps {
     manualReviewNeeded: boolean;
     manualReviewReason?: string;
     evidence?: RiskEvidence[];
+    prohibition_reasons?: {
+        article: string;
+        reason: string;
+        description: string;
+    }[];
+    also_has_high_risk_elements?: boolean;
 }
 
 function getRiskIcon(classification: RiskClassification) {
@@ -75,6 +81,8 @@ export default function RiskClassificationCard({
     manualReviewNeeded,
     manualReviewReason,
     evidence = [],
+    prohibition_reasons = [],
+    also_has_high_risk_elements = false,
 }: RiskClassificationCardProps) {
 
     return (
@@ -121,6 +129,52 @@ export default function RiskClassificationCard({
                         <p className="font-mono text-xs text-black mt-2">
                             {manualReviewReason || 'This assessment may require human verification.'}
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Prohibition Rationale Section */}
+            {classification === 'UNACCEPTABLE' && prohibition_reasons.length > 0 && (
+                <div className="border-2 border-[#FF4F00] bg-white overflow-hidden">
+                    <div className="px-6 py-4 bg-[#FF4F00] flex items-center gap-3">
+                        <ShieldX className="w-6 h-6 text-white" />
+                        <h3 className="font-serif text-xl font-bold text-white uppercase tracking-tight">Prohibited Application Rationale</h3>
+                    </div>
+                    <div className="divide-y divide-[#FF4F00]/20">
+                        {prohibition_reasons.map((reason, i) => (
+                            <div key={i} className="p-6 bg-[#FFF5F0]/30">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <span className="font-mono text-xs font-bold bg-[#FF4F00] text-white px-2 py-1 uppercase tracking-widest">{reason.article}</span>
+                                    <span className="font-serif font-bold text-black text-lg">{reason.reason}</span>
+                                </div>
+                                <p className="font-mono text-sm text-black leading-relaxed">
+                                    {reason.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="px-6 py-4 bg-[#FFF5F0] border-t border-[#FF4F00]">
+                        <p className="font-mono text-[10px] text-[#FF4F00] uppercase font-bold tracking-widest">Legal Status: Article 5 Prohibition // Non-Marketable</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Hybrid Risk Warning (Unacceptable + High Risk) */}
+            {classification === 'UNACCEPTABLE' && also_has_high_risk_elements && (
+                <div className="border-2 border-black bg-white p-6 flex items-start gap-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-black/5 rounded-full" />
+                    <AlertTriangle className="w-10 h-10 text-black flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                        <h4 className="font-serif text-2xl font-bold text-black mb-2">Annex III High-Risk Obligations</h4>
+                        <p className="font-mono text-sm text-black leading-relaxed max-w-3xl">
+                            In addition to being **PROHIBITED**, this AI system contains elements that would trigger **Annex III High-Risk** compliance requirements. 
+                            Should the prohibition be resolved (e.g., through modification of the intended purpose or specific use cases), the system would remain subject to strict self-assessment, human oversight, and data governance standards.
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="font-mono text-[10px] bg-black text-white px-3 py-1 uppercase tracking-widest">Article 9 - Risk Management</span>
+                            <span className="font-mono text-[10px] bg-black text-white px-3 py-1 uppercase tracking-widest">Article 10 - Data Governance</span>
+                            <span className="font-mono text-[10px] bg-black text-white px-3 py-1 uppercase tracking-widest">Article 14 - Human Oversight</span>
+                        </div>
                     </div>
                 </div>
             )}
