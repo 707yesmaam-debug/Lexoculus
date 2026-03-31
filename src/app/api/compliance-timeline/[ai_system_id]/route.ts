@@ -25,12 +25,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Special case: "all" returns unfiltered deadlines
+        // Special case: "all" returns unfiltered deadlines with complete summary
         if (ai_system_id === 'all') {
+            const timeline = calculateComplianceTimeline('ALL');
             return NextResponse.json({
-                timeline: {
-                    total_deadlines: getAllDeadlines().length,
-                    deadlines: getAllDeadlines(),
+                timeline,
+                ai_system: {
+                    id: 'all',
+                    name: 'Master Timeline',
+                    risk_classification: null,
                 },
             });
         }

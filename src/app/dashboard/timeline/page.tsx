@@ -17,9 +17,10 @@ interface Deadline {
     description: string;
     article: string;
     applies_to: string[];
-    status: 'passed' | 'critical' | 'upcoming' | 'future';
+    status: 'passed' | 'critical' | 'upcoming' | 'future' | 'proposed';
     days_remaining: number;
     penalties?: string;
+    is_proposed?: boolean;
 }
 
 interface TimelineData {
@@ -28,6 +29,7 @@ interface TimelineData {
     critical_deadlines: number;
     upcoming_deadlines: number;
     future_deadlines: number;
+    proposed_deadlines: number;
     next_deadline: Deadline | null;
     most_urgent_action: string;
     deadlines: Deadline[];
@@ -119,6 +121,14 @@ export default function TimelinePage() {
             bgColor: 'bg-emerald-50',
             icon: Calendar,
             label: 'FUTURE'
+        },
+        proposed: {
+            color: 'bg-slate-400',
+            textColor: 'text-slate-600',
+            borderColor: 'border-slate-200',
+            bgColor: 'bg-slate-50',
+            icon: Calendar,
+            label: 'PROPOSED'
         },
     };
 

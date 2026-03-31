@@ -34,6 +34,7 @@ export interface TimelineSummary {
     critical_deadlines: number;     // < 90 days
     upcoming_deadlines: number;     // 90-365 days
     future_deadlines: number;       // > 365 days
+    proposed_deadlines: number;     // non-binding dates
     next_deadline: ComplianceDeadline | null;
     most_urgent_action: string;
     deadlines: ComplianceDeadline[];
@@ -163,6 +164,9 @@ function isDeadlineApplicable(
     isGpaiProvider: boolean,
     isEmbeddedAI: boolean,
 ): boolean {
+    // Master timeline shows everything
+    if (riskClassification === 'ALL') return true;
+
     const applies = deadline.applies_to;
 
     // ALL applies to everyone
@@ -247,6 +251,7 @@ export function calculateComplianceTimeline(
         critical_deadlines: critical,
         upcoming_deadlines: upcoming,
         future_deadlines: future,
+        proposed_deadlines: applicableDeadlines.filter(d => d.status === 'proposed').length,
         next_deadline: nextDeadline,
         most_urgent_action: urgentAction,
         deadlines: applicableDeadlines,
