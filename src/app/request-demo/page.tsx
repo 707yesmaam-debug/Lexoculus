@@ -161,7 +161,7 @@ export default function RequestDemoPage() {
             const personalDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com', 'protonmail.com', 'proton.me'];
             const domain = form.work_email.split('@')[1]?.toLowerCase();
             if (personalDomains.includes(domain)) {
-                newErrors.work_email = 'Please use your work email';
+                newErrors.work_email = 'Please use a business email';
             }
         }
         if (!form.company_name.trim()) newErrors.company_name = 'Required';
@@ -307,7 +307,7 @@ export default function RequestDemoPage() {
                             {/* Work Email */}
                             <div>
                                 <label htmlFor="work_email" className="font-mono text-[10px] uppercase tracking-widest text-[#999] block mb-2">
-                                    Work Email <span className="text-[#FF4F00]">*</span>
+                                    Email <span className="text-[#FF4F00]">*</span>
                                 </label>
                                 <input
                                     id="work_email"

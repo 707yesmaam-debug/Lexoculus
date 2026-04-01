@@ -129,15 +129,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
                 color = '#6c757d'; // gray
         }
 
-        // Return JSON if requested
+        // Return JSON if requested (Internal metadata like risk_score/scan_time redacted for security)
         if (format === 'json') {
             return NextResponse.json({
                 system_name: aiSystem.name,
                 risk_classification: aiSystem.risk_classification,
-                risk_score: aiSystem.risk_score,
                 status_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/status/${shareId}`,
                 badge_url: `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/badge/${shareId}`,
-                last_scanned_at: aiSystem.last_scanned_at,
             });
         }
 

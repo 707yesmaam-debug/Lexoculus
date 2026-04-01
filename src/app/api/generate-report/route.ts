@@ -51,9 +51,12 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Generate Report] Starting for assessment: ${final_risk_assessment_id}`);
 
-        // 2. Check for existing report
-        const existingReport = await prisma.complianceReport.findUnique({
-            where: { final_risk_assessment_id },
+        // 2. Check for existing report (Verify ownership to prevent IDOR)
+        const existingReport = await prisma.complianceReport.findFirst({
+            where: { 
+                final_risk_assessment_id,
+                user_id: user.id
+            },
         });
 
         if (existingReport && !regenerate) {

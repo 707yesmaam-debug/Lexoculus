@@ -165,7 +165,7 @@ export function EnterpriseInquiryForm({ isOpen, onClose }: EnterpriseInquiryForm
                                             </div>
 
                                             <div className="space-y-1">
-                                                <label className="font-mono text-[10px] uppercase tracking-widest text-[#999]">Work Email</label>
+                                                <label className="font-mono text-[10px] uppercase tracking-widest text-[#999]">Email</label>
                                                 <input
                                                     required
                                                     type="email"
