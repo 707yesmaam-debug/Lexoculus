@@ -540,32 +540,40 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
     {
         constraint_id: "annex3_5",
         regulation_source: "Annex III(5)",
-        official_text: "AI systems intended to be used for evaluating the eligibility of natural persons for essential private and public services and benefits, as well as for granting, reducing, revoking or reclaiming such services and benefits",
+        official_text: "AI systems intended to be used for: (a) evaluating the eligibility of natural persons for essential public assistance benefits and services, including healthcare services, as well as to grant, reduce, revoke or reclaim such benefits and services; (b) evaluating the creditworthiness of natural persons or establishing their credit score, except AI systems used for detecting financial fraud; (c) evaluating and classifying emergency calls or to dispatch or establish priority in the dispatching of emergency first response services, including by police, fire and medical aid, as well as for emergency healthcare patient triage systems; (d) determining life and health insurance premiums and payouts",
         risk_level: "HIGH_RISK",
         category: "Essential Services Access",
-        description: "AI for determining eligibility for essential services and benefits",
+        description: "AI for credit scoring, public benefits, insurance pricing, or emergency dispatch/triage",
         code_indicators: [
             "credit_scoring", "loan_decision", "insurance_underwriting",
             "benefit_eligibility", "mortgage_decision", "welfare_assessment",
-            "housing_allocation", "utility_access"
+            "housing_allocation", "utility_access",
+            // Bug #1 fix: emergency_response indicators
+            "emergency_dispatch", "triage", "emergency_classification",
+            "first_responder", "ambulance_dispatch", "call_classification",
+            "patient_triage", "emergency_prioritization", "cad_system"
         ],
         detection_method: "context",
         contextual_questions: [
-            "Does it determine access to essential services?",
+            "Does it determine access to essential services (credit, benefits, insurance)?",
             "Does it affect credit, insurance, or benefits eligibility?",
-            "Could denial cause significant harm to individuals?"
+            "Does it classify or prioritize emergency calls or triage patients?",
+            "Could denial or mis-dispatch cause significant harm to individuals?"
         ],
         requirements: [
-            "Transparency to consumers",
-            "Right to explanation",
-            "Human review option",
-            "Non-discrimination testing"
+            "Transparency to consumers / affected persons",
+            "Right to explanation for credit/benefits decisions",
+            "Human review option — humans must be able to override",
+            "Non-discrimination testing",
+            "For emergency dispatch: human operator remains in control"
         ],
         examples: [
             "Credit scoring systems",
             "Loan approval algorithms",
             "Insurance risk assessment",
-            "Social benefit eligibility"
+            "Social benefit eligibility",
+            "Emergency call classification (112/999)",
+            "Hospital patient triage systems"
         ]
     },
 
@@ -668,8 +676,10 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
         regulation_source: "Annex III(8)(b)",
         official_text: "AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour of natural persons in the exercise of their rights in the context of elections or referenda",
         risk_level: "HIGH_RISK",
-        category: "Administration of Justice",
-        description: "AI intended to influence elections or voting behavior",
+        // Bug #2 fix: this is a separate sub-point from 'Administration of Justice'.
+        // Annex III(8)(a) = judicial assistance; Annex III(8)(b) = election influence.
+        category: "Democratic Processes & Elections",
+        description: "AI intended to influence elections, referenda, or individual voting behaviour",
         code_indicators: [
             "election_influence", "voting_behavior", "voter_targeting",
             "political_campaigning", "voter_profiling", "opinion_manipulation"
@@ -696,7 +706,7 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
     // Category 9: Autonomous Vehicles (Article 26 equivalent)
     {
         constraint_id: "annex3_av",
-        regulation_source: "Article 26", // Specific citation kept for classifier match
+        regulation_source: "Article 26",
         official_text: "AI systems intended to be used as safety components in autonomous road vehicles",
         risk_level: "HIGH_RISK",
         category: "Autonomous Vehicles",
@@ -708,6 +718,64 @@ export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [
         detection_method: "context",
         requirements: ["Conformity assessment", "Technical documentation"],
         examples: ["Self-driving car software", "Lane keep assist"]
+    },
+
+    // Category 10 (Bug #4 fix): Article 6(1) — Annex I Product Safety Components
+    // These are AI systems embedded in products regulated by EU harmonisation
+    // legislation (MDR, Machinery Regulation, etc.) that require a third-party
+    // conformity assessment (Module B+C with Notified Body), NOT Module A.
+    {
+        constraint_id: "art6_1_product",
+        regulation_source: "Article 6(1)",
+        official_text: "An AI system that is a safety component of a product, or which is itself a product, covered by the Union harmonisation legislation listed in Annex I, shall be considered to be high-risk under this Regulation",
+        risk_level: "HIGH_RISK",
+        category: "Article 6(1) — Medical Device",
+        description: "AI embedded in a medical device regulated by MDR 2017/745 or IVDR 2017/746",
+        code_indicators: [
+            "medical_device", "clinical_decision", "diagnostic_ai", "patient_monitoring",
+            "imaging_analysis", "radiology_ai", "pathology_ai", "clinical_nlp",
+            "vitals_monitoring", "ecg_analysis", "mri_analysis", "ct_analysis"
+        ],
+        detection_method: "context",
+        contextual_questions: [
+            "Is this AI embedded in a product regulated by the Medical Devices Regulation (MDR 2017/745)?",
+            "Is it classified as a medical device or safety component of one?",
+            "Does it require a CE mark via a Notified Body?"
+        ],
+        requirements: [
+            "Module B+C conformity assessment via EU Notified Body",
+            "Technical documentation per Annex IV of the AI Act",
+            "Quality Management System (ISO 13485 for medical devices)",
+            "Post-market surveillance",
+            "EU Declaration of Conformity"
+        ],
+        examples: [
+            "AI diagnostic imaging tools (radiology, pathology)",
+            "AI-driven patient monitoring systems",
+            "Clinical decision support (Class IIa/IIb/III medical device)"
+        ]
+    },
+    {
+        constraint_id: "art6_1_machinery",
+        regulation_source: "Article 6(1)",
+        official_text: "An AI system that is a safety component of a product covered by the Union harmonisation legislation listed in Annex I shall be considered to be high-risk",
+        risk_level: "HIGH_RISK",
+        category: "Article 6(1) — Machinery",
+        description: "AI safety component in machinery regulated by the EU Machinery Regulation 2023/1230",
+        code_indicators: [
+            "machinery_control", "industrial_robot", "safety_relay", "collaborative_robot",
+            "cobot", "machine_safety", "industrial_automation", "plc_ai"
+        ],
+        detection_method: "context",
+        requirements: [
+            "Module B+C conformity assessment via EU Notified Body (where required)",
+            "Technical documentation",
+            "Safety function documentation"
+        ],
+        examples: [
+            "AI safety systems in industrial robots",
+            "Collaborative robot (cobot) safety AI"
+        ]
     }
 ];
 

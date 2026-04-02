@@ -799,26 +799,39 @@ export function detectPurposeMismatch(
     answers: Record<string, any>
 ): { has_mismatch: boolean; reason?: string } {
     if (!declaredPurpose || declaredPurpose === 'general') return { has_mismatch: false };
-    
+
+    // Bug #7 fix: use arrays covering all granular purpose keys, not just one key
+    const EMPLOYMENT_PURPOSES = [
+        'hr_recruitment', 'recruitment', 'worker_management', 'worker_monitoring',
+    ];
+    const FINANCIAL_PURPOSES = [
+        'financial_services', 'credit_scoring', 'insurance_pricing', 'public_benefits',
+        'emergency_response',
+    ];
+    const BIOMETRIC_PURPOSES = [
+        'biometric_id', 'biometric_categorization', 'emotion_recognition',
+        'real_time_biometric_id',
+    ];
+
     // Check if declared non-HR but answers say it's for hiring
-    if (declaredPurpose !== 'hr_recruitment' && answers.uses_for_hiring === 'yes') {
-        return { has_mismatch: true, reason: 'Declared purpose is not HR/Recruitment, but context indicates use for hiring decisions.' };
+    if (!EMPLOYMENT_PURPOSES.includes(declaredPurpose) && answers.uses_for_hiring === 'yes') {
+        return { has_mismatch: true, reason: 'Declared purpose is not an employment/HR category, but context answers indicate use for hiring decisions. If this system is used for recruitment or worker management, update the declared purpose to \'recruitment\' or \'worker_management\' to ensure the correct Annex III(4) constraints are applied.' };
     }
 
     // Check if declared non-Finance but answers say it's for credit/loans
-    if (declaredPurpose !== 'financial_services' && answers.financial_decisions === 'yes') {
-        return { has_mismatch: true, reason: 'Declared purpose is not Financial Services, but context indicates use for financial/credit decisions.' };
+    if (!FINANCIAL_PURPOSES.includes(declaredPurpose) && answers.financial_decisions === 'yes') {
+        return { has_mismatch: true, reason: 'Declared purpose is not a financial/essential-services category, but context answers indicate use for financial or credit decisions. Update the declared purpose to \'credit_scoring\', \'insurance_pricing\', or \'public_benefits\' to ensure Annex III(5) constraints apply correctly.' };
     }
 
     // Check if non-biometrics, but uses biometrics
-    if (declaredPurpose !== 'biometrics' && answers.uses_biometrics === 'yes') {
-        // Warning: This could be valid (e.g., healthcare with biometrics), but we should flag manual review
-        return { has_mismatch: true, reason: 'System uses biometrics but purpose is not explicitly Biometrics (ensure Annex III constraints are met).' };
+    if (!BIOMETRIC_PURPOSES.includes(declaredPurpose) && answers.uses_biometrics === 'yes') {
+        // Warning: This could be valid (e.g., healthcare with biometrics), but flag for manual review
+        return { has_mismatch: true, reason: 'System uses biometrics but the declared purpose is not a biometric category. Verify that Annex III(1) constraints are being correctly evaluated. If biometric processing is incidental (e.g., a medical device that uses face recognition for patient identification), update the declared purpose accordingly.' };
     }
 
     // Check if developer tool but public access
     if (declaredPurpose === 'developer_tool' && answers.primary_users === 'public') {
-        return { has_mismatch: true, reason: 'Developer tool intended for public/consumer use rather than developers.' };
+        return { has_mismatch: true, reason: 'Declared as a \'Developer Tool\' but context indicates the primary users are the general public. Developer tools are exempt from Annex III high-risk constraints. If this is a consumer-facing product, update the declared purpose to reflect the actual use case.' };
     }
 
     return { has_mismatch: false };

@@ -31,10 +31,18 @@ export function registerClassifyRiskTool(server: McpServer): void {
                     .string()
                     .optional()
                     .describe(
-                        'Intended purpose category. One of: developer_tool, chatbot, data_analytics, ' +
-                        'content_generation, critical_infrastructure, financial_services, healthcare, ' +
-                        'hr_recruitment, law_enforcement, education, biometrics, migration_border, ' +
-                        'justice_legal, autonomous_vehicles, general',
+                        'Intended purpose category (Regulation (EU) 2024/1689). ' +
+                        'GENERAL: developer_tool | data_analytics | api_middleware | general. ' +
+                        'ARTICLE 5 PROHIBITED: social_scoring | real_time_biometric_id. ' +
+                        'ANNEX III(1) BIOMETRICS: biometric_id | biometric_categorization | emotion_recognition. ' +
+                        'ANNEX III(2) CRITICAL INFRA: critical_infrastructure. ' +
+                        'ANNEX III(3) EDUCATION: education_access | student_assessment | student_placement | student_monitoring. ' +
+                        'ANNEX III(4) EMPLOYMENT: hr_recruitment | recruitment | worker_management | worker_monitoring. ' +
+                        'ANNEX III(5) ESSENTIAL SERVICES: credit_scoring | public_benefits | insurance_pricing | emergency_response. ' +
+                        'ANNEX III(6) LAW ENFORCEMENT: law_enforcement. ' +
+                        'ANNEX III(7) MIGRATION: migration_border. ' +
+                        'ANNEX III(8) JUSTICE & DEMOCRACY: justice_legal | elections_democracy. ' +
+                        'ARTICLE 6(1) PRODUCTS: medical_device | machinery_safety | autonomous_vehicles | civil_aviation.'
                     ),
                 capabilities: z
                     .array(z.string())

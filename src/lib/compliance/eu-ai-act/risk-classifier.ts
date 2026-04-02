@@ -14,7 +14,7 @@ import { getConstraintEngine, ConstraintMatchResult, LLMValidationResult } from 
 import { classifyGPAI, GPAIClassification } from './gpai-classifier';
 import { RiskEvidence } from './risk-evidence';
 import { findLibraryByName } from '../../analysis/ai-library-database';
-import { shouldSkipHighRiskCategory, PURPOSE_CATEGORY_MAP } from './purpose-categories';
+import { shouldSkipHighRiskCategory, isDirectlyProhibitedPurpose, isArticle6_1Purpose, PURPOSE_CATEGORY_MAP } from './purpose-categories';
 
 // Types
 export type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -158,21 +158,90 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
     const evidenceList: RiskEvidence[] = [];
 
     // ========================================
+    // STEP 0: Check directly prohibited purpose (Bug #3 fix)
+    // If the user declared a purpose that maps directly to Article 5
+    // (e.g., social_scoring, real_time_biometric_id), escalate immediately
+    // without relying solely on pattern matching.
+    // ========================================
+
+    if (isDirectlyProhibitedPurpose(intendedPurpose)) {
+        const purposeArticleMap: Record<string, string> = {
+            'social_scoring': 'Article 5(1)(c)',
+            'real_time_biometric_id': 'Article 5(1)(h)',
+        };
+        const article = purposeArticleMap[intendedPurpose!] || 'Article 5';
+        const categoryMap: Record<string, string> = {
+            'social_scoring': 'Social Scoring',
+            'real_time_biometric_id': 'Real-time Public Biometric ID (Law Enforcement)',
+        };
+        const descMap: Record<string, string> = {
+            'social_scoring': 'Your declared purpose "Social Credit / Citizen Scoring" is explicitly prohibited under Article 5(1)(c). Systems that evaluate natural persons over time based on social behaviour to produce a score that leads to detrimental treatment cannot be placed on the EU market or used in the EU.',
+            'real_time_biometric_id': 'Your declared purpose "Real-Time Biometric Identification in Public" is prohibited under Article 5(1)(h). Live remote biometric identification in publicly accessible spaces is banned except for three narrow law enforcement exceptions requiring prior judicial authorisation.',
+        };
+        matchedArticles.push({
+            article,
+            category: categoryMap[intendedPurpose!] || 'Prohibited Practice',
+            description: descMap[intendedPurpose!] || `Declared purpose is prohibited under ${article} of Regulation (EU) 2024/1689`,
+            applicable: true,
+            riskTier: 'UNACCEPTABLE',
+            reasoning: `User explicitly declared the system\'s purpose as "${intendedPurpose}", which is a prohibited practice under ${article}. The UNACCEPTABLE classification is purpose-triggered, not inferred from code patterns.`,
+        });
+        riskClassification = 'UNACCEPTABLE';
+        keyFindings.push(`PROHIBITED (${article}): Declared purpose is a banned AI practice. This system cannot be deployed in the EU. See Article 5 of Regulation (EU) 2024/1689 for narrow exceptions.`);
+        manualReviewReason = `UNACCEPTABLE risk — declared purpose falls under ${article} prohibition. Legal counsel required before any deployment.`;
+    }
+
+    // ========================================
+    // STEP 0.5: Check Article 6(1) path — Annex I product safety components
+    // These get HIGH_RISK immediately and require Notified Body (Module B+C)
+    // ========================================
+
+    if (isArticle6_1Purpose(intendedPurpose)) {
+        const article61Desc: Record<string, string> = {
+            'medical_device': 'Your system is declared as a Medical Device AI safety component, regulated under Article 6(1) of the EU AI Act in conjunction with Medical Devices Regulation (MDR 2017/745). This requires a Module B+C conformity assessment through an EU Notified Body — self-assessment (Module A) is NOT sufficient.',
+            'machinery_safety': 'Your system is a safety component in machinery regulated under the EU Machinery Regulation (2023/1230). Article 6(1) of the EU AI Act classifies this as HIGH RISK requiring conformity assessment.',
+            'autonomous_vehicles': 'Your system is a safety component in an autonomous or assisted-driving vehicle, regulated under Article 6(1) and EU type-approval legislation. This is HIGH RISK under the EU AI Act.',
+            'civil_aviation': 'Your system is an AI safety component in civil aviation, regulated by EASA under Article 6(1) of the EU AI Act. This is HIGH RISK and requires conformity assessment through an EU Notified Body.',
+        };
+        const desc = article61Desc[intendedPurpose!] || `Declared as an Article 6(1) product safety component — HIGH RISK classification applies. Module B+C conformity assessment required.`;
+        matchedArticles.push({
+            article: 'Article 6(1)',
+            category: `Article 6(1) — ${intendedPurpose || 'Product Safety'}`,
+            description: desc,
+            applicable: true,
+            riskTier: 'HIGH_RISK',
+            reasoning: `System is a safety component of a product regulated by EU harmonisation legislation (Annex I of the AI Act). Article 6(1) mandates HIGH RISK classification with third-party conformity assessment.`,
+            requirements: [
+                'Module B+C EU-Type Examination via Notified Body',
+                'Technical documentation per Annex IV',
+                'Quality Management System',
+                'Post-market surveillance plan',
+                'EU Declaration of Conformity',
+                'EU database registration (Article 49)',
+            ],
+        });
+        if (riskClassification !== 'UNACCEPTABLE') {
+            riskClassification = 'HIGH_RISK';
+        }
+        keyFindings.push(`HIGH RISK (Article 6(1)): System is a safety component of a product covered by EU harmonisation legislation. ${intendedPurpose === 'medical_device' ? 'MDR 2017/745 applies. ' : ''}Self-assessment is NOT sufficient — a Notified Body must conduct the conformity assessment.`);
+    }
+
+    // ========================================
     // STEP 1: Check UNACCEPTABLE RISK
     // ========================================
 
     if (indicators.targets_vulnerable_persons) {
         matchedArticles.push({
-            article: 'Unacceptable',
-            category: 'Targeting Vulnerable Persons',
-            description: UNACCEPTABLE_RISKS[1].description,
+            article: 'Article 5(1)(b)',
+            category: 'Exploitation of Vulnerabilities',
+            description: 'The system appears to target individuals based on age, disability, or socio-economic status to materially distort their behaviour in a harmful way. This is prohibited under Article 5(1)(b) of Regulation (EU) 2024/1689.',
             applicable: true,
             riskTier: 'UNACCEPTABLE',
-            reasoning: 'System targets vulnerable groups such as children, elderly, or persons with disabilities',
+            reasoning: 'Risk indicator `targets_vulnerable_persons` detected. This signals the system may exploit the vulnerabilities of persons due to age, disability, or social/economic situation, causing or risking significant harm.',
         });
         riskClassification = 'UNACCEPTABLE';
-        keyFindings.push('PROHIBITED: System targets vulnerable persons - not permitted under EU AI Act');
-        manualReviewReason = 'UNACCEPTABLE risk detected - requires legal review';
+        keyFindings.push('PROHIBITED (Article 5(1)(b)): System detected as targeting vulnerable persons (children, elderly, disabled, or low-income groups) to influence their behaviour. This is banned under Article 5(1)(b). Remove this capability or verify it does not exploit vulnerabilities.');
+        manualReviewReason = 'UNACCEPTABLE risk (Article 5(1)(b)) — exploitation of vulnerable persons. Mandatory legal review before any deployment.';
     }
 
     // STEP 1B: Check Article 5(1)(f) — Workplace / Education Emotion Recognition
@@ -184,21 +253,33 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             (analysis.analysis_notes || '').toLowerCase().includes(kw)
         );
 
-        if (hasWorkplaceContext ||
+        // Bug #7 fix: also cover new granular purpose keys
+        const isWorkplacePurpose = hasWorkplaceContext ||
             intendedPurpose === 'worker_monitoring' ||
-            intendedPurpose === 'education') {
+            intendedPurpose === 'worker_management' ||
+            intendedPurpose === 'education' ||
+            intendedPurpose === 'education_access' ||
+            intendedPurpose === 'student_assessment' ||
+            intendedPurpose === 'student_placement' ||
+            intendedPurpose === 'student_monitoring';
+
+        if (isWorkplacePurpose) {
+            const detectedEmotionLibs = rawLibraries
+                .filter(l => l.risk_indicators?.includes('uses_emotion_recognition') || l.category === 'biometrics')
+                .map(l => l.name || l.matched_string || 'unknown')
+                .filter(Boolean);
+            const libList = detectedEmotionLibs.length > 0 ? ` Detected libraries: ${detectedEmotionLibs.join(', ')}.` : '';
             matchedArticles.push({
                 article: 'Article 5(1)(f)',
                 category: 'Workplace/Education Emotion Recognition',
-                description: ARTICLE_5_CONSTRAINTS.find(c => c.constraint_id === 'art5_1f')?.description || 
-                             'Emotion recognition prohibited in workplace and education settings',
+                description: `Emotion recognition systems in workplace or education settings are PROHIBITED under Article 5(1)(f) of Regulation (EU) 2024/1689, except where used strictly for medical or safety reasons.${libList} To fix this: remove emotion recognition capabilities from your workplace/education deployment, or provide evidence that it is used solely for medical/safety purposes (e.g., driver drowsiness detection, pain assessment).`,
                 applicable: true,
                 riskTier: 'UNACCEPTABLE',
-                reasoning: 'Emotion recognition in workplace/education context is PROHIBITED under Article 5(1)(f), except for medical/safety purposes',
+                reasoning: `Emotion recognition capability detected (${indicators.uses_emotion_recognition ? 'risk indicator set' : 'code pattern match'}) in a workplace or education context (purpose: ${intendedPurpose || 'inferred from context'}).${libList}`,
             });
             riskClassification = 'UNACCEPTABLE';
-            keyFindings.push('PROHIBITED: Workplace/Education Emotion Recognition (Article 5(1)(f))');
-            manualReviewReason = 'UNACCEPTABLE risk — emotion recognition in workplace/education is banned';
+            keyFindings.push(`PROHIBITED (Article 5(1)(f)): Emotion recognition in ${intendedPurpose?.startsWith('student') || intendedPurpose?.startsWith('education') ? 'educational' : 'workplace'} context.${libList} This is banned under Article 5(1)(f) unless strictly for medical/safety purposes. Developers must remove this capability or restrict deployment to non-workplace/non-education contexts.`);
+            manualReviewReason = 'UNACCEPTABLE risk (Article 5(1)(f)) — emotion recognition deployed in workplace or education. Legal review required.';
         }
     }
 
@@ -206,30 +287,31 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
     // STEP 2: Check HIGH RISK (Articles 6-27)
     // ========================================
 
-    // Article 6-9: Biometric Identification & Categorization
+    // Annex III(1)(a): Biometric Identification & Categorization
     if (indicators.uses_biometric_processing && !shouldSkipHighRiskCategory('Remote Biometric Identification', intendedPurpose)) {
-        // Map to Annex III(1)(a) - Remote Biometric Identification (most severe)
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(a)') ||
-            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9'); // Fallback
+            HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9');
+
+        const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_biometric_processing') ||
+            l.category === 'biometrics');
+        const libNames = relatedLibs.map(l => l.name || l.matched_string || 'unknown').filter(Boolean);
+        const libList = libNames.length > 0 ? ` Triggered by: ${libNames.join(', ')}.` : '';
 
         if (article) {
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: article.description,
+                description: `Biometric processing detected — this system identifies or categorizes natural persons from biometric data, which is HIGH RISK under Annex III(1)(a) of the EU AI Act.${libList} Developers must conduct a conformity assessment, register in the EU AI database, implement human oversight for all identification decisions, and maintain logs of all operations. Note: biometric VERIFICATION (1:1 matching for a known person) is exempt — if your system only verifies claimed identity, document this to qualify for the exception.`,
                 applicable: true,
                 riskTier: 'HIGH_RISK',
-                reasoning: 'Biometric processing detected - real-time or post biometric identification',
+                reasoning: `Biometric processing risk indicator detected.${libList} Annex III(1)(a) covers remote biometric identification systems.`,
                 requirements: article.requirements,
             });
             if (riskClassification !== 'UNACCEPTABLE') {
                 riskClassification = 'HIGH_RISK';
             }
-            keyFindings.push('Biometric processing detected - HIGH RISK');
+            keyFindings.push(`HIGH RISK (Annex III(1)(a)): Remote biometric identification detected.${libList} Required actions: (1) conduct conformity assessment, (2) register in EU AI database, (3) implement human oversight. Exception: if this is 1:1 identity VERIFICATION only (not 1:N search), document this to qualify for the Annex III(1)(a) exemption.`);
 
-            // Build evidence
-            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_biometric_processing') ||
-                l.category === 'biometrics');
             relatedLibs.forEach(lib => {
                 evidenceList.push({
                     type: 'dependency',
@@ -244,27 +326,29 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         }
     }
 
-    // Article 6-9: Emotion Recognition (Annex III(1)(c))
+    // Annex III(1)(c): Emotion Recognition (outside workplace/education — those are UNACCEPTABLE above)
     if (indicators.uses_emotion_recognition && !shouldSkipHighRiskCategory('Emotion Recognition', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(1)(c)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 6-9');
+
+        const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition') || l.category === 'biometrics');
+        const libNames = relatedLibs.map(l => l.name || l.matched_string || 'unknown').filter(Boolean);
+        const libList = libNames.length > 0 ? ` Triggered by: ${libNames.join(', ')}.` : '';
 
         if (article) {
             matchedArticles.push({
                 article: article.article,
                 category: 'Emotion Recognition',
-                description: 'AI system for emotion recognition (Annex III(1)(c))',
+                description: `Emotion recognition system detected — classified as HIGH RISK under Annex III(1)(c).${libList} This applies to ALL emotion recognition systems not already prohibited under Article 5(1)(f) (workplace/education). Developers must: (1) inform users that emotions are being detected, (2) implement human oversight, (3) provide users a right to object. Note: if this is used ONLY for medical or safety purposes (e.g., driver drowsiness), document this specifically for the Article 5(1)(f) exception.`,
                 applicable: true,
                 riskTier: 'HIGH_RISK',
-                reasoning: 'Emotion recognition systems are classified as HIGH RISK unless strictly for medical or safety purposes (which requires specific context verification)',
+                reasoning: `Emotion recognition risk indicator set.${libList}`,
                 requirements: article.requirements,
             });
             if (riskClassification !== 'UNACCEPTABLE') {
                 riskClassification = 'HIGH_RISK';
             }
-            keyFindings.push('Emotion recognition capability detected - HIGH RISK');
-            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_emotion_recognition') ||
-                l.category === 'biometrics');
+            keyFindings.push(`HIGH RISK (Annex III(1)(c)): Emotion recognition detected.${libList} Actions required: (1) inform users emotions are detected, (2) provide right to object, (3) implement human oversight. If deployed in workplace/education: reclassify as UNACCEPTABLE (Article 5(1)(f)).`);
             relatedLibs.forEach(lib => {
                 evidenceList.push({
                     type: 'dependency',
@@ -279,26 +363,29 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         }
     }
 
-    // Article 15: Critical Infrastructure
+    // Annex III(2): Critical Infrastructure
     if (indicators.uses_critical_infrastructure && !shouldSkipHighRiskCategory('Critical Infrastructure', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(2)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 15');
+
+        const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_critical_infrastructure'));
+        const libNames = relatedLibs.map(l => l.name || l.matched_string || 'unknown').filter(Boolean);
+        const libList = libNames.length > 0 ? ` Triggered by: ${libNames.join(', ')}.` : '';
 
         if (article) {
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: article.description,
+                description: `Critical infrastructure involvement detected — HIGH RISK under Annex III(2).${libList} The EU AI Act classifies AI systems as safety components in the management of road traffic, water, gas, heating, electricity, or critical digital infrastructure as HIGH RISK. Developers must implement a full risk management system, quality management system, technical documentation, and post-market monitoring. Ensure the system cannot cause infrastructure disruption without human approval.`,
                 applicable: true,
                 riskTier: 'HIGH_RISK',
-                reasoning: 'System may control or manage critical infrastructure',
+                reasoning: `Critical infrastructure risk indicator detected.${libList}`,
                 requirements: article.requirements,
             });
             if (riskClassification !== 'UNACCEPTABLE') {
                 riskClassification = 'HIGH_RISK';
             }
-            keyFindings.push('Critical infrastructure involvement - HIGH RISK');
-            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_critical_infrastructure'));
+            keyFindings.push(`HIGH RISK (Annex III(2)): Critical infrastructure safety component detected.${libList} Actions required: (1) implement risk management system, (2) prepare technical documentation, (3) register in EU AI database, (4) implement human override capability for all safety-critical decisions.`);
             relatedLibs.forEach(lib => {
                 evidenceList.push({
                     type: 'dependency',
@@ -313,7 +400,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         }
     }
 
-    // Article 21: Employment Decisions (conditional)
+    // Annex III(4): Employment Decisions (conditional — requires context verification)
     const hasClassificationCapability = capabilities.some(c =>
         c.toLowerCase().includes('classification') ||
         c.toLowerCase().includes('decision') ||
@@ -333,23 +420,21 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: article.description,
+                description: `Classification/decision-making capability detected in an employment context — conditionally HIGH RISK under Annex III(4). If this system is used for recruitment, candidate selection, promotion, termination, pay decisions, or worker monitoring, it is HIGH RISK under EU AI Act Annex III(4). Developers must: (1) inform all affected workers/candidates that AI is involved, (2) provide a right to explanation for all decisions, (3) ensure a human can review and override every decision, (4) conduct bias and discrimination testing before deployment.`,
                 applicable: 'conditional',
                 riskTier: 'HIGH_RISK',
-                reasoning: 'System has classification/decision capability - if used for employment decisions, requires HIGH RISK assessment',
+                reasoning: `System has ML pipeline + training + inference + classification capability. If deployed in employment context, Annex III(4) applies. Annex III categories present: ${intendedPurpose ? '`' + intendedPurpose + '`' : 'unspecified — use context questions to confirm'}.`,
                 requirements: article.requirements,
             });
-            // DO NOT ESCALATE riskClassification to HIGH_RISK here.
-            // Wait for context verification.
             if (riskClassification === 'MINIMAL_RISK') {
                 riskClassification = 'LIMITED_RISK';
             }
-            keyFindings.push('Potential employment decision system - verify use case in Feature 4');
+            keyFindings.push('CONDITIONAL HIGH RISK (Annex III(4)): ML pipeline with classification/scoring detected. If used for recruitment, promotion, termination, task allocation, or worker monitoring → HIGH RISK applies. Verify intended use in the context verification step. Actions needed: candidate/worker transparency, right to explanation, human override.');
             unmatchedIndicators.push('employment_decision_capability');
         }
     }
 
-    // Article 22: Essential Services (conditional)
+    // Annex III(5): Essential Services (conditional — requires context verification)
     const hasFinancialCapability = capabilities.some(c => {
         const lower = c.toLowerCase();
         return lower.includes('credit_scoring') ||
@@ -361,29 +446,32 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             lower.includes('benefit_eligibility') ||
             lower.includes('benefit eligibility') ||
             lower.includes('mortgage') ||
-            lower.includes('welfare_assessment');
+            lower.includes('welfare_assessment') ||
+            lower.includes('emergency_dispatch') ||
+            lower.includes('triage') ||
+            lower.includes('emergency_classification');
     });
 
     if (hasFinancialCapability && analysis.has_ml_pipeline && !shouldSkipHighRiskCategory('Essential Services Access', intendedPurpose)) {
         const article = HIGH_RISK_ARTICLES.find(a => a.article === 'Annex III(5)') ||
             HIGH_RISK_ARTICLES.find(a => a.article === 'Article 22');
 
+        const isEmergency = capabilities.some(c => c.toLowerCase().includes('emergency') || c.toLowerCase().includes('triage') || c.toLowerCase().includes('dispatch'));
+
         if (article) {
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: article.description,
+                description: `Essential services capability detected — conditionally HIGH RISK under Annex III(5). ${isEmergency ? 'Emergency dispatch/triage capability detected: Annex III(5)(d) applies if this system classifies emergency calls or prioritizes first responders. Operators must retain full human control over dispatch decisions.' : 'Credit/insurance/benefits capability detected: if this system evaluates eligibility for credit, public benefits, or sets insurance premiums, Annex III(5) applies.'} Required actions: (1) inform affected individuals that AI is involved, (2) provide a right to explanation, (3) ensure humans can review and override every outcome, (4) conduct non-discrimination testing.`,
                 applicable: 'conditional',
                 riskTier: 'HIGH_RISK',
-                reasoning: 'System has financial/risk assessment capability - if used for credit/insurance decisions, requires HIGH RISK assessment',
+                reasoning: `ML pipeline with financial/essential-services capability detected. Context verification needed to confirm Annex III(5) applicability.`,
                 requirements: article.requirements,
             });
-            // DO NOT ESCALATE riskClassification to HIGH_RISK here.
-            // Wait for context verification.
             if (riskClassification === 'MINIMAL_RISK') {
                 riskClassification = 'LIMITED_RISK';
             }
-            keyFindings.push('Potential financial decision system - verify use case in Feature 4');
+            keyFindings.push(`CONDITIONAL HIGH RISK (Annex III(5)): ${isEmergency ? 'Emergency dispatch/triage capability detected — if classifying calls or triaging patients, this is HIGH RISK under Annex III(5)(d).' : 'Credit scoring / benefits / insurance capability detected — HIGH RISK if used for eligibility decisions.'} Verify in context questions. Required: individual transparency, right to explanation, human override, discrimination testing.`);
             unmatchedIndicators.push('financial_decision_capability');
         }
     }
@@ -460,7 +548,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         }
     }
 
-    // Article 39: Code/Content Generation (Generative AI)
+    // Article 50(2): Code/Content Generation (Generative AI — transparency obligation)
     const isGenerativeSystem =
         indicators.uses_generative_ai &&
         detectedModelTypes.some(t =>
@@ -481,22 +569,24 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
         const article = LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 50(2)') ||
             LIMITED_RISK_ARTICLES.find(a => a.article === 'Article 39');
 
+        const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_generative_ai') || l.category === 'generative_ai');
+        const libNames = relatedLibs.map(l => l.name || l.matched_string || 'unknown').filter(Boolean);
+        const libList = libNames.length > 0 ? ` Detected: ${libNames.join(', ')}.` : '';
+
         if (article) {
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: article.description,
+                description: `Generative AI system detected — LIMITED RISK under Article 50(2) of Regulation (EU) 2024/1689.${libList} Providers must mark all AI-generated outputs (text, code, images, audio, video) in a machine-readable format that makes them detectable as artificially generated. Obligation applies from 2 August 2026. Practical steps: (1) embed C2PA-compatible provenance metadata or watermarks, (2) display clear in-UI labels on all AI-generated content, (3) do not allow outputs to be presented as human-authored without disclosure.`,
                 applicable: true,
                 riskTier: 'LIMITED_RISK',
-                reasoning: 'Generative AI system detected - generates code, text, or synthetic content',
+                reasoning: `Generative AI detected: generative_ai indicator + ${detectedModelTypes.slice(0,3).join(', ')} model types + generative capabilities.${libList}`,
                 requirements: article.requirements,
             });
             if (riskClassification === 'MINIMAL_RISK') {
                 riskClassification = 'LIMITED_RISK';
             }
-            keyFindings.push('Generative AI system - LIMITED RISK (requires AI-generated content labeling)');
-            const relatedLibs = rawLibraries.filter(l => l.risk_indicators?.includes('uses_generative_ai') ||
-                l.category === 'generative_ai');
+            keyFindings.push(`LIMITED RISK (Article 50(2)): Generative AI detected.${libList} Required by 2 August 2026: (1) mark all AI-generated outputs in machine-readable format, (2) display UI disclosures on generated content, (3) do not present outputs as human-authored. Article 50 transparency obligations apply immediately.`);
             relatedLibs.forEach(lib => {
                 evidenceList.push({
                     type: 'dependency',
@@ -927,21 +1017,33 @@ export function classifyRiskWithConstraintValidation(
                 legal_citations: legalCitations,
                 contextual_questions: constraintResult.contextual_questions,
                 audit_trail: validation.audit_trail,
-                purpose_filter: intendedPurpose ? {
-                    declared_purpose: intendedPurpose,
-                    categories_evaluated: PURPOSE_CATEGORY_MAP[intendedPurpose] ?? 'ALL',
-                    categories_skipped: (() => {
-                        const eligible = PURPOSE_CATEGORY_MAP[intendedPurpose];
-                        if (!eligible) return [];
-                        return ANNEX_III_CONSTRAINTS
-                            .map((c: EUAIConstraint) => c.category)
-                            .filter((cat: string, i: number, arr: string[]) => arr.indexOf(cat) === i)
-                            .filter((cat: string) => !eligible.includes(cat));
-                    })(),
-                    note: `Purpose '${intendedPurpose}' filters evaluation to: ${
-                        (PURPOSE_CATEGORY_MAP[intendedPurpose] as string[])?.join(', ') || 'none — all blocked'
-                    }`,
-                } : null,
+                purpose_filter: intendedPurpose ? (() => {
+                    const mapping = PURPOSE_CATEGORY_MAP[intendedPurpose];
+                    // FORCE_UNACCEPTABLE is a string sentinel — coerce it to a display string
+                    const categoriesEvaluated: string[] | 'ALL' =
+                        mapping === 'FORCE_UNACCEPTABLE'
+                            ? []  // nothing to evaluate — direct Article 5 prohibition
+                            : mapping === null
+                                ? 'ALL'
+                                : (mapping as string[]);
+                    const categoriesSkipped: string[] =
+                        mapping === 'FORCE_UNACCEPTABLE' || mapping === null
+                            ? []
+                            : ANNEX_III_CONSTRAINTS
+                                .map((c: EUAIConstraint) => c.category)
+                                .filter((cat: string, i: number, arr: string[]) => arr.indexOf(cat) === i)
+                                .filter((cat: string) => !(mapping as string[]).includes(cat));
+                    return {
+                        declared_purpose: intendedPurpose,
+                        categories_evaluated: categoriesEvaluated,
+                        categories_skipped: categoriesSkipped,
+                        note: mapping === 'FORCE_UNACCEPTABLE'
+                            ? `Purpose '${intendedPurpose}' is directly prohibited under Article 5 — no Annex III filter applied`
+                            : `Purpose '${intendedPurpose}' filters evaluation to: ${
+                                (mapping as string[])?.join(', ') || 'none — all Annex III categories evaluated'
+                            }`,
+                    };
+                })() : null,
             }
         };
     } catch (error) {
