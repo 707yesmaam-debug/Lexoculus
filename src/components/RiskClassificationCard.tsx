@@ -102,7 +102,7 @@ export default function RiskClassificationCard({
 
                     {/* Gauge */}
                     <div className="flex-shrink-0">
-                        <RiskScoreGauge score={score} size="lg" />
+                        <RiskScoreGauge score={score} classification={classification} size="lg" />
                     </div>
 
                     {/* Divider */}

@@ -2,27 +2,31 @@
 
 interface RiskScoreGaugeProps {
     score: number; // 0-100
+    classification?: string;
     size?: 'sm' | 'md' | 'lg';
 }
 
-export default function RiskScoreGauge({ score, size = 'md' }: RiskScoreGaugeProps) {
-    // Determine color based on score
+export default function RiskScoreGauge({ score, classification, size = 'md' }: RiskScoreGaugeProps) {
+    // Determine color and label based on classification (priority) or score
     let colorClasses: string;
     let label: string;
 
-    if (score >= 81) {
+    const normalizedClass = (classification || '').replace(/\s+/g, '_').toUpperCase();
+
+    if (normalizedClass === 'UNACCEPTABLE' || (!classification && score >= 81)) {
         colorClasses = 'text-[#FF4F00]';
         label = 'UNACCEPTABLE';
-    } else if (score >= 51) {
+    } else if (normalizedClass === 'HIGH_RISK' || (!classification && score >= 51)) {
         colorClasses = 'text-[#FF4F00]';
-        label = 'HIGH_RISK';
-    } else if (score >= 21) {
+        label = 'HIGH RISK';
+    } else if (normalizedClass === 'LIMITED_RISK' || (!classification && score >= 21)) {
         colorClasses = 'text-black';
-        label = 'LIMITED_RISK';
+        label = 'LIMITED RISK';
     } else {
         colorClasses = 'text-[#999]';
-        label = 'MINIMAL_RISK';
+        label = classification ? classification.replace('_', ' ') : 'MINIMAL RISK';
     }
+
 
     // Size configurations
     const sizeConfig = {

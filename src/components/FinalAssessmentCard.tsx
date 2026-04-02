@@ -117,7 +117,7 @@ export default function FinalAssessmentCard({
                 <div className="flex flex-col md:flex-row items-center gap-12">
                     {/* Score Gauge */}
                     <div className="transform scale-110">
-                        <RiskScoreGauge score={finalScore} size="lg" />
+                        <RiskScoreGauge score={finalScore} classification={finalClassification} size="lg" />
                     </div>
 
                     <div className="hidden md:block w-px h-32 bg-[#E5E5E5]" />

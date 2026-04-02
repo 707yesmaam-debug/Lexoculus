@@ -89,7 +89,7 @@ const PYTHON_DEEP_LEARNING: AILibrary[] = [
     },
     {
         name: 'tensorflow',
-        aliases: ['tf', 'tensorflow-gpu', 'tensorflow-cpu', 'tf-nightly', 'tensorflow-io'],
+        aliases: ['tf', 'tensorflow-gpu', 'tensorflow-cpu', 'tf-nightly', 'tensorflow-io', 'tensorflow-base', 'tensorflow-estimator'],
         category: 'deep_learning',
         risk_indicators: [],
         ecosystem: 'python',
@@ -731,12 +731,21 @@ const PYTHON_RECOMMENDATION: AILibrary[] = [
 const PYTHON_RL: AILibrary[] = [
     {
         name: 'gymnasium',
-        aliases: ['gym', 'openai-gym'],
+        aliases: ['gym', 'openai-gym', 'atari-py', 'ale-py'],
         category: 'reinforcement_learning',
         risk_indicators: [],
         ecosystem: 'python',
-        confidence: 0.85,
+        confidence: 0.95, // Bumped to high-confidence as it's the core of RL
         use_cases: ['RL environments', 'agent training']
+    },
+    {
+        name: 'stable-baselines',
+        aliases: ['stable_baselines', 'sb2'],
+        category: 'reinforcement_learning',
+        risk_indicators: [],
+        ecosystem: 'python',
+        confidence: 0.95,
+        use_cases: ['RL algorithms (legacy)', 'policy learning']
     },
     {
         name: 'stable-baselines3',
