@@ -171,7 +171,6 @@ export default function RiskClassificationCard({
             {/* Hybrid Risk Warning (Unacceptable + High Risk) */}
             {classification === 'UNACCEPTABLE' && also_has_high_risk_elements && (
                 <div className="border-2 border-black bg-white p-6 flex items-start gap-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-black/5 rounded-full" />
                     <AlertTriangle className="w-10 h-10 text-black flex-shrink-0 mt-1" />
                     <div className="flex-1">
                         <h4 className="font-serif text-2xl font-bold text-black mb-2">Annex III High-Risk Obligations</h4>
