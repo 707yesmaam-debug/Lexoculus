@@ -77,6 +77,7 @@ interface AssessmentData {
         reason: string;
         description: string;
     }[];
+    constraint_validation?: any;
 }
 
 interface AnalysisData {
@@ -480,6 +481,7 @@ export default function RiskClassifierPage() {
                         evidence={assessment.evidence}
                         prohibition_reasons={assessment.prohibition_reasons}
                         also_has_high_risk_elements={assessment.preliminary_assessment?.also_has_high_risk_elements}
+                        constraint_validation={assessment.constraint_validation}
                     />
                 </div>
             )}

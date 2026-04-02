@@ -841,14 +841,29 @@ function generateRiskNarrative(
 ): string {
     const narratives: string[] = [];
 
+    const articleNames = matchedArticles.map(a => a.article).join(' and ');
+    const requirements = matchedArticles.flatMap(a => a.requirements || []);
+    const uniqueReqs = [...new Set(requirements)];
+
     switch (classification) {
         case 'UNACCEPTABLE':
             narratives.push('This AI system has been classified as UNACCEPTABLE under the EU AI Act.');
+            if (matchedArticles.length > 0) {
+                narratives.push(`It matched prohibited categories: ${articleNames}.`);
+            }
             narratives.push('Systems in this category are prohibited and cannot be deployed in the European Union.');
             break;
         case 'HIGH_RISK':
-            narratives.push('This AI system has been classified as HIGH RISK under the EU AI Act Annex III.');
-            narratives.push('High-risk systems require extensive compliance documentation, conformity assessment, and ongoing monitoring.');
+            if (matchedArticles.length > 0) {
+                narratives.push(`This system is classified HIGH RISK under EU AI Act Annex III.`);
+                narratives.push(`It matched ${matchedArticles.length} Annex III article(s): ${articleNames}.`);
+                if (uniqueReqs.length > 0) {
+                    narratives.push(`Mandatory obligations include: ${uniqueReqs.slice(0, 3).join(', ')}${uniqueReqs.length > 3 ? ', and more' : ''}.`);
+                }
+            } else {
+                narratives.push('This AI system has been classified as HIGH RISK under the EU AI Act Annex III.');
+                narratives.push('High-risk systems require extensive compliance documentation, conformity assessment, and ongoing monitoring.');
+            }
             break;
         case 'LIMITED_RISK':
             narratives.push('This AI system has been classified as LIMITED RISK under the EU AI Act.');
@@ -858,11 +873,6 @@ function generateRiskNarrative(
             narratives.push('This AI system has been classified as MINIMAL RISK under the EU AI Act.');
             narratives.push('Minimal-risk systems are generally exempt from specific regulatory requirements but should follow best practices.');
             break;
-    }
-
-    if (matchedArticles.length > 0) {
-        const articleList = matchedArticles.map(a => a.article).join(', ');
-        narratives.push(`Matched Annex III articles: ${articleList}.`);
     }
 
     if (confidenceScore < 0.7) {
@@ -964,9 +974,10 @@ export function classifyRiskWithConstraintValidation(
         // Add constraint-matched findings
         for (const match of constraintResult.matches) {
             if (match.constraint.risk_level === 'UNACCEPTABLE') {
-                enhancedFindings.unshift(
-                    `PROHIBITED (${match.constraint.regulation_source}): ${match.constraint.category}`
-                );
+                const newFinding = `PROHIBITED (${match.constraint.regulation_source}): ${match.constraint.category} — ${match.constraint.description} See official text: ${match.constraint.official_text.slice(0, 80)}...`;
+                if (!enhancedFindings.includes(newFinding)) {
+                    enhancedFindings.unshift(newFinding);
+                }
             }
         }
 
@@ -1108,7 +1119,7 @@ function generateEnhancedNarrative(
     // Add legal citations
     if (legalCitations.length > 0) {
         const sources = [...new Set(legalCitations.map(c => c.regulation_source))];
-        narratives.push(`Legal basis: ${sources.join(', ')} of Regulation (EU) 2024/1689.`);
+        narratives.push(`This classification is legally grounded in: ${sources.join(', ')} per Regulation (EU) 2024/1689.`);
     }
 
     if (confidenceScore < 0.7) {
@@ -1150,14 +1161,19 @@ export function classifyRiskFull(
 
         if (gpaiResult.is_gpai_deployer) {
             const providers = gpaiResult.detected_providers.map(p => p.provider_name).join(', ');
-            gpaiFindings.push(`GPAI Deployer: integrates models from ${providers}`);
+            gpaiFindings.push(`GPAI Deployer (Article 50, Ch. V): integrates ${providers} models.`);
+            
+            if (gpaiResult.open_source_exception) {
+                gpaiFindings.push('Open-source exception may apply (Article 53(2)). However, Article 50 transparency still applies.');
+            } else {
+                gpaiFindings.push(`Obligation from 2 Aug 2026: disclose AI-generated content in machine-readable format. Open-source exception does NOT apply.`);
+            }
+        } else {
+            if (gpaiResult.open_source_exception) {
+                gpaiFindings.push('Open-source exception may apply (Article 53(2))');
+            }
+            gpaiFindings.push(`Article 50 transparency obligations apply from 2 August 2026`);
         }
-
-        if (gpaiResult.open_source_exception) {
-            gpaiFindings.push('Open-source exception may apply (Article 53(2))');
-        }
-
-        gpaiFindings.push(`Article 50 transparency obligations apply from 2 August 2026`);
 
         // Merge findings (GPAI findings prepended for visibility)
         baseResult.key_findings = [...gpaiFindings, ...baseResult.key_findings];

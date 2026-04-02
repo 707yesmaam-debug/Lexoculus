@@ -231,12 +231,24 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
                     yPos = doc.y + 5;
                 }
 
-                // Reasoning
-                const reasoning = stripMarkdown(article.reasoning || article.description || '');
+                // Detection Evidence
+                const reasoning = stripMarkdown(article.reasoning || '');
                 if (reasoning) {
+                    doc.fontSize(8).font('Courier-Bold').fillColor(GRAY).text('DETECTION EVIDENCE:', 60, yPos);
+                    yPos = doc.y + 2;
                     doc.fontSize(10).font('Helvetica').fillColor(GRAY)
                         .text(reasoning, 60, yPos, { width: 475, lineGap: 3 });
-                    yPos = doc.y + 5;
+                    yPos = doc.y + 10;
+                }
+
+                // Legal Obligation
+                const description = stripMarkdown(article.description || '');
+                if (description) {
+                    doc.fontSize(8).font('Courier-Bold').fillColor(GRAY).text('LEGAL OBLIGATION:', 60, yPos);
+                    yPos = doc.y + 2;
+                    doc.fontSize(10).font('Helvetica').fillColor(PRIMARY)
+                        .text(description, 60, yPos, { width: 475, lineGap: 3 });
+                    yPos = doc.y + 10;
                 }
 
                 // Requirements list
@@ -264,8 +276,20 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
 
             keyFindings.forEach((finding: string) => {
                 if (yPos > 700) { yPos = addFormattedPage('Risk Classification'); }
-                doc.fontSize(10).font('Helvetica').fillColor(PRIMARY)
-                    .text(`  -  ${stripMarkdown(finding)}`, 70, yPos, { width: 455 });
+                
+                let findingText = stripMarkdown(finding);
+                let findingColor = PRIMARY;
+                
+                if (findingText.startsWith('PROHIBITED')) {
+                    findingColor = ACCENT; 
+                } else if (findingText.startsWith('HIGH RISK') || findingText.startsWith('CONDITIONAL')) {
+                    findingColor = '#F59E0B'; // Amber
+                } else if (findingText.startsWith('LIMITED RISK')) {
+                    findingColor = GRAY;
+                }
+                
+                doc.fontSize(10).font('Helvetica').fillColor(findingColor)
+                    .text(`  -  ${findingText}`, 70, yPos, { width: 455 });
                 yPos = doc.y + 8;
             });
             yPos += 15;

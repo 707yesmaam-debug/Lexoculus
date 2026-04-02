@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, Shield, ShieldAlert, ShieldCheck, ShieldX, AlertCircle, FileText } from 'lucide-react';
+import { useState } from 'react';
 import RiskScoreGauge from './RiskScoreGauge';
 
 type RiskClassification = 'UNACCEPTABLE' | 'HIGH_RISK' | 'LIMITED_RISK' | 'MINIMAL_RISK';
@@ -32,6 +33,12 @@ interface RiskClassificationCardProps {
         description: string;
     }[];
     also_has_high_risk_elements?: boolean;
+    constraint_validation?: {
+        legal_citations?: {
+            regulation_source: string;
+            official_text: string;
+        }[];
+    };
 }
 
 function getRiskIcon(classification: RiskClassification) {
@@ -83,7 +90,9 @@ export default function RiskClassificationCard({
     evidence = [],
     prohibition_reasons = [],
     also_has_high_risk_elements = false,
+    constraint_validation,
 }: RiskClassificationCardProps) {
+    const [expandedCitations, setExpandedCitations] = useState<{ [key: number]: boolean }>({});
 
     return (
         <div className="space-y-12">
@@ -209,7 +218,16 @@ export default function RiskClassificationCard({
                                             )}
                                         </div>
                                         <p className="font-mono text-xs text-[#555] uppercase tracking-wide mb-3">{article.category}</p>
-                                        <p className="font-mono text-sm text-black mb-4">{article.reasoning}</p>
+                                        
+                                        <div className="mb-4">
+                                            <p className="font-serif font-bold text-sm text-black mb-1">Why you are flagged</p>
+                                            <p className="font-mono text-sm text-black leading-relaxed">{article.description}</p>
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <p className="font-serif font-bold text-sm text-[#555] mb-1">Detection Evidence</p>
+                                            <p className="font-mono text-xs text-[#555]">{article.reasoning}</p>
+                                        </div>
 
                                         {article.requirements && article.requirements.length > 0 && (
                                             <div className="bg-[#F5F5F5] p-4 border border-[#E5E5E5]">
@@ -238,16 +256,76 @@ export default function RiskClassificationCard({
                     <h3 className="font-serif text-xl font-bold text-black">Key Findings</h3>
                 </div>
                 <div className="p-6">
-                    <ul className="space-y-3">
-                        {keyFindings.map((finding, i) => (
-                            <li key={i} className="flex items-start gap-3 font-mono text-sm text-black">
-                                <span className="mt-1.5 w-1.5 h-1.5 bg-[#FF4F00] flex-shrink-0" />
-                                {finding}
-                            </li>
-                        ))}
+                    <ul className="space-y-4">
+                        {keyFindings.map((finding, i) => {
+                            let itemStyle = "flex items-start gap-4 font-mono text-sm text-black p-3 border-l-4";
+                            let iconColor = "bg-[#555]";
+                            
+                            if (finding.startsWith('PROHIBITED')) {
+                                itemStyle += " border-[#FF4F00] bg-[#FFF5F0]";
+                                iconColor = "bg-[#FF4F00]";
+                            } else if (finding.startsWith('HIGH RISK') || finding.startsWith('CONDITIONAL')) {
+                                itemStyle += " border-[#F59E0B] bg-[#FFFBEB]";
+                                iconColor = "bg-[#F59E0B]";
+                            } else if (finding.startsWith('LIMITED RISK')) {
+                                itemStyle += " border-[#999] bg-[#F5F5F5]";
+                            } else {
+                                itemStyle += " border-transparent";
+                            }
+
+                            return (
+                                <li key={i} className={itemStyle}>
+                                    {finding.startsWith('PROHIBITED') ? (
+                                        <ShieldX className="w-5 h-5 text-[#FF4F00] flex-shrink-0 mt-0.5" />
+                                    ) : (
+                                        <span className={`mt-2 w-1.5 h-1.5 ${iconColor} flex-shrink-0`} />
+                                    )}
+                                    <span className="leading-relaxed">
+                                        {finding}
+                                    </span>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             </div>
+
+            {/* Official Regulatory Text */}
+            {constraint_validation?.legal_citations && constraint_validation.legal_citations.length > 0 && (
+                <div className="border-2 border-black bg-white">
+                    <div className="px-6 py-4 border-b border-black bg-[#F5F5F5] flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-black" />
+                            <h3 className="font-serif text-xl font-bold text-black">Official Regulatory Text</h3>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-black">
+                        {constraint_validation.legal_citations.map((citation, i) => {
+                            const isExpanded = expandedCitations[i];
+                            return (
+                                <div key={i} className="p-6">
+                                    <button 
+                                        className="w-full flex items-center justify-between text-left"
+                                        onClick={() => setExpandedCitations((prev: any) => ({ ...prev, [i]: !isExpanded }))}
+                                    >
+                                        <span className="font-serif font-bold text-lg text-black">{citation.regulation_source}</span>
+                                        <span className="font-mono text-xs text-[#555] uppercase tracking-widest px-2 py-1 border border-[#E5E5E5]">
+                                            {isExpanded ? 'Hide' : 'Show'} Text
+                                        </span>
+                                    </button>
+                                    {isExpanded && (
+                                        <div className="mt-4 p-4 bg-[#F9F9F9] border-l-4 border-[#FF4F00]">
+                                            <p className="font-mono text-xs text-[#555] leading-relaxed whitespace-pre-wrap">
+                                                {citation.official_text}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Evidence Trail */}
             {evidence.length > 0 && (
