@@ -3,16 +3,16 @@ import { createServerClient } from '@/lib/infra/supabase-server';
 import prisma from '@/lib/infra/prisma';
 
 interface RouteContext {
-    params: Promise<{ id: string }>;
+    params: Promise<{ ai_system_id: string }>;
 }
 
 /**
- * GET /api/conformity-assessment/:id/evidence
+ * GET /api/conformity-assessment/:ai_system_id/evidence
  * Get all evidence uploaded for a specific conformity assessment
  */
 export async function GET(request: NextRequest, context: RouteContext) {
     try {
-        const { id } = await context.params;
+        const { ai_system_id } = await context.params;
 
         const supabase = await createServerClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
         const evidence = await prisma.complianceEvidence.findMany({
             where: {
-                conformity_assessment_id: id,
+                conformity_assessment_id: ai_system_id,
                 user_id: user.id
             },
             orderBy: { collected_at: 'desc' }

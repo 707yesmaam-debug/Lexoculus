@@ -29,13 +29,18 @@ function ResetPasswordForm() {
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                setError(data.error || 'Failed to send recovery email');
+                if (res.status === 504 || res.status === 503) {
+                    setError('The authentication gateway timed out. Please try sending the link again.');
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    setError(data.error || 'Failed to send recovery email. Please check your connection.');
+                }
             } else {
                 setSuccess(true);
             }
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred');
+            console.error('[RESET_PASSWORD] Form error:', err);
+            setError('Connection error. Please verify your network and try again.');
         }
         setLoading(false);
     };

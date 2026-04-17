@@ -31,30 +31,47 @@ async function dispatchEmail(options: {
     try {
         logger.info({ to: options.to, subject: options.subject }, '📧 [EMAIL] Dispatching via Resend HTTP API (Zero Dependency)...');
         
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${pass}`
-            },
-            body: JSON.stringify({
-                from: options.from,
-                to: options.to,
-                subject: options.subject,
-                html: options.html,
-            })
-        });
+        // Add a strict timeout to prevent serverless function hangs
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            logger.error({ errorData, status: response.status }, '📧 [EMAIL] Resend HTTP API failure');
+        try {
+            const response = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${pass}`
+                },
+                body: JSON.stringify({
+                    from: options.from,
+                    to: options.to,
+                    subject: options.subject,
+                    html: options.html,
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                logger.error({ errorData, status: response.status }, '📧 [EMAIL] Resend HTTP API failure');
+                return false;
+            }
+
+            logger.info({ to: options.to }, '📧 [EMAIL] Successfully sent via Port 443');
+            return true;
+        } catch (fetchErr: any) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+                logger.error({ to: options.to }, '📧 [EMAIL] Resend API request timed out after 8s');
+            } else {
+                logger.error({ err: fetchErr, to: options.to }, '📧 [EMAIL] Fetch error in dispatch');
+            }
             return false;
         }
-
-        logger.info({ to: options.to }, '📧 [EMAIL] Successfully sent via Port 443');
-        return true;
     } catch (error) {
-        logger.error({ err: error }, '📧 [EMAIL] Unexpected error in HTTP dispatch');
+        logger.error({ err: error }, '📧 [EMAIL] Unexpected error in HTTP dispatch setup');
         return false;
     }
 }

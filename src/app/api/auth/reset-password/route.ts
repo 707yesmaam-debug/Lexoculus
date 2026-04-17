@@ -34,9 +34,11 @@ export async function POST(req: NextRequest) {
         });
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        console.log('[RESET-PASSWORD] Supabase client initialized, generating link...');
+        console.log('[RESET-PASSWORD] Supabase admin client initializing for:', email);
 
         // Generate the recovery link
+        // This admin call can sometimes hang if the Supabase connection is unstable
+        console.log('[RESET-PASSWORD] Triggering supabase.auth.admin.generateLink...');
         const { data, error } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email,
@@ -46,10 +48,13 @@ export async function POST(req: NextRequest) {
         });
 
         if (error) {
+            console.error('[RESET-PASSWORD] Auth admin link generation failed:', error.message);
             logger.error({ err: error, email }, 'Failed to generate recovery link');
             // We shouldn't leak whether the email exists or not to prevent user enumeration
             return NextResponse.json({ success: true });
         }
+
+        console.log('[RESET-PASSWORD] Generation successful, properties:', !!data.properties);
 
         const actionLink = data.properties?.action_link;
 
