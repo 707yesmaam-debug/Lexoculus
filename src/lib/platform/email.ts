@@ -11,11 +11,9 @@ import logger from '../infra/logger';
 const FOUNDER_EMAIL = process.env.LEADS_EMAIL || 'founder@lexoculus.com';
 const NO_REPLY_EMAIL = process.env.SMTP_FROM || 'onboarding@lexoculus.com';
 
-// Create transporter (lazy init)
-let transporter: nodemailer.Transporter | null = null;
+// Create transporter (fresh per call for serverless compatibility)
 
 function getTransporter(): nodemailer.Transporter | null {
-    if (transporter) return transporter;
 
     const host = process.env.SMTP_HOST;
     const port = parseInt(process.env.SMTP_PORT || '587');
@@ -27,16 +25,16 @@ function getTransporter(): nodemailer.Transporter | null {
         return null;
     }
 
-    transporter = nodemailer.createTransport({
+    const currentTransporter = nodemailer.createTransport({
         host,
         port,
         secure: port === 465,
         auth: { user, pass },
     });
 
-    logger.info({ host, port }, '📧 [EMAIL] Transporter initialized');
+    logger.info({ host, port }, '📧 [EMAIL] Fresh transporter initialized');
 
-    return transporter;
+    return currentTransporter;
 }
 
 interface DemoRequestData {
