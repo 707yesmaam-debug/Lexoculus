@@ -10,28 +10,28 @@ model User {
   id                      String                  @id @default(cuid())
   email                   String                  @unique
   full_name               String?
-  account_type            String                  @default("individual") // "individual" | "firm"
+  account_type            String                  @default("individual")
   created_at              DateTime                @default(now())
   updated_at              DateTime                @updatedAt
   ai_systems              AiSystem[]
   audit_logs              AuditLog[]
   evidence                ComplianceEvidence[]
-  testing_evidence        TestingEvidence[]
   compliance_reports      ComplianceReport[]
   conformity_assessments  ConformityAssessment[]
   feedback                Feedback[]
   final_risk_assessments  FinalRiskAssessment[]
+  firm_member             FirmMember?
   github_action_installs  GitHubActionInstall[]
   github_connections      GithubConnection[]
   llm_capability_analyses LlmCapabilityAnalysis[]
+  mcp_api_keys            McpApiKey[]
   monitoring_alerts       MonitoringAlert[]
   pr_scans                PRScan[]
   repo_scans              RepoScan[]
   risk_assessments        RiskAssessment[]
   subscription            Subscription?
+  testing_evidence        TestingEvidence[]
   github_repos            UserGithubRepo[]
-  mcp_api_keys            McpApiKey[]
-  firm_member             FirmMember?
 
   @@index([email])
   @@map("users")
@@ -73,18 +73,16 @@ model RepoScan {
   scanned_at               DateTime               @default(now())
   expires_at               DateTime               @default(dbgenerated("(now() + '30 days'::interval)"))
   scan_token               String?                @unique
+  firm_id                  String?
+  firm_client_id           String?
   scan_history             AiSystemScan[]         @relation("ScanHistory")
   ai_system                AiSystem?              @relation("AiSystemLatestScan")
   final_risk_assessment    FinalRiskAssessment?
   llm_analysis             LlmCapabilityAnalysis?
+  firm_client              FirmClient?            @relation(fields: [firm_client_id], references: [id])
+  firm                     Firm?                  @relation(fields: [firm_id], references: [id])
   user                     User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
   risk_assessment          RiskAssessment?
-
-  // Strict Isolation / Multi-tenancy
-  firm_id                  String?
-  firm_client_id           String?
-  firm                     Firm?                  @relation(fields: [firm_id], references: [id], onDelete: SetNull)
-  firm_client              FirmClient?            @relation(fields: [firm_client_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([github_repo_url])
@@ -263,7 +261,7 @@ model GitHubActionInstall {
 }
 
 model PRScan {
-  id                  String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  id                  String      @id @default(dbgenerated("(gen_random_uuid())::text"))
   user_id             String
   repo_full_name      String
   pr_number           Int
@@ -271,19 +269,17 @@ model PRScan {
   pr_url              String
   head_sha            String
   risk_level          String
-  matched_patterns    String[]  @default([])
-  matched_constraints String[]  @default([])
-  blocked             Boolean?  @default(false)
-  comment_posted      Boolean?  @default(false)
-  scanned_at          DateTime? @default(now()) @db.Timestamptz(6)
+  matched_patterns    String[]    @default([])
+  matched_constraints String[]    @default([])
+  blocked             Boolean?    @default(false)
+  comment_posted      Boolean?    @default(false)
+  scanned_at          DateTime?   @default(now()) @db.Timestamptz(6)
   scan_duration_ms    Int?
-  user                User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  // Strict Isolation / Multi-tenancy
-  firm_id                  String?
-  firm_client_id           String?
-  firm                     Firm?                  @relation(fields: [firm_id], references: [id], onDelete: SetNull)
-  firm_client              FirmClient?            @relation(fields: [firm_client_id], references: [id], onDelete: SetNull)
+  firm_id             String?
+  firm_client_id      String?
+  firm_client         FirmClient? @relation(fields: [firm_client_id], references: [id])
+  firm                Firm?       @relation(fields: [firm_id], references: [id])
+  user                User        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([pr_number], map: "idx_pr_scans_pr_number")
   @@index([repo_full_name], map: "idx_pr_scans_repo_full_name")
@@ -298,11 +294,11 @@ model Subscription {
   user_id                 String    @unique
   tier                    String?   @default("free")
   status                  String?   @default("active")
-  account_type            String?   @default("individual") // individual | firm
-  client_limit            Int?      // Max client slots (null = unlimited)
+  account_type            String?   @default("individual")
+  client_limit            Int?
   clients_used            Int?      @default(0)
-  per_client_rate         Int?      // Rate in EUR cents
-  billing_model           String?   @default("flat") // flat | per_client
+  per_client_rate         Int?
+  billing_model           String?   @default("flat")
   repos_limit             Int?      @default(1)
   scans_limit             Int?      @default(5)
   pr_scans_limit          Int?      @default(0)
@@ -339,7 +335,7 @@ model Feedback {
   comment    String?
   page_url   String?
   created_at DateTime @default(now())
-  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [user_id], references: [id])
 
   @@index([user_id])
   @@index([created_at])
@@ -368,22 +364,19 @@ model AiSystem {
   files_changed_count    Int?                  @default(0)
   drift_detected         Boolean?              @default(false)
   drift_checked_at       DateTime?             @db.Timestamptz(6)
+  firm_id                String?
+  firm_client_id         String?
   scan_history           AiSystemScan[]
+  firm_client            FirmClient?           @relation(fields: [firm_client_id], references: [id])
+  firm                   Firm?                 @relation(fields: [firm_id], references: [id])
   latest_scan            RepoScan?             @relation("AiSystemLatestScan", fields: [latest_scan_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  alerts                 MonitoringAlert[]
   user                   User                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   audit_logs             AuditLog[]
   documents              ComplianceDocument[]
   evidence               ComplianceEvidence[]
-  testing_evidence       TestingEvidence[]
   conformity_assessments ConformityAssessment?
-
-  // Strict Isolation / Multi-tenancy
-  firm_id                  String?
-  firm_client_id           String?
-
-  firm                     Firm?                 @relation(fields: [firm_id], references: [id], onDelete: SetNull)
-  firm_client              FirmClient?           @relation(fields: [firm_client_id], references: [id], onDelete: SetNull)
+  alerts                 MonitoringAlert[]
+  testing_evidence       TestingEvidence[]
 
   @@unique([user_id, name])
   @@index([public_share_id], map: "idx_ai_systems_public_share_id")
@@ -421,16 +414,14 @@ model ComplianceDocument {
   content            Json
   template_version   String?   @default("1.0")
   status             String?   @default("draft")
-  
-  // Strict Isolation / Multi-tenancy
   firm_id            String?
-  firm               Firm?     @relation(fields: [firm_id], references: [id], onDelete: SetNull)
   completion_percent Int?      @default(0)
   missing_fields     Json?
   version            Int?      @default(1)
   created_at         DateTime? @default(now()) @db.Timestamptz(6)
   updated_at         DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
   ai_system          AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  firm               Firm?     @relation(fields: [firm_id], references: [id])
 
   @@unique([ai_system_id, document_type])
   @@map("compliance_documents")
@@ -457,27 +448,25 @@ model MonitoringAlert {
 }
 
 model AuditLog {
-  id            String    @id @default(dbgenerated("(gen_random_uuid())::text"))
-  user_id       String
-  ai_system_id  String?
-  action        String
-  entity_type   String
-  entity_id     String?
-  description   String
-  metadata      Json?
-  previous_hash String?
-  hash          String
-  ip_address    String?
-  user_agent    String?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-  ai_system     AiSystem? @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  // Strict Isolation / Multi-tenancy
-  firm_id       String?
+  id             String      @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id        String
+  ai_system_id   String?
+  action         String
+  entity_type    String
+  entity_id      String?
+  description    String
+  metadata       Json?
+  previous_hash  String?
+  hash           String
+  ip_address     String?
+  user_agent     String?
+  created_at     DateTime?   @default(now()) @db.Timestamptz(6)
+  firm_id        String?
   firm_client_id String?
-  firm          Firm?     @relation(fields: [firm_id], references: [id], onDelete: SetNull)
-  firm_client   FirmClient? @relation(fields: [firm_client_id], references: [id], onDelete: SetNull)
+  ai_system      AiSystem?   @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  firm_client    FirmClient? @relation(fields: [firm_client_id], references: [id])
+  firm           Firm?       @relation(fields: [firm_id], references: [id])
+  user           User        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([ai_system_id], map: "idx_audit_logs_ai_system_id")
   @@index([user_id], map: "idx_audit_logs_user_id")
@@ -485,61 +474,59 @@ model AuditLog {
 }
 
 model ComplianceEvidence {
-  id            String    @id @default(dbgenerated("(gen_random_uuid())::text"))
-  user_id       String
-  ai_system_id  String
-  evidence_type String
-  title         String
-  description   String?
-  file_url      String?
-  file_name     String?
-  file_size     Int?
-  mime_type     String?
-  source_type   String?
-  source_id     String?
-  conformity_step_id String?
+  id                       String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id                  String
+  ai_system_id             String
+  evidence_type            String
+  title                    String
+  description              String?
+  file_url                 String?
+  file_name                String?
+  file_size                Int?
+  mime_type                String?
+  source_type              String?
+  source_id                String?
+  conformity_step_id       String?
   conformity_assessment_id String?
-  collected_at  DateTime? @default(now()) @db.Timestamptz(6)
-  collected_by  String
-  hash          String
-  verified      Boolean?  @default(false)
-  verified_at   DateTime? @db.Timestamptz(6)
-  verified_by   String?
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
-  ai_system     AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  
-  // Strict Isolation / Multi-tenancy
-  firm_id       String?
-  firm          Firm?     @relation(fields: [firm_id], references: [id], onDelete: SetNull)
-  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  collected_at             DateTime? @default(now()) @db.Timestamptz(6)
+  collected_by             String
+  hash                     String
+  verified                 Boolean?  @default(false)
+  verified_at              DateTime? @db.Timestamptz(6)
+  verified_by              String?
+  created_at               DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+  firm_id                  String?
+  ai_system                AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  firm                     Firm?     @relation(fields: [firm_id], references: [id])
+  user                     User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([user_id], map: "idx_compliance_evidence_user_id")
   @@map("compliance_evidence")
 }
 
 model TestingEvidence {
-  id              String   @id @default(cuid())
-  ai_system_id    String
-  user_id         String
-  requirement_id  String   // Maps to TestingRequirement.id
-  category        String   // bias, accuracy, robustness, cybersecurity
-  title           String
-  description     String?
-  file_url        String?
-  file_name       String?
-  file_size       Int?
-  hash            String   // SHA-256 integrity hash
-  metrics         Json?    // { "accuracy": 0.94, "f1_score": 0.91 }
-  methodology     String?  // Free text: "5-fold cross-validation on..."
-  test_date       DateTime?
-  tested_by       String?
-  status          String   @default("uploaded") // uploaded, reviewed, accepted, rejected
-  reviewer_notes  String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  ai_system       AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
-  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid())
+  ai_system_id   String
+  user_id        String
+  requirement_id String
+  category       String
+  title          String
+  description    String?
+  file_url       String?
+  file_name      String?
+  file_size      Int?
+  hash           String
+  metrics        Json?
+  methodology    String?
+  test_date      DateTime?
+  tested_by      String?
+  status         String    @default("uploaded")
+  reviewer_notes String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  ai_system      AiSystem  @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([ai_system_id])
   @@index([user_id])
@@ -621,15 +608,15 @@ model DemoRequest {
 }
 
 model EnterpriseInquiry {
-  id          String   @id @default(cuid())
-  full_name   String
-  work_email  String
-  company     String
-  team_size   String
-  role        String?
-  message     String?
-  status      String   @default("new") // new, contacted, archived
-  created_at  DateTime @default(now())
+  id         String   @id @default(cuid())
+  full_name  String
+  work_email String
+  company    String
+  team_size  String
+  role       String?
+  message    String?
+  status     String   @default("new")
+  created_at DateTime @default(now())
 
   @@map("enterprise_inquiries")
 }
@@ -637,12 +624,12 @@ model EnterpriseInquiry {
 model McpApiKey {
   id           String    @id @default(cuid())
   user_id      String
-  key_hash     String    @unique    // SHA-256 hash of the full key
-  key_prefix   String               // First 8 chars for display (e.g. "lx_a1b2...")
+  key_hash     String    @unique
+  key_prefix   String
   name         String    @default("Default")
   created_at   DateTime  @default(now())
   last_used_at DateTime?
-  revoked_at   DateTime?            // Soft-delete: null = active
+  revoked_at   DateTime?
   user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
@@ -651,25 +638,23 @@ model McpApiKey {
 }
 
 model Firm {
-  id              String       @id @default(cuid())
-  name            String
-  business_email  String?
-  vat_number      String?
-  logo_url        String?
-  custom_intro    String?
-  branding_color  String?      @default("#000000")
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
-  members         FirmMember[]
-  clients         FirmClient[]
-  
-  // Relations for multi-tenancy
-  ai_systems      AiSystem[]
-  repo_scans      RepoScan[]
-  pr_scans        PRScan[]
-  documents       ComplianceDocument[]
-  evidence        ComplianceEvidence[]
-  audit_logs      AuditLog[]
+  id             String               @id @default(cuid())
+  name           String
+  business_email String?
+  vat_number     String?
+  logo_url       String?
+  custom_intro   String?
+  branding_color String?              @default("#000000")
+  created_at     DateTime             @default(now())
+  updated_at     DateTime             @updatedAt
+  ai_systems     AiSystem[]
+  audit_logs     AuditLog[]
+  documents      ComplianceDocument[]
+  evidence       ComplianceEvidence[]
+  clients        FirmClient[]
+  members        FirmMember[]
+  pr_scans       PRScan[]
+  repo_scans     RepoScan[]
 
   @@index([name])
   @@map("firms")
@@ -681,8 +666,8 @@ model FirmMember {
   firm_id   String
   role      String   @default("member")
   joined_at DateTime @default(now())
-  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   firm      Firm     @relation(fields: [firm_id], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, firm_id])
   @@index([firm_id])
@@ -690,28 +675,26 @@ model FirmMember {
 }
 
 model FirmClient {
-  id                  String              @id @default(cuid())
-  firm_id             String
-  client_name         String
-  client_email        String?
-  github_repo_url     String?
-  status              String              @default("pending") // pending, onboarded, active, archived
-  monitoring_enabled  Boolean             @default(false)
-  monitoring_frequency String?            @default("weekly")
-  last_monitored_at   DateTime?           @db.Timestamptz(6)
-  onboard_token       String?             @unique
+  id                    String            @id @default(cuid())
+  firm_id               String
+  client_name           String
+  client_email          String?
+  github_repo_url       String?
+  status                String            @default("pending")
+  monitoring_enabled    Boolean           @default(false)
+  monitoring_frequency  String?           @default("weekly")
+  last_monitored_at     DateTime?         @db.Timestamptz(6)
+  onboard_token         String?           @unique
   onboard_token_expires DateTime?         @db.Timestamptz(6)
-  notes               String?
-  created_at          DateTime            @default(now())
-  updated_at          DateTime            @updatedAt
-  firm                Firm                @relation(fields: [firm_id], references: [id], onDelete: Cascade)
-  access              FirmClientAccess?
-
-  // Relations for multi-tenancy
-  ai_systems          AiSystem[]
-  repo_scans          RepoScan[]
-  pr_scans            PRScan[]
-  audit_logs          AuditLog[]
+  notes                 String?
+  created_at            DateTime          @default(now())
+  updated_at            DateTime          @updatedAt
+  ai_systems            AiSystem[]
+  audit_logs            AuditLog[]
+  access                FirmClientAccess?
+  firm                  Firm              @relation(fields: [firm_id], references: [id], onDelete: Cascade)
+  pr_scans              PRScan[]
+  repo_scans            RepoScan[]
 
   @@unique([firm_id, client_name])
   @@index([firm_id])
@@ -720,14 +703,14 @@ model FirmClient {
 }
 
 model FirmClientAccess {
-  id                  String     @id @default(cuid())
-  firm_client_id      String     @unique
-  github_oauth_token  String
-  github_username     String?
-  token_scope         String?    @default("repo:read")
-  granted_at          DateTime   @default(now())
-  expires_at          DateTime?  @db.Timestamptz(6)
-  firm_client         FirmClient @relation(fields: [firm_client_id], references: [id], onDelete: Cascade)
+  id                 String     @id @default(cuid())
+  firm_client_id     String     @unique
+  github_oauth_token String
+  github_username    String?
+  token_scope        String?    @default("repo:read")
+  granted_at         DateTime   @default(now())
+  expires_at         DateTime?  @db.Timestamptz(6)
+  firm_client        FirmClient @relation(fields: [firm_client_id], references: [id], onDelete: Cascade)
 
   @@map("firm_client_access")
 }

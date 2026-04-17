@@ -29,9 +29,11 @@ export async function middleware(request: NextRequest) {
     );
 
     // Refresh session if needed
+    // Optimized: Use getSession() instead of getUser() to rely on cookies and avoid DB roundtrips when possible
     const {
-        data: { user },
-    } = await supabase.auth.getUser();
+        data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
 
     // Geo-Location Pricing Logic REMOVED - Single Currency (EUR) Enforced
     // Vercel populates 'x-vercel-ip-country' with the 2-letter country code
