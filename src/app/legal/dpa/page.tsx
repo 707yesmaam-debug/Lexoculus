@@ -39,12 +39,12 @@ export default function DPAPage() {
                     The Controller agrees that the Processor may engage the following sub-processors:
                 </p>
                 <ul className="list-disc pl-5 space-y-2 mt-2">
-                    <li><strong>Supabase</strong> (Database & Auth - EU Region)</li>
+                    <li><strong>Supabase</strong> (Database &amp; Auth — South Korea, ap-northeast-2)</li>
                     <li><strong>Vercel</strong> (Hosting &amp; CDN — Paris, France, cdg1)</li>
                     <li><strong>Groq</strong> (LLM Inference - USA)</li>
                 </ul>
                 <p className="text-sm mt-4 text-neutral-600">
-                    LexOculus will provide 30 days prior written notice of any new sub-processors. LexOculus ensures that all sub-processors are bound by data protection obligations materially the same as those in this DPA. <strong>Note on Groq:</strong> Groq is contractually prohibited from using any API data for training AI models.
+                    LexOculus will provide 30 days prior written notice of any new sub-processors. LexOculus ensures that all sub-processors are bound by data protection obligations materially the same as those in this DPA. <strong>Note on Supabase region:</strong> Data is hosted in South Korea (AWS ap-northeast-2), which is an EU-adequate country under European Commission Adequacy Decision 2022/254. No additional safeguards (SCCs) are required. <strong>Note on Groq:</strong> Groq is contractually prohibited from using any API data for training AI models.
                 </p>
             </section>
 

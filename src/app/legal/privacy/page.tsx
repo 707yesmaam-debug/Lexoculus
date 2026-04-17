@@ -112,7 +112,7 @@ export default function PrivacyPage() {
                         </thead>
                         <tbody className="divide-y divide-black font-mono text-xs">
                             <tr>
-                                <th className="px-6 py-4 font-bold text-black border-r border-black">Supabase (EU)</th>
+                                <th className="px-6 py-4 font-bold text-black border-r border-black">Supabase (South Korea, ap-northeast-2)</th>
                                 <td className="px-6 py-4 border-r border-black">Database, Authentication</td>
                                 <td className="px-6 py-4">Account data, encrypted tokens, scan metadata</td>
                             </tr>
