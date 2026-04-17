@@ -6,6 +6,7 @@ import logger from '@/lib/infra/logger';
 export async function POST(req: NextRequest) {
     try {
         const { email } = await req.json();
+        console.log('[RESET-PASSWORD] Received request for:', email);
 
         if (!email) {
             return NextResponse.json(
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
         });
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        console.log('[RESET-PASSWORD] Supabase client initialized, generating link...');
 
         // Generate the recovery link
         const { data, error } = await supabase.auth.admin.generateLink({
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true });
         }
 
+        console.log('[RESET-PASSWORD] Link generated successfully, sending email...');
         // Send the email using our custom SMTP
         const emailSent = await sendPasswordResetEmail(email, actionLink);
 
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        console.log('[RESET-PASSWORD] All steps completed successfully');
         return NextResponse.json({ success: true });
     } catch (error) {
         logger.error({ err: error }, 'Error in password reset route');
