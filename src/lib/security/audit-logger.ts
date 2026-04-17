@@ -41,6 +41,17 @@ function generateHash(entry: AuditLogEntry, previousHash: string | null): string
     return crypto.createHash('sha256').update(content).digest('hex');
 }
 
+// GDPR Art. 5(1)(c) — Truncate IP to remove last octet
+function anonymiseIp(ip?: string): string | undefined {
+    if (!ip) return undefined;
+    // IPv4: 192.168.1.100 → 192.168.1.x
+    if (ip.includes('.')) {
+        return ip.split('.').slice(0, 3).join('.') + '.x';
+    }
+    // IPv6: 2001:db8::1 → 2001:db8::x
+    return ip.split(':').slice(0, 4).join(':') + ':x';
+}
+
 /**
  * Create an audit log entry with hash chain
  */
@@ -67,7 +78,7 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<string> {
                 metadata: entry.metadata ? JSON.parse(JSON.stringify(entry.metadata)) : undefined,
                 previous_hash: previousHash,
                 hash,
-                ip_address: entry.ipAddress,
+                ip_address: anonymiseIp(entry.ipAddress),
                 user_agent: entry.userAgent,
                 firm_id: entry.firmId,
                 firm_client_id: entry.firmClientId,

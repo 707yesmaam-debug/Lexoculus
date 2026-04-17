@@ -141,11 +141,25 @@ export async function POST(req: NextRequest) {
             llm_components: [],
         };
 
+        // Fetch Testing Evidence
+        let testingEvidence: any[] = [];
+        try {
+            const aiSystem = await prisma.aiSystem.findUnique({
+                where: { latest_scan_id: repo_scan_id }
+            });
+            if (aiSystem) {
+                testingEvidence = await prisma.testingEvidence.findMany({
+                    where: { ai_system_id: aiSystem.id }
+                });
+            }
+        } catch (e) {}
+
         const pdfBuffer = await generateComplianceReport({
             assessment: assessment as any,
             repo: assessment.risk_assessment.repo_scan as any,
             capabilities: capabilities as any,
             preliminary: assessment.risk_assessment as any,
+            testingEvidence,
             firm_branded: !!firmMember,
             firm_name: firmMember?.firm?.name,
             firm_custom_intro: firmMember?.firm?.custom_intro,

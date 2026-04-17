@@ -123,7 +123,8 @@ interface PreliminaryArticle {
  */
 export function refineWithContext(
     preliminary: RiskAssessment,
-    answers: ContextAnswers
+    answers: ContextAnswers,
+    hasTestingEvidence: boolean = false
 ): FinalAssessmentResult {
     let finalClassification: RiskClassification = preliminary.risk_classification as RiskClassification;
     const evidenceItems: EvidenceItem[] = [];
@@ -494,7 +495,7 @@ export function refineWithContext(
         answers,
         preliminaryArticles,
         hasHumanOversight,
-        hasTesting,
+        hasTestingEvidence || hasTesting,
         hasTransparency,
         hasArchitectureDiagram,
         hasHumanPolicy,

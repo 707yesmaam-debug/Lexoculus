@@ -97,8 +97,21 @@ export async function POST(request: NextRequest) {
 
         console.log(`[SCAN] [CONTEXT] Verifying context for ${assessment.repo_scan.repo_owner}/${assessment.repo_scan.repo_name}`);
 
-        // 7. Run context refinement
-        const result = refineWithContext(assessment, context_answers as ContextAnswers);
+        // 7. Check for uploaded testing evidence
+        let hasTestingEvidence = false;
+        try {
+            const aiSystem = await prisma.aiSystem.findUnique({
+                where: { latest_scan_id: repo_scan_id }
+            });
+            if (aiSystem) {
+                const count = await prisma.testingEvidence.count({
+                    where: { ai_system_id: aiSystem.id }
+                });
+                hasTestingEvidence = count > 0;
+            }
+        } catch (e) {}
+
+        const result = refineWithContext(assessment as any, context_answers as ContextAnswers, hasTestingEvidence);
 
         console.log(`[SUCCESS] [CONTEXT] Final classification: ${result.final_risk_classification} (score: ${result.final_risk_score})`);
         console.log(`   Evidence items: ${result.evidence_items.length}`);

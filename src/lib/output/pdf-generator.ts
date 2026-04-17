@@ -457,6 +457,46 @@ export async function generateComplianceReport(data: any): Promise<Buffer> {
         }
 
         // ==========================================
+        // PAGE 5.5: TESTING EVIDENCE
+        // ==========================================
+        if (data.testingEvidence && data.testingEvidence.length > 0) {
+            yPos = addFormattedPage('Article 15 Compliance');
+
+            doc.fontSize(18).font('Times-Bold').fillColor(PRIMARY).text('Technical Testing Evidence', 60, yPos);
+            yPos += 25;
+            doc.moveTo(60, yPos).lineTo(535, yPos).lineWidth(1).stroke(BORDER);
+            yPos += 15;
+
+            doc.fontSize(11).font('Helvetica').fillColor(GRAY).text(
+                'The following technical performance documents have been uploaded as evidence of compliance with robustness, accuracy, and cybersecurity mandates.',
+                60, yPos, { width: 475 }
+            );
+            yPos += 30;
+
+            data.testingEvidence.forEach((item: any) => {
+                if (yPos > 650) { yPos = addFormattedPage('Article 15 Compliance'); }
+
+                doc.fontSize(12).font('Times-Bold').fillColor(PRIMARY).text(item.category.toUpperCase(), 60, yPos);
+                yPos += 15;
+
+                doc.fontSize(10).font('Courier').fillColor(GRAY);
+                doc.text(`FILE: ${item.file_name || 'Attached Document'}`, 60, yPos, { width: 475 });
+                yPos += 15;
+
+                if (item.hash) {
+                    doc.text(`SHA256: ${item.hash}`, 60, yPos, { width: 475 });
+                    yPos += 15;
+                }
+                
+                doc.text(`STATUS: ${item.status.toUpperCase()}  |  RECORDED: ${new Date(item.created_at).toLocaleDateString()}`, 60, yPos, { width: 475 });
+                yPos += 20;
+
+                doc.moveTo(60, yPos).lineTo(535, yPos).lineWidth(0.5).stroke(BORDER);
+                yPos += 15;
+            });
+        }
+
+        // ==========================================
         // PAGE 6: COMPLIANCE ROADMAP
         // ==========================================
         yPos = addFormattedPage('Compliance Roadmap');

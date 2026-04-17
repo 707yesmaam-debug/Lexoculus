@@ -34,6 +34,8 @@ export interface ConformityStep {
     requires_notified_body: boolean;
     status: StepStatus;
     article_url?: string;
+    evidence_required: boolean;
+    evidence_ids: string[];
 }
 
 export interface ConformityPathway {
@@ -109,6 +111,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/17/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_a_tech_docs',
@@ -130,6 +134,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/11/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_a_testing',
@@ -149,6 +155,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/9/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_a_declaration',
@@ -167,6 +175,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/47/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_a_registration',
@@ -186,6 +196,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/49/',
+            evidence_required: false,
+            evidence_ids: [],
         },
         {
             step_id: 'module_a_monitoring',
@@ -204,6 +216,8 @@ function getModuleASteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/72/',
+            evidence_required: false,
+            evidence_ids: [],
         },
     ];
 }
@@ -226,6 +240,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: true,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/28/',
+            evidence_required: false,
+            evidence_ids: [],
         },
         {
             step_id: 'module_bc_tech_docs',
@@ -244,6 +260,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: true,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/annex/iv/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_bc_examination',
@@ -262,6 +280,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: true,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/annex/vii/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_bc_conformity',
@@ -279,6 +299,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: true,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/annex/vii/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_bc_declaration',
@@ -296,6 +318,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/47/',
+            evidence_required: true,
+            evidence_ids: [],
         },
         {
             step_id: 'module_bc_monitoring',
@@ -314,6 +338,8 @@ function getModuleBCSteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/72/',
+            evidence_required: false,
+            evidence_ids: [],
         },
     ];
 }
@@ -335,6 +361,8 @@ function getNotRequiredSteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/50/',
+            evidence_required: false,
+            evidence_ids: [],
         },
         {
             step_id: 'not_required_best_practices',
@@ -351,6 +379,8 @@ function getNotRequiredSteps(): ConformityStep[] {
             requires_notified_body: false,
             status: 'not_started',
             article_url: 'https://artificialintelligenceact.eu/article/95/',
+            evidence_required: false,
+            evidence_ids: [],
         },
     ];
 }

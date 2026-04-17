@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
                         llm_analysis: true,
                         risk_assessment: true,
                     }
-                }
+                },
+                conformity_assessments: true,
             }
         });
 
@@ -146,7 +147,16 @@ export async function POST(request: NextRequest) {
             user: {
                 email: aiSystem.user.email,
                 full_name: aiSystem.user.full_name || undefined,
-            }
+            },
+            repoScan: aiSystem.latest_scan ? {
+                package_json_content: typeof aiSystem.latest_scan.package_json_content === 'string' 
+                    ? aiSystem.latest_scan.package_json_content 
+                    : JSON.stringify(aiSystem.latest_scan.package_json_content),
+                requirements_txt_content: aiSystem.latest_scan.requirements_txt_content,
+            } : null,
+            conformityAssessment: aiSystem.conformity_assessments ? {
+                module_name: aiSystem.conformity_assessments.module_name,
+            } : null,
         };
 
         // Generate document

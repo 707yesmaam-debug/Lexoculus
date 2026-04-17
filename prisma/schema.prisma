@@ -16,6 +16,7 @@ model User {
   ai_systems              AiSystem[]
   audit_logs              AuditLog[]
   evidence                ComplianceEvidence[]
+  testing_evidence        TestingEvidence[]
   compliance_reports      ComplianceReport[]
   conformity_assessments  ConformityAssessment[]
   feedback                Feedback[]
@@ -374,6 +375,7 @@ model AiSystem {
   audit_logs             AuditLog[]
   documents              ComplianceDocument[]
   evidence               ComplianceEvidence[]
+  testing_evidence       TestingEvidence[]
   conformity_assessments ConformityAssessment?
 
   // Strict Isolation / Multi-tenancy
@@ -495,6 +497,8 @@ model ComplianceEvidence {
   mime_type     String?
   source_type   String?
   source_id     String?
+  conformity_step_id String?
+  conformity_assessment_id String?
   collected_at  DateTime? @default(now()) @db.Timestamptz(6)
   collected_by  String
   hash          String
@@ -512,6 +516,34 @@ model ComplianceEvidence {
 
   @@index([user_id], map: "idx_compliance_evidence_user_id")
   @@map("compliance_evidence")
+}
+
+model TestingEvidence {
+  id              String   @id @default(cuid())
+  ai_system_id    String
+  user_id         String
+  requirement_id  String   // Maps to TestingRequirement.id
+  category        String   // bias, accuracy, robustness, cybersecurity
+  title           String
+  description     String?
+  file_url        String?
+  file_name       String?
+  file_size       Int?
+  hash            String   // SHA-256 integrity hash
+  metrics         Json?    // { "accuracy": 0.94, "f1_score": 0.91 }
+  methodology     String?  // Free text: "5-fold cross-validation on..."
+  test_date       DateTime?
+  tested_by       String?
+  status          String   @default("uploaded") // uploaded, reviewed, accepted, rejected
+  reviewer_notes  String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  ai_system       AiSystem @relation(fields: [ai_system_id], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([ai_system_id])
+  @@index([user_id])
+  @@map("testing_evidence")
 }
 
 model RegulatoryUpdate {

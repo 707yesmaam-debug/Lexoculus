@@ -63,6 +63,13 @@ export interface ScanData {
         email?: string;
         full_name?: string;
     } | null;
+    repoScan?: {
+        package_json_content?: string | null;
+        requirements_txt_content?: string | null;
+    } | null;
+    conformityAssessment?: {
+        module_name?: string;
+    } | null;
 }
 
 /**
@@ -88,7 +95,7 @@ export function loadTemplate(documentType: DocumentType): string {
  * Build the placeholder mapping from scan data
  */
 export function buildPlaceholderMap(data: ScanData): Record<string, string> {
-    const { aiSystem, llmAnalysis, riskAssessment, contextAnswers, user } = data;
+    const { aiSystem, llmAnalysis, riskAssessment, contextAnswers, user, repoScan, conformityAssessment } = data;
 
     // Format capabilities list
     const capabilitiesList = llmAnalysis?.capabilities?.length
@@ -117,6 +124,45 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
         algo_logic: '> [ACTION REQUIRED: Explain the algorithmic approach (e.g., Transformer-based LLM, Random Forest).]',
         accuracy_results: '> [ACTION REQUIRED: Insert final validation metrics (e.g., F1 Score, Accuracy %).] -- See Test Report TR-001.',
     };
+
+    // Auto-fill Algo Logic based on frameworks
+    let autoAlgoLogic = instructionalDefaults.algo_logic;
+    const allFrameworks = [...(llmAnalysis?.capabilities || []), ...(llmAnalysis?.libraries || [])].join(' ').toLowerCase();
+    if (allFrameworks.includes('transformer') || allFrameworks.includes('llm') || allFrameworks.includes('gpt')) {
+        autoAlgoLogic = 'Transformer-based Large Language Model architecture.';
+    } else if (allFrameworks.includes('tensorflow') || allFrameworks.includes('pytorch')) {
+        autoAlgoLogic = 'Deep Neural Network (DNN) implemented via standard framework.';
+    }
+
+    // Auto-fill Software Dependencies
+    let autoDeps = '> [ACTION REQUIRED: List OS, libraries, and runtime dependencies.]';
+    if (repoScan?.package_json_content) {
+        try {
+            const pkg = JSON.parse(repoScan.package_json_content);
+            const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+            if (Object.keys(deps).length > 0) {
+                autoDeps = Object.entries(deps).slice(0, 15).map(([k, v]) => `- ${k}: ${v}`).join('\\n');
+                if (Object.keys(deps).length > 15) autoDeps += '\\n- ...and others';
+            }
+        } catch { /* ignore */ }
+    } else if (repoScan?.requirements_txt_content) {
+        const lines = repoScan.requirements_txt_content.split('\\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 15);
+        if (lines.length > 0) {
+            autoDeps = lines.map(l => `- ${l}`).join('\\n');
+            if (repoScan.requirements_txt_content.split('\\n').length > 15) autoDeps += '\\n- ...and others';
+        }
+    } else if (llmAnalysis?.libraries?.length) {
+        autoDeps = llmAnalysis.libraries.map(l => `- ${l}`).join('\\n');
+    }
+
+    // Auto-fill Hardware Requirements
+    let autoHardware = '> [ACTION REQUIRED: Specify computing resources required (GPU/CPU/RAM).]';
+    const librariesStr = (llmAnalysis?.libraries || []).join(' ').toLowerCase();
+    if (librariesStr.includes('cuda') || librariesStr.includes('gpu') || librariesStr.includes('torch') || librariesStr.includes('tensorflow')) {
+        autoHardware = 'GPU required for optimal performance (e.g., NVIDIA CUDA compatible), plus standard CPU/RAM.';
+    } else if (llmAnalysis?.libraries?.length) {
+        autoHardware = 'Standard CPU and RAM (no specialized AI inference hardware strictly required).';
+    }
 
     return {
         // --- Header / Component Data ---
@@ -154,7 +200,7 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
         architecture_diagram_placeholder: instructionalDefaults.architecture_diagram,
         ui_description_placeholder: instructionalDefaults.ui_description,
         interoperability_placeholder: instructionalDefaults.interoperability,
-        algo_logic_placeholder: instructionalDefaults.algo_logic,
+        algo_logic_placeholder: autoAlgoLogic,
         accuracy_results_placeholder: instructionalDefaults.accuracy_results,
 
         // --- Risk Management (Article 9) ---
@@ -194,14 +240,14 @@ export function buildPlaceholderMap(data: ScanData): Record<string, string> {
         standards_placeholder: '> [List harmonised standards or common specifications applied.]',
         notified_body_name: '[Notified Body Name - if applicable]',
         notified_body_number: '[NB Number]',
-        conformity_assessment_procedure: 'Annex VII (Internal Control) OR Annex VII (Assessment of QMS)',
+        conformity_assessment_procedure: conformityAssessment?.module_name || 'Annex VII (Internal Control) OR Annex VII (Assessment of QMS)',
         certificate_number: '[Certificate Number - if applicable]',
         place_of_issue: '[City, Country]',
         date_of_issue: new Date().toLocaleDateString(),
 
         // --- Hardware/Software ---
-        hardware_requirements: '> [ACTION REQUIRED: Specify computing resources required (GPU/CPU/RAM).]',
-        software_dependencies: '> [ACTION REQUIRED: List OS, libraries, and runtime dependencies.]',
+        hardware_requirements: autoHardware,
+        software_dependencies: autoDeps,
 
         // --- Risk & Oversight ---
         known_limitations: contextAnswers?.limitations || '> [ACTION REQUIRED: List known limitations, edge cases, and areas where performance may degrade.]',

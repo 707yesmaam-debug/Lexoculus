@@ -1,0 +1,34 @@
+name: LexOculus AI Systems Drift Monitor
+
+on:
+  schedule:
+    # Run every day at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger LexOculus Drift Webhook
+        env:
+          WEBHOOK_SECRET: ${{ secrets.DRIFT_WEBHOOK_SECRET }}
+          API_URL: ${{ secrets.PUBLIC_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "API_URL is not set. Please configure the PUBLIC_API_URL repository secret."
+            exit 1
+          fi
+          
+          echo "Triggering automated drift check for all registered repositories..."
+          STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null \
+            -X POST "$API_URL/api/webhooks/drift-check" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $WEBHOOK_SECRET")
+            
+          if [ "$STATUS_CODE" -eq 200 ] || [ "$STATUS_CODE" -eq 202 ]; then
+            echo "Successfully triggered drift check (Status: $STATUS_CODE)"
+          else
+            echo "Failed to trigger drift check (Status: $STATUS_CODE)"
+            exit 1
+          fi

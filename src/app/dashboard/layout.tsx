@@ -161,6 +161,13 @@ export default function DashboardLayout({
             disabled: !!activeScanId,
             isActive: pathname.startsWith('/dashboard/configure-mcp')
         },
+        {
+            name: '09_ALERTS',
+            href: '/dashboard/alerts',
+            status: '[VIEW]',
+            disabled: false,
+            isActive: pathname === '/dashboard/alerts'
+        },
     ];
 
 

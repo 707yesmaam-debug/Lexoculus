@@ -34,6 +34,7 @@ export default function LegalLayout({
                             <LegalLink href="/legal/privacy">Privacy Policy</LegalLink>
                             <LegalLink href="/legal/security">Security Policy</LegalLink>
                             <LegalLink href="/legal/compliance">EU Compliance</LegalLink>
+                            <LegalLink href="/legal/dpa">Data Processing Agreement</LegalLink>
                         </nav>
                     </div>
 

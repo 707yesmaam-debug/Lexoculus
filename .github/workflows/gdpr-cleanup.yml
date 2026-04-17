@@ -1,0 +1,32 @@
+name: GDPR Data Cleanup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 02:00 UTC
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run GDPR Data Cleanup
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          API_URL: ${{ secrets.PUBLIC_API_URL }}
+        run: |
+          if [ -z "$API_URL" ]; then
+            echo "API_URL is not set. Please configure the PUBLIC_API_URL repository secret."
+            exit 1
+          fi
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET is not set. Please configure the CRON_SECRET repository secret."
+            exit 1
+          fi
+
+          echo "Triggering automated GDPR cleanup..."
+          STATUS=$(curl --write-out '%{http_code}' --silent --output /dev/null \
+            -X GET "$API_URL/api/cron/cleanup" \
+            -H "x-cron-secret: $CRON_SECRET")
+            
+          echo "Cleanup status: $STATUS"
+          if [ "$STATUS" -ne 200 ]; then exit 1; fi

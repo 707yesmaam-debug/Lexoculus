@@ -323,13 +323,25 @@ export default function RegistryPage() {
                                                 </button>
                                                 {/* Conformity Tracker (Phase 5) */}
                                                 {(system.risk_classification === 'HIGH_RISK' || system.risk_classification === 'LIMITED_RISK') && (
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/conformity/${system.id}`); }}
-                                                        className="flex items-center gap-1 hover:text-black text-[#FF4F00]"
-                                                    >
-                                                        <ShieldCheck className="w-3 h-3" />
-                                                        TRACK_CONFORMITY
-                                                    </button>
+                                                    <div className="flex gap-3">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/conformity/${system.id}`); }}
+                                                            className="flex items-center gap-1 hover:text-black text-[#FF4F00]"
+                                                        >
+                                                            <ShieldCheck className="w-3 h-3" />
+                                                            TRACK_CONFORMITY
+                                                        </button>
+                                                        
+                                                        {system.risk_classification === 'HIGH_RISK' && (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/testing/${system.id}`); }}
+                                                                className="flex items-center gap-1 hover:text-black text-blue-600"
+                                                            >
+                                                                <FileText className="w-3 h-3" />
+                                                                TEST_EVIDENCE
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

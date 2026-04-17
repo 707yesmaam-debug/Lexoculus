@@ -23,6 +23,17 @@ interface ConformityStep {
     requires_notified_body: boolean;
     status: 'not_started' | 'in_progress' | 'completed' | 'blocked';
     article_url?: string;
+    evidence_required?: boolean;
+    evidence_ids?: string[];
+}
+
+interface EvidenceData {
+    id: string;
+    file_name: string;
+    file_url: string;
+    hash: string;
+    conformity_step_id: string;
+    collected_at: string;
 }
 
 interface PathwayData {
@@ -66,6 +77,8 @@ export default function ConformityAssessmentPage() {
     const [isInitializing, setIsInitializing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [expandedStep, setExpandedStep] = useState<string | null>(null);
+    const [evidence, setEvidence] = useState<EvidenceData[]>([]);
+    const [uploadingStep, setUploadingStep] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
         try {
@@ -78,6 +91,15 @@ export default function ConformityAssessmentPage() {
 
             if (data.assessment) {
                 setAssessment(data.assessment);
+                try {
+                    const evRes = await fetch(`/api/conformity-assessment/${data.assessment.id}/evidence`);
+                    if (evRes.ok) {
+                        const evData = await evRes.json();
+                        if (evData.evidence) setEvidence(evData.evidence);
+                    }
+                } catch (e) {
+                    console.error("Failed to load evidence", e);
+                }
             }
             if (data.pathway) {
                 setPathway(data.pathway);
@@ -129,6 +151,40 @@ export default function ConformityAssessmentPage() {
             setAssessment(data.assessment);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update step');
+        }
+    };
+
+    const handleUploadEvidence = async (stepId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!assessment) return;
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setUploadingStep(stepId);
+            setError(null);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('ai_system_id', ai_system_id);
+            formData.append('conformity_assessment_id', assessment.id);
+            formData.append('conformity_step_id', stepId);
+            formData.append('evidence_type', 'conformity_evidence');
+
+            const res = await fetch('/api/upload-evidence', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+            if (data.evidence) {
+                setEvidence(prev => [data.evidence, ...prev]);
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Upload failed');
+        } finally {
+            setUploadingStep(null);
+            e.target.value = '';
         }
     };
 
@@ -398,12 +454,56 @@ export default function ConformityAssessmentPage() {
                                             </div>
                                         </div>
 
+                                        {/* Evidence section */}
+                                        {step.evidence_required && (
+                                            <div className="pt-4 border-t border-black/5 mt-4">
+                                                <h4 className="font-mono text-[10px] text-[#555] uppercase tracking-widest mb-3">Evidence Required</h4>
+                                                
+                                                {/* List existing evidence for this step */}
+                                                <div className="space-y-2 mb-3">
+                                                    {evidence.filter(e => e.conformity_step_id === step.step_id).map((ev) => (
+                                                        <div key={ev.id} className="flex justify-between items-center bg-gray-50 border border-gray-200 p-2 text-sm">
+                                                            <div className="flex items-center gap-2">
+                                                                <FileText className="w-4 h-4 text-[#FF4F00]" />
+                                                                <a href={ev.file_url} target="_blank" rel="noopener noreferrer" className="font-mono text-xs hover:underline text-[#FF4F00]">{ev.file_name}</a>
+                                                            </div>
+                                                            <div className="text-[9px] text-gray-400 font-mono" title={ev.hash}>
+                                                                SHA-256
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className="flex items-center gap-4">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        disabled={uploadingStep === step.step_id}
+                                                        onClick={() => document.getElementById(`upload-${step.step_id}`)?.click()}
+                                                        className="font-mono text-[10px] uppercase tracking-widest"
+                                                    >
+                                                        {uploadingStep === step.step_id ? 'Uploading...' : 'Upload Evidence'}
+                                                    </Button>
+                                                    <input 
+                                                        id={`upload-${step.step_id}`}
+                                                        type="file" 
+                                                        className="hidden" 
+                                                        onChange={(e) => handleUploadEvidence(step.step_id, e)} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {/* Status Actions - Checklist Mode */}
                                         {assessment && (
                                             <div className="pt-4 border-t border-black/5 mt-4">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        const stepEvidence = evidence.filter(ev => ev.conformity_step_id === step.step_id);
+                                                        if (step.evidence_required && step.status !== 'completed' && stepEvidence.length === 0) {
+                                                            setError(`Evidence is required to complete step: ${step.title}`);
+                                                            return;
+                                                        }
                                                         handleStepUpdate(step.step_id, step.status === 'completed' ? 'not_started' : 'completed');
                                                     }}
                                                     className={`
