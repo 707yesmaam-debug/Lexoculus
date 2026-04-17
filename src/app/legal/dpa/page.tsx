@@ -40,7 +40,7 @@ export default function DPAPage() {
                 </p>
                 <ul className="list-disc pl-5 space-y-2 mt-2">
                     <li><strong>Supabase</strong> (Database & Auth - EU Region)</li>
-                    <li><strong>Vercel</strong> (Hosting & CDN - EU Options)</li>
+                    <li><strong>Vercel</strong> (Hosting &amp; CDN — Paris, France, cdg1)</li>
                     <li><strong>Groq</strong> (LLM Inference - USA)</li>
                 </ul>
                 <p className="text-sm mt-4 text-neutral-600">

@@ -3,7 +3,22 @@ export default function TermsPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Terms of Service</h1>
-                <p className="text-neutral-500 font-mono text-sm">Effective Date: February 19, 2026</p>
+                <p className="text-neutral-500 font-mono text-sm">Effective Date: April 17, 2026</p>
+            </div>
+
+            {/* Entity Information */}
+            <div className="bg-neutral-50 border-2 border-black p-6 space-y-3">
+                <p className="text-xs font-mono uppercase tracking-widest text-neutral-500">PARTIES</p>
+                <p className="text-sm leading-relaxed">
+                    This Agreement is entered into by and between:
+                </p>
+                <p className="text-sm leading-relaxed">
+                    <strong>Varad Khoriya</strong>, an individual carrying on business under the name and style of <strong>&ldquo;LexOculus&rdquo;</strong>, a sole proprietorship established in India (hereinafter referred to as &ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;),
+                </p>
+                <p className="text-sm">and</p>
+                <p className="text-sm leading-relaxed">
+                    the user of the Services (&ldquo;User&rdquo;, &ldquo;you&rdquo;, or &ldquo;your&rdquo;).
+                </p>
             </div>
 
             {/* Warning Box */}
@@ -51,7 +66,7 @@ export default function TermsPage() {
             <section className="space-y-4">
                 <h2 className="text-2xl font-bold uppercase">4. Your Data Rights</h2>
                 <p>
-                    You retain all ownership and intellectual property rights to your source code and repositories. By using the Service, you grant LexOculus a limited, temporary license to access and analyze your repository content solely for the purpose of generating compliance reports. <strong>We do not permanently store your source code</strong> (see Privacy Policy for details).
+                    You retain all ownership and intellectual property rights to your source code and repositories. By using the Service, you grant LexOculus a limited, temporary license to access and analyze your repository content solely for the purpose of generating compliance reports. Repository metadata (README, dependency manifests, file tree) is stored for up to 30 days to enable report regeneration, then automatically purged. Source code files are never stored. See our <a href="/legal/privacy" className="text-[#FF4F00] hover:underline">Privacy Policy</a> for the full retention schedule.
                 </p>
             </section>
 
