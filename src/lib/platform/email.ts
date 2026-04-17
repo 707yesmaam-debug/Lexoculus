@@ -34,6 +34,8 @@ function getTransporter(): nodemailer.Transporter | null {
         auth: { user, pass },
     });
 
+    logger.info({ host, port }, '📧 [EMAIL] Transporter initialized');
+
     return transporter;
 }
 
