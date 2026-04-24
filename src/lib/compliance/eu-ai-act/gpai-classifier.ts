@@ -207,8 +207,8 @@ const GPAI_CAPABILITY_KEYWORDS = [
 const GPAI_PROVIDER_OBLIGATIONS: GPAIObligation[] = [
     {
         article: 'Article 53(1)(a)',
-        title: 'Technical Documentation',
-        description: 'Draw up and keep up-to-date technical documentation of the model, including its training and testing process and the results of its evaluation, containing at a minimum the information set out in Annex XI.',
+        title: 'Technical Documentation & Energy Metrics',
+        description: 'Draw up and keep up-to-date technical documentation of the model, including its training and testing process, evaluation results, and known or estimated energy consumption (Annex XI).',
         annex_reference: 'Annex XI',
         applies_to: 'provider',
         deadline: '2025-08-02',
