@@ -16,7 +16,7 @@ export default function PrivacyPage() {
                     LexOculus operates as the Data Controller for personal data processed through the Service.
                 </p>
                 <p>
-                    <strong>Contact:</strong> <a href="mailto:founder@lexoculus.com" className="text-[#FF4F00] hover:underline">founder@lexoculus.com</a>
+                    <strong>Contact:</strong> <a href="mailto:varadkhoriya17@gmail.com" className="text-[#FF4F00] hover:underline">varadkhoriya17@gmail.com</a>
                 </p>
             </section>
 
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
                     <li><strong>Right to Erasure (Art. 17):</strong> Use the "Delete Account" button to permanently and cascadedly delete all your data.</li>
                     <li><strong>Right to Data Portability (Art. 20):</strong> Use the "Export Data" button to download a JSON file of your complete data history.</li>
                 </ul>
-                <p>For other rights (Access, Rectification, Restriction, Objection), please contact: <a href="mailto:founder@lexoculus.com" className="text-[#FF4F00] hover:underline">founder@lexoculus.com</a>.</p>
+                <p>For other rights (Access, Rectification, Restriction, Objection), please contact: <a href="mailto:varadkhoriya17@gmail.com" className="text-[#FF4F00] hover:underline">varadkhoriya17@gmail.com</a>.</p>
             </section>
         </div>
     );

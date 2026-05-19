@@ -61,7 +61,7 @@ export async function sendOnboardingEmail({
 
     try {
         await transporter.sendMail({
-            from: `"${firmName} via LexOculus" <${process.env.SMTP_FROM || 'noreply@lexoculus.com'}>`,
+            from: `"${firmName} via LexOculus" <${process.env.SMTP_FROM || 'varadkhoriya17@gmail.com'}>`,
             to,
             subject: `Action Required: Authorize ${firmName} Compliance Audit`,
             html: emailHtml,

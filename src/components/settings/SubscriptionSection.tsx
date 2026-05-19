@@ -134,7 +134,7 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                     <div>
                         <h4 className="font-mono text-xs font-bold text-blue-800 mb-1">NEED_ASSISTANCE?</h4>
                         <p className="text-sm text-blue-700">
-                            For billing inquiries or enterprise licensing, please contact <a href="mailto:founder@lexoculus.com" className="underline hover:text-blue-900">founder@lexoculus.com</a>.
+                            For billing inquiries or enterprise licensing, please contact <a href="mailto:varadkhoriya17@gmail.com" className="underline hover:text-blue-900">varadkhoriya17@gmail.com</a>.
                         </p>
                     </div>
                 </div>

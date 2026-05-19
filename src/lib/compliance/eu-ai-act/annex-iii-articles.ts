@@ -338,7 +338,7 @@ export const ARTICLE_5_CONSTRAINTS: EUAIConstraint[] = [
 // =============================================================================
 // ANNEX III: HIGH-RISK AI SYSTEMS
 // Source: Regulation (EU) 2024/1689, Annex III
-// Fully Enforceable: August 2, 2026
+// Fully Enforceable: December 2, 2027 (Deferred from August 2, 2026 under the May 2026 AI Omnibus agreement)
 // =============================================================================
 
 export const ANNEX_III_CONSTRAINTS: EUAIConstraint[] = [

@@ -577,7 +577,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             matchedArticles.push({
                 article: article.article,
                 category: article.category,
-                description: `Generative AI system detected — LIMITED RISK under Article 50(2) of Regulation (EU) 2024/1689.${libList} Providers must mark all AI-generated outputs (text, code, images, audio, video) in a machine-readable format that makes them detectable as artificially generated. Obligation applies from 2 August 2026. Practical steps: (1) embed C2PA-compatible provenance metadata or watermarks, (2) display clear in-UI labels on all AI-generated content, (3) do not allow outputs to be presented as human-authored without disclosure.`,
+                description: `Generative AI system detected — LIMITED RISK under Article 50(2) of Regulation (EU) 2024/1689.${libList} Providers must mark all AI-generated outputs (text, code, images, audio, video) in a machine-readable format that makes them detectable as artificially generated. Obligation applies from 2 December 2026. Practical steps: (1) embed C2PA-compatible provenance metadata or watermarks, (2) display clear in-UI labels on all AI-generated content, (3) do not allow outputs to be presented as human-authored without disclosure.`,
                 applicable: true,
                 riskTier: 'LIMITED_RISK',
                 reasoning: `Generative AI detected: generative_ai indicator + ${detectedModelTypes.slice(0,3).join(', ')} model types + generative capabilities.${libList}`,
@@ -586,7 +586,7 @@ export function classifyRisk(analysis: LlmCapabilityAnalysis, intendedPurpose?: 
             if (riskClassification === 'MINIMAL_RISK') {
                 riskClassification = 'LIMITED_RISK';
             }
-            keyFindings.push(`LIMITED RISK (Article 50(2)): Generative AI detected.${libList} Required by 2 August 2026: (1) mark all AI-generated outputs in machine-readable format, (2) display UI disclosures on generated content, (3) do not present outputs as human-authored. Article 50 transparency obligations apply immediately.`);
+            keyFindings.push(`LIMITED RISK (Article 50(2)): Generative AI detected.${libList} Required by 2 December 2026: (1) mark all AI-generated outputs in machine-readable format, (2) display UI disclosures on generated content, (3) do not present outputs as human-authored. Article 50 transparency obligations apply immediately.`);
             relatedLibs.forEach(lib => {
                 evidenceList.push({
                     type: 'dependency',
@@ -1166,13 +1166,13 @@ export function classifyRiskFull(
             if (gpaiResult.open_source_exception) {
                 gpaiFindings.push('Open-source exception may apply (Article 53(2)). However, Article 50 transparency still applies.');
             } else {
-                gpaiFindings.push(`Obligation from 2 Aug 2026: disclose AI-generated content in machine-readable format. Open-source exception does NOT apply.`);
+                gpaiFindings.push(`Obligation from 2 Dec 2026: disclose AI-generated content in machine-readable format. Open-source exception does NOT apply.`);
             }
         } else {
             if (gpaiResult.open_source_exception) {
                 gpaiFindings.push('Open-source exception may apply (Article 53(2))');
             }
-            gpaiFindings.push(`Article 50 transparency obligations apply from 2 August 2026`);
+            gpaiFindings.push(`Article 50 transparency obligations apply from 2 December 2026`);
         }
 
         // Merge findings (GPAI findings prepended for visibility)

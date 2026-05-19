@@ -441,6 +441,15 @@ const PYTHON_GENERATIVE_AI: AILibrary[] = [
         use_cases: ['fast LLM inference', 'Llama', 'Mixtral']
     },
     {
+        name: 'litellm',
+        aliases: [],
+        category: 'generative_ai',
+        risk_indicators: ['uses_generative_ai', 'uses_nlp'],
+        ecosystem: 'python',
+        confidence: 0.95,
+        use_cases: ['LLM orchestration', 'API routing', 'multi-model support']
+    },
+    {
         name: 'ollama',
         aliases: [],
         category: 'generative_ai',

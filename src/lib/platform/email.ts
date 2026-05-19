@@ -8,8 +8,8 @@
 
 import logger from '../infra/logger';
 
-const FOUNDER_EMAIL = process.env.LEADS_EMAIL || 'founder@lexoculus.com';
-const NO_REPLY_EMAIL = process.env.SMTP_FROM || 'onboarding@lexoculus.com';
+const FOUNDER_EMAIL = process.env.LEADS_EMAIL || 'varadkhoriya17@gmail.com';
+const NO_REPLY_EMAIL = process.env.SMTP_FROM || 'varadkhoriya17@gmail.com';
 
 /**
  * Universal Email Dispatcher (HTTP ONLY)

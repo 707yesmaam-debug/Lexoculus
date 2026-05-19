@@ -1,7 +1,14 @@
 {
-  "name": "complianceai",
-  "version": "0.1.0",
-  "private": true,
+  "name": "lexoculus",
+  "version": "1.0.0",
+  "description": "EU AI Act compliance platform — scan GitHub repos, classify risk, generate legal reports.",
+  "private": false,
+  "license": "Apache-2.0",
+  "homepage": "https://lexoculus.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CURSED-ME/lexoculus"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

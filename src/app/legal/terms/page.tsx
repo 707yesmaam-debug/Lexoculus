@@ -93,7 +93,7 @@ export default function TermsPage() {
                     <li><strong>Acknowledge</strong> that you thereby <strong>waive your 14-day right of withdrawal</strong> once service delivery has begun.</li>
                 </ol>
                 <p>
-                    If you do not wish to waive this right, you may request that access to paid features be delayed until the 14-day period has passed. Contact: <a href="mailto:founder@lexoculus.com" className="text-blue-600 hover:underline">founder@lexoculus.com</a>.
+                    If you do not wish to waive this right, you may request that access to paid features be delayed until the 14-day period has passed. Contact: <a href="mailto:varadkhoriya17@gmail.com" className="text-blue-600 hover:underline">varadkhoriya17@gmail.com</a>.
                 </p>
                 <p>
                     <strong>Termination:</strong> In accordance with the EU Data Act (Regulation (EU) 2023/2854), you may terminate your subscription at any time. The termination will take effect at the end of the current billing cycle.
@@ -117,7 +117,7 @@ export default function TermsPage() {
             <section className="space-y-4">
                 <h2 className="text-2xl font-bold uppercase">9. Contact</h2>
                 <p>
-                    For any questions regarding these Terms, contact: <a href="mailto:founder@lexoculus.com" className="text-blue-600 hover:underline">founder@lexoculus.com</a>
+                    For any questions regarding these Terms, contact: <a href="mailto:varadkhoriya17@gmail.com" className="text-blue-600 hover:underline">varadkhoriya17@gmail.com</a>
                 </p>
             </section>
         </div>

@@ -239,6 +239,7 @@ export function shouldSkipHighRiskCategory(
     if (!intendedPurpose) return false;  // no purpose declared → evaluate everything
 
     const mapping = PURPOSE_CATEGORY_MAP[intendedPurpose];
+    if (mapping === undefined) return false; // unknown purpose → evaluate everything (conservative)
 
     // FORCE_UNACCEPTABLE: do NOT skip — Article 5 is handled separately
     if (mapping === FORCE_UNACCEPTABLE) return false;

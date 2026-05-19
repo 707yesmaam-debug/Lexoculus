@@ -42,3 +42,25 @@ debug_output*.txt
 next-env.d.ts
 
 /src/generated/prisma
+
+# Graphify outputs
+/graphify-out/
+
+# Agent context (keep private)
+/.agents/
+
+# Root test/debug artifacts
+*.json
+!package.json
+!package-lock.json
+!components.json
+!vercel.json
+!jest.config.js
+!tsconfig.json
+
+# Logs
+*.log
+*.txt
+
+# scratch files
+/scratch/

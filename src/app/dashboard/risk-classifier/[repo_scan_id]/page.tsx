@@ -651,7 +651,7 @@ export default function RiskClassifierPage() {
                                     <div className="bg-[#FFFCE6] border border-[#E6D95E] p-4">
                                         <div className="flex items-center gap-2 mb-2">
                                             <Eye className="w-4 h-4 text-[#8B7E00]" />
-                                            <span className="font-mono text-[10px] text-[#8B7E00] uppercase tracking-widest font-bold">Effective: 2 August 2026</span>
+                                            <span className="font-mono text-[10px] text-[#8B7E00] uppercase tracking-widest font-bold">Effective: 2 December 2026</span>
                                         </div>
                                         <ul className="space-y-1.5">
                                             {assessment.gpai_classification.transparency_requirements.map((req, i) => (

@@ -33,7 +33,7 @@ export default function SecurityPage() {
             <section className="space-y-4">
                 <h2 className="text-2xl font-bold uppercase">4. Vulnerability Disclosure</h2>
                 <p>
-                    If you discover a security vulnerability, please report it responsibly to: <a href="mailto:founder@lexoculus.com" className="text-blue-600 hover:underline">founder@lexoculus.com</a>. We commit to:
+                    If you discover a security vulnerability, please report it responsibly to: <a href="mailto:varadkhoriya17@gmail.com" className="text-blue-600 hover:underline">varadkhoriya17@gmail.com</a>. We commit to:
                 </p>
                 <ul className="list-disc pl-5 space-y-2">
                     <li>Acknowledging receipt within 48 hours.</li>

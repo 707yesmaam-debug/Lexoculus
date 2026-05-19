@@ -1,9 +1,7 @@
 # LexOculus — Technical Architecture Document
 
-> **Generated**: 2026-03-17  
-> **Repo**: `complianceAI`  
-> **Version**: 0.1.0  
-> **Status**: Production (Vercel)
+> **Repo**: `lexoculus`
+> **Version**: 1.0.0
 
 ---
 
@@ -552,7 +550,29 @@ Security tripwire system for detecting unauthorized access patterns (6.7KB).
 
 ---
 
-## 8. API Architecture (41 Endpoints)
+## 8. Enterprise Multi-Tenancy (White-Label for Law Firms)
+
+Lexoculus includes an optional multi-tenancy layer designed for law firms and compliance consultants to manage multiple clients.
+
+### 8.1 Multi-Tenancy Models
+
+| Model | Purpose |
+|-------|---------|
+| `Firm` | Represents a law firm or consulting entity. Supports custom branding (logo, intro text). |
+| `FirmMember` | Links users to a `Firm` with specific roles (e.g., `admin`, `member`). |
+| `FirmClient` | Represents a client of the firm. Enables tracking of client-specific repositories and scans. |
+| `FirmClientAccess` | Manages GitHub OAuth tokens granted by clients to the firm for automated monitoring. |
+
+### 8.2 Client Monitoring Workflow
+
+1. **Firm** creates a **FirmClient** entry.
+2. **Client** provides a delegated GitHub OAuth token via a secure onboarding link.
+3. **Lexoculus** uses the token to scan and monitor the client's repositories on behalf of the Firm.
+4. **Firm** generates branded compliance reports for the Client using the Firm's white-label settings.
+
+---
+
+## 9. API Architecture (41 Endpoints)
 
 ### Core Scan Pipeline
 
@@ -610,7 +630,7 @@ Security tripwire system for detecting unauthorized access patterns (6.7KB).
 
 ---
 
-## 9. Payment System (Dodo Payments)
+## 10. Payment System (Dodo Payments)
 
 | Feature | Detail |
 |---------|--------|
@@ -635,7 +655,7 @@ Security tripwire system for detecting unauthorized access patterns (6.7KB).
 
 ---
 
-## 10. MCP Server Architecture
+## 11. MCP Server Architecture
 
 A **standalone** MCP (Model Context Protocol) server for AI coding assistants, separate from the main Next.js app.
 
@@ -651,7 +671,7 @@ A **standalone** MCP (Model Context Protocol) server for AI coding assistants, s
 
 ---
 
-## 11. Frontend Architecture
+## 12. Frontend Architecture
 
 ### Design System: "Optical Legality" (System 3.0)
 
@@ -705,7 +725,7 @@ A **standalone** MCP (Model Context Protocol) server for AI coding assistants, s
 
 ---
 
-## 12. GitHub Integration
+## 13. GitHub Integration
 
 ### CI/CD — GitHub Action PR Scanner
 
@@ -725,7 +745,7 @@ A **standalone** MCP (Model Context Protocol) server for AI coding assistants, s
 
 ---
 
-## 13. Infrastructure
+## 14. Infrastructure
 
 ### Logging (`logger.ts`)
 
@@ -751,44 +771,64 @@ A **standalone** MCP (Model Context Protocol) server for AI coding assistants, s
 
 ---
 
-## 14. Environment Variables
+## 15. Environment Variables
 
 ```env
-# Database
-DATABASE_URL=              # Supabase PostgreSQL connection string
-DIRECT_URL=                # Direct DB URL (Prisma migrations)
+# ─────────────────────────────────────────────
+# LEXOCULUS — Environment Variables
+# ─────────────────────────────────────────────
 
-# Supabase
+# ── App ──────────────────────────────────────
+NEXT_PUBLIC_APP_URL=       # Your public URL
+
+# ── Database (Supabase PostgreSQL) ───────────
+DATABASE_URL=              # Connection string
+DIRECT_URL=                # Direct DB URL
+
+# ── Supabase Auth ────────────────────────────
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# AI/LLM
-GROQ_API_KEY=              # Groq API key
-GROQ_MODEL=                # Optional, default: llama-3.3-70b-versatile
-
-# GitHub
-GITHUB_APP_CLIENT_ID=      # GitHub OAuth app
+# ── GitHub OAuth ─────────────────────────────
+GITHUB_APP_CLIENT_ID=
 GITHUB_APP_CLIENT_SECRET=
 
-# Security
-ENCRYPTION_KEY=            # AES-256-GCM key for token encryption
-ADMIN_EMAIL=               # Admin panel access gate
+# ── AI / LLM ─────────────────────────────────
+GROQ_API_KEY=
+GROQ_MODEL=                # Default: llama-3.3-70b-versatile
 
-# Rate Limiting
-UPSTASH_REDIS_REST_URL=    # Optional (falls back to in-memory)
+# ── Security ─────────────────────────────────
+ENCRYPTION_KEY=            # AES-256-GCM key
+ADMIN_EMAIL=               # Admin panel gate
+
+# ── Rate Limiting (Upstash Redis) ────────────
+UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
 
-# Payments
+# ── Payments (Dodo Payments) ─────────────────
 DODO_PAYMENTS_API_KEY=
 DODO_PAYMENTS_PRODUCT_ID_PRO=
 DODO_PAYMENTS_PRODUCT_ID_PRO_YEARLY=
 DODO_PAYMENTS_WEBHOOK_SECRET=
+
+# ── Email (SMTP) ──────────────────────────────
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+LEADS_EMAIL=               # Lead notification target
+
+# ── Security Webhooks ─────────────────────────
+GITHUB_WEBHOOK_SECRET=
+DRIFT_WEBHOOK_SECRET=
+CRON_SECRET=
 ```
 
 ---
 
-## 15. Testing & Development
+## 16. Testing & Development
 
 ### Commands
 
@@ -826,7 +866,7 @@ DODO_PAYMENTS_WEBHOOK_SECRET=
 
 ---
 
-## 16. Deployment
+## 17. Deployment
 
 | Aspect | Detail |
 |--------|--------|
@@ -839,7 +879,7 @@ DODO_PAYMENTS_WEBHOOK_SECRET=
 
 ---
 
-## 17. File Size Census (Core Modules)
+## 18. File Size Census (Core Modules)
 
 | File | Size | Lines |
 |------|------|:-----:|

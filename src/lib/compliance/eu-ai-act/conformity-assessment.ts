@@ -469,7 +469,7 @@ export function determineConformityPathway(
     // ─── MINIMAL_RISK or LIMITED_RISK ───
     if (riskClassification === 'MINIMAL_RISK' || riskClassification === 'LIMITED_RISK') {
         if (isGpaiDeployer) {
-            notes.push('As a GPAI deployer, Article 50 transparency obligations apply from 2 August 2026.');
+            notes.push('As a GPAI deployer, Article 50 transparency obligations apply from 2 December 2026.');
         }
         if (riskClassification === 'LIMITED_RISK') {
             notes.push('Article 50 transparency obligations: users must be informed they interact with AI.');
@@ -501,7 +501,7 @@ export function determineConformityPathway(
             notes.push('The provider may use harmonized standards to simplify the assessment, but Notified Body verification is still required.');
 
             if (isGpaiDeployer) {
-                notes.push('Additional GPAI deployer obligations under Article 50 apply from 2 August 2026.');
+                notes.push('Additional GPAI deployer obligations under Article 50 apply from 2 December 2026.');
             }
 
             const steps = getModuleBCSteps();
@@ -526,7 +526,7 @@ export function determineConformityPathway(
             notes.push('The provider must still comply with all Chapter III requirements and maintain complete technical documentation.');
 
             if (isGpaiDeployer) {
-                notes.push('Additional GPAI deployer obligations under Article 50 apply from 2 August 2026.');
+                notes.push('Additional GPAI deployer obligations under Article 50 apply from 2 December 2026.');
             }
 
             const steps = getModuleASteps();

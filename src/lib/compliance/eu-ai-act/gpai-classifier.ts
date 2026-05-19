@@ -508,7 +508,7 @@ function mapObligations(
             title: 'Transparency to End Users',
             description: 'Ensure users are informed they are interacting with an AI system. AI-generated outputs must be marked as artificially generated in a machine-readable format.',
             applies_to: 'deployer',
-            deadline: '2026-08-02', // Article 50 enters force later
+            deadline: '2026-12-02', // Article 50 enters force later
             systemic_risk_only: false,
         });
     }
@@ -591,7 +591,7 @@ function generateGPAISummary(
     }
 
     if (isDeployer) {
-        parts.push('Article 50 transparency obligations apply from 2 August 2026.');
+        parts.push('Article 50 transparency obligations apply from 2 December 2026.');
     }
 
     return parts.join(' ');

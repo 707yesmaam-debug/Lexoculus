@@ -32,8 +32,6 @@ function StatusBlinker({ label }: { label: string }) {
 
 // ─── HERO CTA ────────────────────────────────────────────────────────────────
 function HeroCTA() {
-    const [isVideoOpen, setIsVideoOpen] = useState(false);
-
     return (
         <div className="mb-8">
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -43,12 +41,6 @@ function HeroCTA() {
                 >
                     Request_Demo →
                 </Link>
-                <button
-                    onClick={() => setIsVideoOpen(true)}
-                    className="bg-white text-black font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-[#F5F5F5] transition-colors border-2 border-black text-center"
-                >
-                    Watch_Demo
-                </button>
             </div>
 
             <div className="flex items-center gap-4 mt-3">
@@ -63,43 +55,6 @@ function HeroCTA() {
                     View_Plans →
                 </Link>
             </div>
-
-            {/* Video Modal Overlay */}
-            {isVideoOpen && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8 animate-in fade-in"
-                    onClick={() => setIsVideoOpen(false)}
-                >
-                    <div
-                        className="relative w-full max-w-[1000px] aspect-video bg-black border-2 border-[#FF4F00] shadow-2xl animate-in zoom-in-95"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Header Bar */}
-                        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-                            <span className="font-mono text-[10px] uppercase tracking-widest text-[#FF4F00]">
-                                LexOculus // Product_Demo
-                            </span>
-                            <button
-                                onClick={() => setIsVideoOpen(false)}
-                                className="pointer-events-auto font-mono text-xs uppercase tracking-widest text-white hover:text-[#FF4F00] bg-black/50 px-3 py-1 border border-white/20 backdrop-blur-md transition-colors"
-                            >
-                                [Close_X]
-                            </button>
-                        </div>
-
-                        {/* Iframe */}
-                        <video
-                            className="w-full h-full object-cover"
-                            src="https://sqxqtaiwgrtiimlfgsyu.supabase.co/storage/v1/object/public/website-assests/lexoculus-demo.mp4"
-                            title="Product Demo"
-                            autoPlay
-                            controls
-                            playsInline
-                            controlsList="nodownload"
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -153,8 +108,14 @@ export default function LandingPage() {
                             paddingLeft: 'max(2rem, calc((100vw - 1400px) / 2 + 2rem))'
                         }}
                     >
-                        <div className="font-mono text-[10px] uppercase tracking-widest text-[#999] mb-6">
-                            EU AI Act Compliance Engine
+                        <div className="flex flex-wrap items-center gap-2 mb-6">
+                            <span className="bg-[#FF4F00] text-white font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold">
+                                NOW OPEN SOURCE
+                            </span>
+                            <span className="text-gray-300">·</span>
+                            <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">
+                                EU AI Act Compliance Engine
+                            </span>
                         </div>
 
                         <h1 className="font-serif text-4xl md:text-6xl font-bold leading-[1.05] mb-6">
@@ -163,7 +124,7 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="font-mono text-sm text-[#555] leading-relaxed max-w-[400px] mb-10">
-                            Connect your GitHub repository. We scan your dependencies,
+                            Lexoculus is now fully open-source. Connect your GitHub repository to scan your dependencies,
                             classify your AI system under the EU AI Act, and generate
                             a signed compliance report. In minutes, not months.
                         </p>
@@ -522,8 +483,8 @@ export default function LandingPage() {
                                 <div className="p-3 space-y-2 font-mono text-[10px]">
                                     <div className="flex justify-between"><span className="text-[#555]">Banned AI</span><span className="text-[#FF4F00]">FEB 2025 ✕</span></div>
                                     <div className="flex justify-between"><span className="text-[#555]">GPAI Rules</span><span className="text-[#FF4F00]">AUG 2025 ✕</span></div>
-                                    <div className="flex justify-between"><span className="text-[#555]">High-Risk</span><span>AUG 2026</span></div>
-                                    <div className="flex justify-between"><span className="text-[#555]">Full Act</span><span>AUG 2027</span></div>
+                                    <div className="flex justify-between"><span className="text-[#555]">High-Risk</span><span>DEC 2027</span></div>
+                                    <div className="flex justify-between"><span className="text-[#555]">Full Act</span><span>AUG 2028</span></div>
                                 </div>
                             </div>
                         </div>
@@ -646,7 +607,7 @@ export default function LandingPage() {
                         <p className="font-mono text-sm text-[#555] leading-relaxed max-w-[400px] mb-8">
                             Banned AI practices are prohibited since February 2025.
                             GPAI obligations apply from August 2025.
-                            High-risk system requirements take effect August 2026.
+                            High-risk system requirements take effect December 2027.
                             Non-compliance fines reach €35 million or 7% of global turnover.
                         </p>
                         <div className="font-mono text-xs text-black">
@@ -663,8 +624,8 @@ export default function LandingPage() {
                             {[
                                 { date: 'FEB 2025', event: 'Banned AI practices prohibited', status: 'ENFORCED' },
                                 { date: 'AUG 2025', event: 'GPAI model obligations apply', status: 'ENFORCED' },
-                                { date: 'AUG 2026', event: 'High-risk AI system requirements', status: 'UPCOMING' },
-                                { date: 'AUG 2027', event: 'Full Act enforcement', status: 'UPCOMING' },
+                                { date: 'DEC 2026', event: 'Article 50 transparency obligations', status: 'UPCOMING' },
+                                { date: 'DEC 2027', event: 'High-risk AI system requirements', status: 'UPCOMING' },
                             ].map((d, i) => (
                                 <div key={i} className="flex items-start gap-4 py-4 border-b border-[#333]">
                                     <div className="font-mono text-sm text-[#FF4F00] w-[100px] shrink-0">{d.date}</div>

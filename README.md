@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LEXOCULUS
 
-## Getting Started
+### EU AI Act Compliance Platform
 
-First, run the development server:
+**Lexoculus** is a professional-grade compliance engine designed to help developers and organizations align with the **EU AI Act (Regulation (EU) 2024/1689)**. It scans GitHub repositories, detects AI capabilities, classifies risk, and generates legally-referenced compliance reports.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔍 CORE FEATURES
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **5-Stage Scan Pipeline**: Deterministic scanner + context-aware LLM analysis.
+- **EU AI Act Mapping**: Automatic classification against Annex III high-risk articles.
+- **GPAI Detection**: Identifies General-Purpose AI providers and systemic risk.
+- **Report Generation**: Digitaly signed PDF compliance reports with evidence trails.
+- **CI/CD Integration**: PR scanning via GitHub Actions with risk-based blocking.
+- **MCP Server**: Standalone Model Context Protocol server for AI coding assistants.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠 TECHNICAL ARCHITECTURE
 
-To learn more about Next.js, take a look at the following resources:
+Lexoculus operates a sequential pipeline to ensure high-confidence risk assessment:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1.  **SCANNER**: Deterministic AI/ML library detection (200+ library DB).
+2.  **LLM ANALYSIS**: Contextual purpose analysis using Groq (Llama 3.3).
+3.  **RISK CLASSIFY**: Mapping to Annex III articles via the Constraint Engine.
+4.  **CONTEXT VERIFY**: User-provided evidence and use-case refinement.
+5.  **REPORT**: Final compliance readiness assessment and PDF generation.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🚀 GETTING STARTED
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Node.js 20+
+- PostgreSQL (Supabase recommended)
+- Groq API Key (for LLM analysis)
+- GitHub OAuth App (for repo scanning)
+
+### Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/CURSED-ME/lexoculus.git
+    cd lexoculus
+    ```
+
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+
+3.  **Configure environment**:
+    Copy `.env.local.example` to `.env.local` and fill in your keys.
+
+4.  **Setup Database**:
+    ```bash
+    npx prisma generate
+    npx prisma db push
+    ```
+
+5.  **Run development server**:
+    ```bash
+    npm run dev
+    ```
+
+---
+
+## ⚖️ LICENSE
+
+Lexoculus is released under the **Apache License 2.0**. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🤝 CONTRIBUTING
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to participate in the development of Lexoculus.
+
+---
+
+## 🔒 SECURITY
+
+To report a security vulnerability, please follow the instructions in [SECURITY.md](SECURITY.md).
+
+---
+
+<p align="center">
+  <b>OPTICAL LEGALITY SYSTEM 3.0</b><br>
+  <i>Safety through Transparency.</i>
+</p>

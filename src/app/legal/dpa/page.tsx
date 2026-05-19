@@ -8,7 +8,7 @@ export default function DPAPage() {
 
             <div className="bg-neutral-50 border-l-4 border-black p-4 my-4">
                 <p className="text-sm font-mono leading-relaxed">
-                    This Data Processing Agreement ("DPA") forms an integral part of the LexOculus Terms of Service or any other Enterprise Agreement between LexOculus ("Data Processor") and the Customer ("Data Controller"). To execute a counter-signed copy of this DPA, please contact <a href="mailto:founder@lexoculus.com" className="text-[#FF4F00]">founder@lexoculus.com</a>.
+                    This Data Processing Agreement ("DPA") forms an integral part of the LexOculus Terms of Service or any other Enterprise Agreement between LexOculus ("Data Processor") and the Customer ("Data Controller"). To execute a counter-signed copy of this DPA, please contact <a href="mailto:varadkhoriya17@gmail.com" className="text-[#FF4F00]">varadkhoriya17@gmail.com</a>.
                 </p>
             </div>
 

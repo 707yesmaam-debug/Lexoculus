@@ -12,11 +12,13 @@ jest.mock('@/lib/infra/prisma', () => ({
     prisma: {
         user: {
             findUnique: jest.fn(),
+            update: jest.fn(),
         },
         subscription: {
             upsert: jest.fn(),
             update: jest.fn(),
         },
+        $transaction: jest.fn((promises) => Promise.all(promises)),
     },
 }));
 

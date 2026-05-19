@@ -30,8 +30,8 @@ describe('Purpose Categories Risk Filtering', () => {
             expect(shouldSkipHighRiskCategory('Employment & Worker Management', 'developer_tool')).toBe(true);
         });
 
-        it('should skip ALL high-risk categories for "chatbot"', () => {
-            expect(shouldSkipHighRiskCategory('Education & Vocational Training', 'chatbot')).toBe(true);
+        it('should skip ALL high-risk categories for "data_analytics"', () => {
+            expect(shouldSkipHighRiskCategory('Critical Infrastructure', 'data_analytics')).toBe(true);
         });
     });
 
@@ -49,17 +49,17 @@ describe('Purpose Categories Risk Filtering', () => {
         });
 
         it('should handle purposes that map to multiple categories', () => {
-            // 'biometrics' allows 3 different categories
+            // 'product_safety_industrial' allows 'Article 6(1) — Machinery' and 'Critical Infrastructure'
 
-            const bio1 = shouldSkipHighRiskCategory('Remote Biometric Identification', 'biometrics');
-            expect(bio1).toBe(false);
+            const ps1 = shouldSkipHighRiskCategory('Article 6(1) — Machinery', 'product_safety_industrial');
+            expect(ps1).toBe(false);
 
-            const bio2 = shouldSkipHighRiskCategory('Emotion Recognition', 'biometrics');
-            expect(bio2).toBe(false);
+            const ps2 = shouldSkipHighRiskCategory('Critical Infrastructure', 'product_safety_industrial');
+            expect(ps2).toBe(false);
 
             // Something unrelated should be skipped
-            const bio3 = shouldSkipHighRiskCategory('Law Enforcement', 'biometrics');
-            expect(bio3).toBe(true);
+            const ps3 = shouldSkipHighRiskCategory('Law Enforcement', 'product_safety_industrial');
+            expect(ps3).toBe(true);
         });
     });
 
