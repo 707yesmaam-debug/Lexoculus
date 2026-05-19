@@ -35,25 +35,27 @@ function HeroCTA() {
     return (
         <div className="mb-8">
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <Link
-                    href="/request-demo"
+                <a
+                    href="https://github.com/CURSED-ME/lexoculus"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="bg-[#FF4F00] text-white font-mono text-sm uppercase tracking-widest px-8 py-4 hover:bg-black transition-colors border-2 border-black text-center"
                 >
-                    Request_Demo →
-                </Link>
+                    View_on_GitHub →
+                </a>
             </div>
 
             <div className="flex items-center gap-4 mt-3">
                 <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">
-                    Enterprise-grade compliance
+                    AGPL-3.0 Licensed
                 </span>
                 <span className="text-[#CCC]">·</span>
-                <Link
-                    href="/pricing"
+                <a
+                    href="mailto:varadkhoriya17@gmail.com?subject=Commercial License Inquiry"
                     className="font-mono text-[10px] uppercase tracking-widest text-[#999] hover:text-[#FF4F00] transition-colors"
                 >
-                    View_Plans →
-                </Link>
+                    Commercial_License →
+                </a>
             </div>
         </div>
     );
@@ -110,7 +112,7 @@ export default function LandingPage() {
                     >
                         <div className="flex flex-wrap items-center gap-2 mb-6">
                             <span className="bg-[#FF4F00] text-white font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold">
-                                NOW OPEN SOURCE
+                                OPEN SOURCE // DUAL LICENSED
                             </span>
                             <span className="text-gray-300">·</span>
                             <span className="font-mono text-[10px] uppercase tracking-widest text-[#999]">
@@ -124,9 +126,7 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="font-mono text-sm text-[#555] leading-relaxed max-w-[400px] mb-10">
-                            Lexoculus is now fully open-source. Connect your GitHub repository to scan your dependencies,
-                            classify your AI system under the EU AI Act, and generate
-                            a signed compliance report. In minutes, not months.
+                            Lexoculus is proudly open-source under AGPL-3.0. A dual-licensing model is available for commercial use. Connect your GitHub repository to scan your dependencies, classify your AI system under the EU AI Act, and generate a signed compliance report.
                         </p>
 
                         <HeroCTA />

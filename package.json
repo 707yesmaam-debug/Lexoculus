@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "EU AI Act compliance platform — scan GitHub repos, classify risk, generate legal reports.",
   "private": false,
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0",
   "homepage": "https://lexoculus.com",
   "repository": {
     "type": "git",
